@@ -16,35 +16,38 @@ export default function StudentLogin() {
       setError('Enter your name and password')
       return
     }
+    // Open the tab synchronously within the click handler so browsers
+    // don't block it as a popup, then point it at the panel once auth succeeds.
+    const popup = window.open('', '_blank')
     setLoading(true)
     setError('')
     const result = await getStudentByCredentials(name, password)
     if (result?.error === 'not_found') {
+      popup?.close()
       setError('No student found with that name. Check spelling or contact admin.')
       setLoading(false)
       return
     }
     if (result?.error === 'no_credentials') {
+      popup?.close()
       setError('No password set for this account. Contact admin to set up your login.')
       setLoading(false)
       return
     }
     if (result?.error === 'already_logged_in_elsewhere') {
+      popup?.close()
       setError('This account is already logged in elsewhere')
       setLoading(false)
       return
     }
     if (result?.error === 'wrong_password') {
+      popup?.close()
       setError('Wrong password. Try again.')
       setLoading(false)
       return
     }
     if (!result?.student) {
-      setError('Invalid name or password. Try again.')
-      setLoading(false)
-      return
-    }
-    if (!result?.student) {
+      popup?.close()
       setError('Invalid name or password. Try again.')
       setLoading(false)
       return
@@ -54,7 +57,12 @@ export default function StudentLogin() {
     await setStudentSession(result.student.id, token)
     localStorage.setItem('student_id', result.student.id)
     setLoading(false)
-    navigate('/student/dashboard')
+    if (popup) {
+      popup.location.href = `${window.location.origin}/student/dashboard`
+      navigate('/')
+    } else {
+      navigate('/student/dashboard')
+    }
   }
 
   return (

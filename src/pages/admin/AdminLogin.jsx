@@ -12,14 +12,23 @@ export default function AdminLogin() {
   const navigate = useNavigate()
 
   const handleLogin = async () => {
+    // Open the tab synchronously within the click handler so browsers
+    // don't block it as a popup, then point it at the panel once auth succeeds.
+    const popup = window.open('', '_blank')
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
+      popup?.close()
       setError('Invalid credentials. Try again.')
       setLoading(false)
     } else {
-      navigate('/admin')
+      if (popup) {
+        popup.location.href = `${window.location.origin}/admin`
+        navigate('/')
+      } else {
+        navigate('/admin')
+      }
     }
   }
 
