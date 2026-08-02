@@ -1,0 +1,20 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+export const judgeClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storageKey: 'artfest-judge-auth',
+  },
+})
+
+// Throwaway client used to re-verify judge credentials without disturbing the
+// judge panel's active session (no persistence, no token swap).
+export const verifyJudgeClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+  },
+})

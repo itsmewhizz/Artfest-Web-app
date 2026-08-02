@@ -1,0 +1,1181 @@
+
+
+
+
+🎭
+CAMPUS ART FEST
+Management System
+Complete Project Planning Documents  ·  All 6 Docs
+
+
+
+
+Project
+Campus Art Fest App
+
+
+Stack
+React + Supabase
+
+
+Developer
+Farhan
+
+
+Version
+v1.0  ·  June 2026
+
+
+
+
+Documents Inside
+01 PRD  ·  02 TRD  ·  03 App Flow  ·  04 UI/UX  ·  05 Backend Schema  ·  06 Implementation Roadmap
+
+
+
+
+📋  Document 01  ·  Product Requirements Document (PRD)
+
+The north star of the entire project. Defines what we're building, who it's for, and what success looks like.
+
+App Overview
+
+
+
+App Name
+
+
+Campus Art Fest Management System
+
+
+Tagline
+
+
+Your College Arts Festival — Tracked, Celebrated, Remembered
+
+
+Purpose
+
+
+A web app to manage programmes, student results, team scores, and winner posters for a campus arts festival
+
+
+Primary Users
+
+
+Students, Teachers, Audience, Fest Admin
+
+
+Platform
+
+
+Web (mobile-responsive), accessible on any device
+
+The Problem We're Solving
+Results and winners are announced verbally or on paper — easy to lose
+No central place for students to check their programme results
+Team scores are manually tracked — no live visual display
+Downloading winner certificates/posters is not possible currently
+Admin has no easy panel to update data without coding knowledge
+
+Target Users
+
+
+
+Students / Candidates
+
+
+Check their participated programmes, see results, download their result poster
+
+
+Audience / Visitors
+
+
+Browse programmes, see team scores and competition winners
+
+
+Admin / Coordinator
+
+
+Add programmes, update results, manage team points, upload photos
+
+
+Teachers / Jury
+
+
+View results by category, see programme completion status
+
+Core Features — Must Have
+🏠  Section 1: Home / Spotlight
+Auto-scrolling or fading banner of campus art fest photos
+Photos uploaded and managed by admin
+Smooth transitions, festival atmosphere UI
+🏆  Section 2: Teams & Scores
+3 teams displayed with curved/arc score bar per team
+Team name written inside each bar
+Click any team → see: 1st place points, 2nd place points, 3rd place points breakdown
+Competition list → click any competition → see winners
+Download winner poster in 3 design themes
+👤  Section 3: Students / Candidates
+Name search bar with filter by Team Name and Class Category
+Click any student → Student Profile Card opens
+Profile card shows: photo, name, team, class
+Circular progress bar showing e.g. 4/7 programmes participated
+List of all programmes the student is enrolled in
+Each programme shows: Finished ✅ or Unfinished ❎ status
+Click any programme → see result details
+Download result poster in 3 design themes
+📋  Section 4: Programmes
+Search bar with filter by Class category(HS,Minor,Premier,Sub-junior,Junior)
+All programmes listed with Finished / Unfinished badge
+Click any programme → view result
+Download result poster in 3 design themes
+🖼️  Result / Winner Posters
+Available in 3 themes/designs (e.g. Classic, Vibrant, Minimal)
+Poster contains: Programme name, Category, 1st/2nd/3rd place student names + photos
+Downloadable as image (PNG/JPG)
+🔐  Section 5: Admin Panel
+Secured login with admin ID number + password
+Add new programmes with name, category, type
+Edit programme status: Conducted ✅ / Not Conducted ❎
+Add/edit programme results — select candidate (auto-loads photo)
+Edit each team's points
+Upload/manage spotlight photos for the home banner
+All changes reflect live on the public-facing app
+
+Nice to Have (v2)
+Push notifications for result announcements
+Live score updates during the fest
+QR code for each student's profile
+Dark/light mode toggle
+
+Out of Scope (v1)
+Online registration for students (students added by admin only)
+Payment or ticketing system
+Live video streaming
+Multi-fest / multi-year support
+
+Success Metrics
+
+
+
+All students findable
+
+
+100% of registered students appear in search
+
+
+All programmes tracked
+
+
+Every conducted programme has a result entry
+
+
+Poster download works
+
+
+All 3 themes downloadable on mobile + desktop
+
+
+Admin ease
+
+
+Admin can update results in under 2 minutes
+
+
+Zero data loss
+
+
+Supabase keeps all data safe and synced
+
+
+
+
+⚙️  Document 02  ·  Technical Requirements Document (TRD)
+
+The technical blueprint. Locks in every stack decision so AI and developers build consistently.
+
+Tech Stack
+
+
+
+Frontend Framework
+
+
+React 18 (Vite) with JavaScript
+
+
+Styling
+
+
+Tailwind CSS + custom CSS for animations
+
+
+Routing
+
+
+React Router v6 (multi-page navigation)
+
+
+State Management
+
+
+React useState / useContext (no Redux needed)
+
+
+Database
+
+
+Supabase (PostgreSQL, real-time)
+
+
+File Storage
+
+
+Supabase Storage (student photos, spotlight images)
+
+
+Authentication
+
+
+Supabase Auth — Phone/Password for admin only
+
+
+Hosting
+
+
+Supabase Hosting (free tier, fast CDN)
+
+
+Poster Download
+
+
+html2canvas + file-saver (convert HTML poster to PNG)
+
+
+Icons
+
+
+Lucide React
+
+
+Build Tool
+
+
+Vite (fast dev server, optimized build)
+
+Supabase Collections (Database)
+Supabase uses PostgreSQL — each table stores rows of structured data with typed columns.
+
+
+
+students
+
+
+All student/candidate records
+
+
+programmes
+
+
+All fest programmes/events
+
+
+results
+
+
+Result entries per programme
+
+
+teams
+
+
+Team names and total points
+
+
+spotlight
+
+
+Home banner image URLs
+
+
+admin
+
+
+Admin credentials (hashed)
+
+Third-Party Libraries
+
+
+
+html2canvas
+
+
+Renders the poster HTML div as a canvas image for download
+
+
+file-saver
+
+
+Triggers browser file download (saveAs function)
+
+
+react-circular-progressbar
+
+
+Circular progress bar for student programme count
+
+
+react-router-dom
+
+
+Page routing between sections
+
+
+lucide-react
+
+
+Clean icon set (search, download, check, x icons)
+
+
+@supabase/supabase-js
+
+
+Full Supabase SDK (Database, Storage, Auth)
+
+Environment Variables (.env)
+Store these in a .env file — never commit to GitHub:
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+
+
+
+
+
+Key Technical Constraints
+Must be fully mobile-responsive — students will use phones
+Poster download must work on mobile Chrome/Safari
+All Supabase queries should be optimized — avoid unnecessary re-fetches
+Admin panel route must be protected — redirect if not logged in
+Student photos stored in Supabase Storage — not embedded as base64 in the database
+Free Supabase tier limits — max 1GB database, 2GB storage, 50MB file size — sufficient for college fest
+
+
+
+
+🗺️  Document 03  ·  App Flow — Navigation & User Journey
+
+Every screen, every click, every path — mapped before a single line of code.
+
+All Pages / Screens
+
+
+
+/ (Home)
+
+
+Spotlight banner + quick nav to all sections
+
+
+/teams
+
+
+Team scores with arc bars + competition winners
+
+
+/students
+
+
+Search & filter students, view profile cards
+
+
+/students/:id
+
+
+Individual student profile card with programme list
+
+
+/programmes
+
+
+Search & filter all programmes
+
+
+/programmes/:id
+
+
+Individual programme result page
+
+
+/admin/login
+
+
+Admin login screen (number + password)
+
+
+/admin
+
+
+Admin dashboard — protected route
+
+
+/admin/programmes
+
+
+Add/edit programmes
+
+
+/admin/results
+
+
+Add/edit programme results
+
+
+/admin/teams
+
+
+Edit team points
+
+
+/admin/spotlight
+
+
+Upload/manage home banner photos
+
+
+/admin/students
+
+
+Add/edit student/candidate records
+
+Navigation Structure
+Bottom navigation bar (mobile-first) with 4 main tabs:
+🏠 Home
+🏆 Teams
+👤 Students
+📋 Programmes
+Admin panel accessible via a hidden/small link in footer or via direct URL /admin/login
+
+User Journey 1 — Student checks their result
+
+
+
+Step 1
+
+
+Student opens app → sees Home spotlight
+
+
+Step 2
+
+
+Taps 'Students' tab in bottom nav
+
+
+Step 3
+
+
+Types their name in search bar
+
+
+Step 4
+
+
+Optionally filters by Team or Class
+
+
+Step 5
+
+
+Finds their name in results → taps on it
+
+
+Step 6
+
+
+Profile card opens: sees 4/7 circular progress
+
+
+Step 7
+
+
+Scrolls down to see programme list
+
+
+Step 8
+
+
+Taps a Finished programme → sees result (1st/2nd/3rd)
+
+
+Step 9
+
+
+Taps Download Poster → chooses 1 of 3 themes → downloads
+
+User Journey 2 — Audience checks team scores
+
+
+
+Step 1
+
+
+Opens app → taps 'Teams' tab
+
+
+Step 2
+
+
+Sees 3 arc/curved score bars with team names
+
+
+Step 3
+
+
+Taps any team → sees 1st, 2nd, 3rd place points breakdown
+
+
+Step 4
+
+
+Scrolls to see list of competitions
+
+
+Step 5
+
+
+Taps a competition → sees winner names + photos
+
+
+Step 6
+
+
+Taps Download → picks a poster theme → saves image
+
+User Journey 3 — Admin updates a result
+
+
+
+Step 1
+
+
+Admin navigates to /admin/login
+
+
+Step 2
+
+
+Enters ID numbers + password → logs in
+
+
+Step 3
+
+
+Admin dashboard appears
+
+
+Step 4
+
+
+Taps 'Results' → selects a programme
+
+
+Step 5
+
+
+Selects candidate from dropdown → photo auto-loads
+
+
+Step 6
+
+
+Sets position: 1st / 2nd / 3rd
+
+
+Step 7
+
+
+Saves → result live on public app instantly
+
+Edge Cases & States
+
+
+
+No results found in search
+
+
+Show 'No students found' empty state with illustration
+
+
+Programme not conducted yet
+
+
+Show ❎ Unfinished badge, result section hidden
+
+
+Student in 0 programmes
+
+
+Circular bar shows 0/0, message: 'No programmes assigned'
+
+
+Poster download fails
+
+
+Show error toast: 'Download failed, try again'
+
+
+Admin wrong password
+
+
+Show: 'Invalid credentials' — no account lockout in v1
+
+
+Image not uploaded for student
+
+
+Show placeholder avatar/silhouette icon
+
+
+
+
+🎨  Document 04  ·  UI/UX Design Brief
+
+The visual language of the app — so it looks like a real, polished product, not a student project.
+
+Overall Aesthetic
+Festival-grade dark purple UI. Rich, celebratory, and modern — like a music festival app meets a college management portal. Bold enough to feel exciting, clean enough to be usable.
+Inspiration: Behance portfolio apps, BYJUS for structure, Spotify for card aesthetics.
+
+Color Palette
+
+
+
+Primary Purple
+
+
+#7C3AED — main brand color, buttons, highlights
+
+
+Deep Navy
+
+
+#1E1B4B — page backgrounds, headers
+
+
+Gold Accent
+
+
+#F59E0B — winner badges, 1st place highlights, CTAs
+
+
+Lavender Light
+
+
+#EDE9FE — card backgrounds, hover states
+
+
+Purple Mid
+
+
+#A78BFA — progress bars, chart fills, secondary text
+
+
+White
+
+
+#FFFFFF — card surfaces, text on dark bg
+
+
+Gray Text
+
+
+#6B7280 — secondary labels, timestamps
+
+
+Light Gray
+
+
+#F3F4F6 — input backgrounds, dividers
+
+Typography
+
+
+
+Display / Headings
+
+
+Poppins Bold — section titles, team names, programme titles
+
+
+Body / UI Text
+
+
+Inter Regular/Medium — descriptions, labels, search results
+
+
+Data / Numbers
+
+
+Inter Mono or Roboto Mono — scores, counts, programme IDs
+
+
+Base font size
+
+
+16px body, 24–36px headings, 12px captions
+
+
+Line height
+
+
+1.5 for body, 1.2 for headings
+
+Component Style
+
+
+
+Border radius
+
+
+16px for cards, 8px for buttons, 24px for chips/badges
+
+
+Shadows
+
+
+Soft shadow: 0 4px 24px rgba(124,58,237,0.10) on cards
+
+
+Buttons
+
+
+Filled purple for primary, outlined purple for secondary
+
+
+Input fields
+
+
+Light gray background, purple focus border, rounded
+
+
+Icons
+
+
+Lucide React — consistent 20px stroke icons throughout
+
+
+Progress bars
+
+
+Circular (student card) + horizontal arc (team scores)
+
+
+Badges
+
+
+Pill-shaped: green for Finished, red/gray for Unfinished
+
+Screen-by-Screen Design Notes
+Home — Spotlight
+Full-width auto-fading banner of fest photos
+Dot indicators at bottom to show current slide
+Overlay gradient so text (if any) is readable
+4 icon quick-nav tiles below the banner: Teams, Students, Programmes, About
+Teams Screen
+3 large cards — one per team — with team color coding
+Arc/semicircle progress chart in each card showing score proportion
+Clicking a card expands to show 1st/2nd/3rd breakdown
+Gold trophy icon for 1st, silver for 2nd, bronze for 3rd
+Student Profile Card
+Circular student photo at top, name + class + team below
+Large circular progress ring: e.g. '4 / 7' in center text
+Below: scrollable list of programmes — each with a Finished/Unfinished pill
+Tap a programme row → expands to show result + Download Poster button
+Result Poster (3 Themes)
+Theme 1 — Classic: white background, gold border, serif font feel
+Theme 2 — Vibrant: gradient purple-to-gold, bold and celebratory
+Theme 3 — Minimal: dark background, clean white text, modern
+All 3 show: Programme name, Category, 1st/2nd/3rd with photos
+Admin Panel
+Same purple brand, but denser layout — data-focused
+Sidebar navigation on desktop, top tabs on mobile
+Tables with edit/save inline — no modal overload
+Green/red status badges for Conducted / Not Conducted
+
+Mobile First
+Designed for 390px wide screens first (iPhone 14 standard)
+Bottom nav bar replaces sidebar on mobile
+All cards full-width on mobile, grid on tablet/desktop
+Poster download tested on mobile Chrome and Safari
+
+
+
+
+🗄️  Document 05  ·  Backend Schema — Supabase Data Model
+
+Every Supabase table, every column, every relationship — defined before writing a single database call.
+
+Collection: students
+One document per student/candidate.
+
+
+
+Field
+
+
+Type / Description
+
+
+id
+
+
+uuid — auto-generated Supabase row ID
+
+
+name
+
+
+string — Full name e.g. 'Arjun K'
+
+
+class
+
+
+string — e.g. '10A', '12B', 'FY BSc'
+
+
+team
+
+
+string — ref to teams collection: 'team_A', 'team_B', 'team_C'
+
+
+photoURL
+
+
+string — Supabase Storage public URL
+
+
+programmeIds
+
+
+array<string> — list of programme IDs student is enrolled in
+
+
+createdAt
+
+
+timestamp — when admin added this student
+
+Collection: programmes
+One document per fest event/competition.
+
+
+
+Field
+
+
+Type / Description
+
+
+id
+
+
+uuid — auto-generated Supabase row ID
+
+
+name
+
+
+string — e.g. 'Classical Dance Solo'
+
+
+category
+
+
+string — e.g. 'Dance', 'Music', 'Art', 'Literary', 'Stage'
+
+
+isFinished
+
+
+boolean — true = Conducted ✅, false = Not Conducted ❎
+
+
+resultId
+
+
+string | null — ref to results doc (null if not finished)
+
+
+createdAt
+
+
+timestamp
+
+Collection: results
+One document per programme result. Linked from programmes.resultId.
+
+
+
+Field
+
+
+Type / Description
+
+
+id
+
+
+uuid — auto-generated Supabase row ID
+
+
+programmeId
+
+
+string — ref to programmes doc
+
+
+first
+
+
+object — { studentId, name, photoURL }
+
+
+second
+
+
+object — { studentId, name, photoURL }
+
+
+third
+
+
+object — { studentId, name, photoURL }
+
+
+updatedAt
+
+
+timestamp — last time admin updated result
+
+Collection: teams
+Exactly 3 documents — one per team.
+
+
+
+Field
+
+
+Type / Description
+
+
+id
+
+
+string — e.g. 'team_A', 'team_B', 'team_C'
+
+
+name
+
+
+string — Team display name e.g. 'Red Eagles'
+
+
+color
+
+
+string — hex color for UI e.g. '#EF4444'
+
+
+firstPlaceCount
+
+
+number — total 1st place wins
+
+
+secondPlaceCount
+
+
+number — total 2nd place wins
+
+
+thirdPlaceCount
+
+
+number — total 3rd place wins
+
+
+totalPoints
+
+
+number — calculated: (1st×5) + (2nd×3) + (3rd×1)
+
+Collection: spotlight
+Array of image URLs for the home banner slideshow.
+
+
+
+Field
+
+
+Type / Description
+
+
+id
+
+
+uuid — auto-generated Supabase row ID
+
+
+imageURL
+
+
+string — Supabase Storage public URL
+
+
+caption
+
+
+string | null — optional caption text
+
+
+order
+
+
+number — display order in slider
+
+
+uploadedAt
+
+
+timestamp
+
+Collection: admin
+Single document with admin credentials. Protected by Supabase Row Level Security (RLS).
+
+
+
+Field
+
+
+Type / Description
+
+
+phone
+
+
+string — admin phone number (used as username)
+
+
+passwordHash
+
+
+string — bcrypt hashed password
+
+
+lastLogin
+
+
+timestamp
+
+Supabase Row Level Security (Summary)
+students, programmes, results, teams, spotlight — PUBLIC READ, admin write only
+admin table — NO public read, NO public write, only authenticated Supabase Auth access
+Supabase Storage — public read for photos, admin write only
+Admin authentication via Supabase Auth (email/password)
+
+Data Relationships Diagram
+students.programmeIds  →  programmes.id
+programmes.resultId  →  results.id
+results.first/second/third.studentId  →  students.id
+students.team  →  teams.id
+
+
+
+
+🚀  Document 06  ·  Implementation Roadmap
+
+Step-by-step build order. Follow this sequence and you'll never be stuck wondering 'what next?'
+
+Phase 1 — Project Setup (Day 1)
+Create React app with Vite: npm create vite@latest artfest --template react
+Install dependencies: Tailwind CSS, React Router, @supabase/supabase-js, Lucide React
+Create Supabase project → enable Database, Storage, Authentication
+Add .env file with Supabase URL and anon key
+Set up React Router with all route paths (/, /teams, /students, /programmes, /admin)
+Create folder structure: /components, /pages, /supabase, /hooks, /utils
+
+Phase 2 — Supabase Connection (Day 1–2)
+Create supabase/client.js — initialize Supabase client
+Create supabase/queries.js — helper functions (getStudents, getProgrammes, etc.)
+Seed Supabase tables with test data: 2–3 students, 3 programmes, 3 teams
+Test all read operations work before building UI
+
+Phase 3 — UI Shell & Navigation (Day 2)
+Build App layout with bottom nav bar (Home, Teams, Students, Programmes)
+Create placeholder pages for all 4 main sections
+Set up Tailwind color config using the design palette from Doc 04
+Build reusable components: Card, Badge (Finished/Unfinished), SearchBar, LoadingSpinner
+
+Phase 4 — Home & Spotlight (Day 3)
+Build spotlight image slider with auto-fade (use CSS transitions)
+Fetch spotlight images from Supabase
+Add dot indicators, pause on hover
+Add 4 quick-nav icon tiles below slider
+
+Phase 5 — Teams Section (Day 3–4)
+Build 3 team cards with SVG arc/semicircle score bars
+Click team → expand to show 1st/2nd/3rd point breakdown
+Build competition list — fetch from programmes where isFinished=true
+Click competition → show result with winner names + photos
+Build winner poster component in 3 themes
+Integrate html2canvas + file-saver for poster download
+
+Phase 6 — Students Section (Day 4–5)
+Build student search bar with real-time filtering
+Add Team filter dropdown + Class Category filter
+Build student list cards with photo + name + team badge
+Build Student Profile page (/students/:id)
+Add react-circular-progressbar for programme count ring
+Build programme list inside profile: Finished/Unfinished badges
+Click programme → show result + Download Poster button
+
+Phase 7 — Programmes Section (Day 5)
+Build programmes search + category filter
+List all programmes with Finished/Unfinished status
+Click programme → Programme Result page
+Show 1st/2nd/3rd with photos + Download Poster (3 themes)
+
+Phase 8 — Admin Panel (Day 6–7)
+Build /admin/login page — phone + password form
+Supabase Auth: supabase.auth.signInWithPassword({ email, password })
+Create protected route HOC — redirect to login if not authenticated
+Admin dashboard with sidebar nav
+Admin: Add/Edit Programmes — form with name, category, status toggle
+Admin: Results Editor — select programme → select candidates → set 1st/2nd/3rd
+Candidate dropdown auto-loads photo from Supabase Storage
+Admin: Teams Editor — number inputs for each team's points
+Admin: Spotlight Manager — upload images to Supabase Storage, reorder, delete
+Admin: Students Manager — add/edit student records, upload photos
+
+Phase 9 — Polish & Testing (Day 7–8)
+Test on mobile (Chrome + Safari): poster download, search, navigation
+Add loading skeletons for all data-fetching states
+Add empty state illustrations (no results, no programmes)
+Test all 3 poster themes download correctly
+Review Supabase Row Level Security (RLS) — lock down admin tables
+Performance: add Supabase query limits and pagination if needed
+
+Phase 10 — Deployment (Day 8)
+Run: npm run build → generates /dist folder
+Run: npm run build → deploy /dist to Vercel or Netlify (Supabase does not host frontends)
+Share live URL with college
+Test live URL on multiple phones
+
+
+
+
+🎭  You're ready to build. Start with Phase 1.
+Campus Art Fest Management System  ·  Built by Farhan  ·  2026

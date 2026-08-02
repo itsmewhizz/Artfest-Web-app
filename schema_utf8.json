@@ -1,0 +1,623 @@
+﻿{
+    "swagger":  "2.0",
+    "info":  {
+                 "description":  "",
+                 "title":  "standard public schema",
+                 "version":  "14.5"
+             },
+    "host":  "lvkehbubcijtovbrcikq.supabase.co:443",
+    "basePath":  "/",
+    "schemes":  [
+                    "https"
+                ],
+    "consumes":  [
+                     "application/json",
+                     "application/vnd.pgrst.object+json;nulls=stripped",
+                     "application/vnd.pgrst.object+json",
+                     "text/csv"
+                 ],
+    "produces":  [
+                     "application/json",
+                     "application/vnd.pgrst.object+json;nulls=stripped",
+                     "application/vnd.pgrst.object+json",
+                     "text/csv"
+                 ],
+    "paths":  {
+                  "/":  {
+                            "get":  {
+                                        "produces":  "application/openapi+json application/json",
+                                        "responses":  "@{200=}",
+                                        "summary":  "OpenAPI description (this document)",
+                                        "tags":  "Introspection"
+                                    }
+                        },
+                  "/programmes":  {
+                                      "get":  {
+                                                  "parameters":  "            ",
+                                                  "responses":  "@{200=; 206=}",
+                                                  "tags":  "programmes"
+                                              },
+                                      "post":  {
+                                                   "parameters":  "  ",
+                                                   "responses":  "@{201=}",
+                                                   "tags":  "programmes"
+                                               },
+                                      "delete":  {
+                                                     "parameters":  "      ",
+                                                     "responses":  "@{204=}",
+                                                     "tags":  "programmes"
+                                                 },
+                                      "patch":  {
+                                                    "parameters":  "       ",
+                                                    "responses":  "@{204=}",
+                                                    "tags":  "programmes"
+                                                }
+                                  },
+                  "/teams":  {
+                                 "get":  {
+                                             "parameters":  "             ",
+                                             "responses":  "@{200=; 206=}",
+                                             "tags":  "teams"
+                                         },
+                                 "post":  {
+                                              "parameters":  "  ",
+                                              "responses":  "@{201=}",
+                                              "tags":  "teams"
+                                          },
+                                 "delete":  {
+                                                "parameters":  "       ",
+                                                "responses":  "@{204=}",
+                                                "tags":  "teams"
+                                            },
+                                 "patch":  {
+                                               "parameters":  "        ",
+                                               "responses":  "@{204=}",
+                                               "tags":  "teams"
+                                           }
+                             },
+                  "/results":  {
+                                   "get":  {
+                                               "parameters":  "             ",
+                                               "responses":  "@{200=; 206=}",
+                                               "tags":  "results"
+                                           },
+                                   "post":  {
+                                                "parameters":  "  ",
+                                                "responses":  "@{201=}",
+                                                "tags":  "results"
+                                            },
+                                   "delete":  {
+                                                  "parameters":  "       ",
+                                                  "responses":  "@{204=}",
+                                                  "tags":  "results"
+                                              },
+                                   "patch":  {
+                                                 "parameters":  "        ",
+                                                 "responses":  "@{204=}",
+                                                 "tags":  "results"
+                                             }
+                               },
+                  "/students":  {
+                                    "get":  {
+                                                "parameters":  "             ",
+                                                "responses":  "@{200=; 206=}",
+                                                "tags":  "students"
+                                            },
+                                    "post":  {
+                                                 "parameters":  "  ",
+                                                 "responses":  "@{201=}",
+                                                 "tags":  "students"
+                                             },
+                                    "delete":  {
+                                                   "parameters":  "       ",
+                                                   "responses":  "@{204=}",
+                                                   "tags":  "students"
+                                               },
+                                    "patch":  {
+                                                  "parameters":  "        ",
+                                                  "responses":  "@{204=}",
+                                                  "tags":  "students"
+                                              }
+                                },
+                  "/spotlight":  {
+                                     "get":  {
+                                                 "parameters":  "           ",
+                                                 "responses":  "@{200=; 206=}",
+                                                 "tags":  "spotlight"
+                                             },
+                                     "post":  {
+                                                  "parameters":  "  ",
+                                                  "responses":  "@{201=}",
+                                                  "tags":  "spotlight"
+                                              },
+                                     "delete":  {
+                                                    "parameters":  "     ",
+                                                    "responses":  "@{204=}",
+                                                    "tags":  "spotlight"
+                                                },
+                                     "patch":  {
+                                                   "parameters":  "      ",
+                                                   "responses":  "@{204=}",
+                                                   "tags":  "spotlight"
+                                               }
+                                 },
+                  "/admin":  {
+                                 "get":  {
+                                             "parameters":  "          ",
+                                             "responses":  "@{200=; 206=}",
+                                             "tags":  "admin"
+                                         },
+                                 "post":  {
+                                              "parameters":  "  ",
+                                              "responses":  "@{201=}",
+                                              "tags":  "admin"
+                                          },
+                                 "delete":  {
+                                                "parameters":  "    ",
+                                                "responses":  "@{204=}",
+                                                "tags":  "admin"
+                                            },
+                                 "patch":  {
+                                               "parameters":  "     ",
+                                               "responses":  "@{204=}",
+                                               "tags":  "admin"
+                                           }
+                             }
+              },
+    "definitions":  {
+                        "programmes":  {
+                                           "required":  [
+                                                            "id"
+                                                        ],
+                                           "properties":  {
+                                                              "id":  "@{default=gen_random_uuid(); description=Note:\nThis is a Primary Key.\u003cpk/\u003e; format=uuid; type=string}",
+                                                              "name":  "@{format=text; type=string}",
+                                                              "category":  "@{format=text; type=string}",
+                                                              "isFinished":  "@{default=False; format=boolean; type=boolean}",
+                                                              "resultId":  "@{format=text; type=string}",
+                                                              "createdAt":  "@{default=now(); format=timestamp with time zone; type=string}"
+                                                          },
+                                           "type":  "object"
+                                       },
+                        "teams":  {
+                                      "required":  [
+                                                       "id"
+                                                   ],
+                                      "properties":  {
+                                                         "id":  "@{description=Note:\nThis is a Primary Key.\u003cpk/\u003e; format=text; type=string}",
+                                                         "name":  "@{format=text; type=string}",
+                                                         "color":  "@{format=text; type=string}",
+                                                         "firstPlaceCount":  "@{default=0; format=bigint; type=integer}",
+                                                         "secondPlaceCount":  "@{default=0; format=bigint; type=integer}",
+                                                         "thirdPlaceCount":  "@{default=0; format=bigint; type=integer}",
+                                                         "totalPoints":  "@{default=0; format=bigint; type=integer}"
+                                                     },
+                                      "type":  "object"
+                                  },
+                        "results":  {
+                                        "required":  [
+                                                         "id",
+                                                         "name"
+                                                     ],
+                                        "properties":  {
+                                                           "id":  "@{default=gen_random_uuid(); description=Note:\nThis is a Primary Key.\u003cpk/\u003e; format=uuid; type=string}",
+                                                           "name":  "@{format=text; type=string}",
+                                                           "programmeId":  "@{format=text; type=string}",
+                                                           "first":  "@{format=jsonb}",
+                                                           "second":  "@{format=jsonb}",
+                                                           "third":  "@{format=jsonb}",
+                                                           "updatedAt":  "@{format=timestamp without time zone; type=string}"
+                                                       },
+                                        "type":  "object"
+                                    },
+                        "students":  {
+                                         "required":  [
+                                                          "id"
+                                                      ],
+                                         "properties":  {
+                                                            "id":  "@{default=gen_random_uuid(); description=Note:\nThis is a Primary Key.\u003cpk/\u003e; format=uuid; type=string}",
+                                                            "name":  "@{format=text; type=string}",
+                                                            "class":  "@{format=text; type=string}",
+                                                            "team":  "@{format=text; type=string}",
+                                                            "photoURL":  "@{format=text; type=string}",
+                                                            "programmeIds":  "@{format=jsonb}",
+                                                            "createdAt":  "@{default=now(); format=timestamp with time zone; type=string}"
+                                                        },
+                                         "type":  "object"
+                                     },
+                        "spotlight":  {
+                                          "required":  [
+                                                           "id"
+                                                       ],
+                                          "properties":  {
+                                                             "id":  "@{default=gen_random_uuid(); description=Note:\nThis is a Primary Key.\u003cpk/\u003e; format=uuid; type=string}",
+                                                             "imageURL":  "@{format=text; type=string}",
+                                                             "caption":  "@{format=text; type=string}",
+                                                             "order":  "@{default=0; format=bigint; type=integer}",
+                                                             "uploadedAt":  "@{default=now(); format=timestamp with time zone; type=string}"
+                                                         },
+                                          "type":  "object"
+                                      },
+                        "admin":  {
+                                      "required":  [
+                                                       "id"
+                                                   ],
+                                      "properties":  {
+                                                         "id":  "@{default=gen_random_uuid(); description=Note:\nThis is a Primary Key.\u003cpk/\u003e; format=uuid; type=string}",
+                                                         "phone":  "@{format=text; type=string}",
+                                                         "passwordHash":  "@{format=text; type=string}",
+                                                         "lastLogin":  "@{format=timestamp with time zone; type=string}"
+                                                     },
+                                      "type":  "object"
+                                  }
+                    },
+    "parameters":  {
+                       "preferParams":  {
+                                            "name":  "Prefer",
+                                            "description":  "Preference",
+                                            "required":  false,
+                                            "in":  "header",
+                                            "type":  "string"
+                                        },
+                       "preferReturn":  {
+                                            "name":  "Prefer",
+                                            "description":  "Preference",
+                                            "required":  false,
+                                            "enum":  [
+                                                         "return=representation",
+                                                         "return=minimal",
+                                                         "return=none"
+                                                     ],
+                                            "in":  "header",
+                                            "type":  "string"
+                                        },
+                       "preferCount":  {
+                                           "name":  "Prefer",
+                                           "description":  "Preference",
+                                           "required":  false,
+                                           "enum":  [
+                                                        "count=none"
+                                                    ],
+                                           "in":  "header",
+                                           "type":  "string"
+                                       },
+                       "preferPost":  {
+                                          "name":  "Prefer",
+                                          "description":  "Preference",
+                                          "required":  false,
+                                          "enum":  [
+                                                       "return=representation",
+                                                       "return=minimal",
+                                                       "return=none",
+                                                       "resolution=ignore-duplicates",
+                                                       "resolution=merge-duplicates"
+                                                   ],
+                                          "in":  "header",
+                                          "type":  "string"
+                                      },
+                       "select":  {
+                                      "name":  "select",
+                                      "description":  "Filtering Columns",
+                                      "required":  false,
+                                      "in":  "query",
+                                      "type":  "string"
+                                  },
+                       "on_conflict":  {
+                                           "name":  "on_conflict",
+                                           "description":  "On Conflict",
+                                           "required":  false,
+                                           "in":  "query",
+                                           "type":  "string"
+                                       },
+                       "order":  {
+                                     "name":  "order",
+                                     "description":  "Ordering",
+                                     "required":  false,
+                                     "in":  "query",
+                                     "type":  "string"
+                                 },
+                       "range":  {
+                                     "name":  "Range",
+                                     "description":  "Limiting and Pagination",
+                                     "required":  false,
+                                     "in":  "header",
+                                     "type":  "string"
+                                 },
+                       "rangeUnit":  {
+                                         "name":  "Range-Unit",
+                                         "description":  "Limiting and Pagination",
+                                         "required":  false,
+                                         "default":  "items",
+                                         "in":  "header",
+                                         "type":  "string"
+                                     },
+                       "offset":  {
+                                      "name":  "offset",
+                                      "description":  "Limiting and Pagination",
+                                      "required":  false,
+                                      "in":  "query",
+                                      "type":  "string"
+                                  },
+                       "limit":  {
+                                     "name":  "limit",
+                                     "description":  "Limiting and Pagination",
+                                     "required":  false,
+                                     "in":  "query",
+                                     "type":  "string"
+                                 },
+                       "body.programmes":  {
+                                               "name":  "programmes",
+                                               "description":  "programmes",
+                                               "required":  false,
+                                               "in":  "body",
+                                               "schema":  {
+                                                              "$ref":  "#/definitions/programmes"
+                                                          }
+                                           },
+                       "rowFilter.programmes.id":  {
+                                                       "name":  "id",
+                                                       "required":  false,
+                                                       "in":  "query",
+                                                       "type":  "string"
+                                                   },
+                       "rowFilter.programmes.name":  {
+                                                         "name":  "name",
+                                                         "required":  false,
+                                                         "in":  "query",
+                                                         "type":  "string"
+                                                     },
+                       "rowFilter.programmes.category":  {
+                                                             "name":  "category",
+                                                             "required":  false,
+                                                             "in":  "query",
+                                                             "type":  "string"
+                                                         },
+                       "rowFilter.programmes.isFinished":  {
+                                                               "name":  "isFinished",
+                                                               "required":  false,
+                                                               "in":  "query",
+                                                               "type":  "string"
+                                                           },
+                       "rowFilter.programmes.resultId":  {
+                                                             "name":  "resultId",
+                                                             "required":  false,
+                                                             "in":  "query",
+                                                             "type":  "string"
+                                                         },
+                       "rowFilter.programmes.createdAt":  {
+                                                              "name":  "createdAt",
+                                                              "required":  false,
+                                                              "in":  "query",
+                                                              "type":  "string"
+                                                          },
+                       "body.teams":  {
+                                          "name":  "teams",
+                                          "description":  "teams",
+                                          "required":  false,
+                                          "in":  "body",
+                                          "schema":  {
+                                                         "$ref":  "#/definitions/teams"
+                                                     }
+                                      },
+                       "rowFilter.teams.id":  {
+                                                  "name":  "id",
+                                                  "required":  false,
+                                                  "in":  "query",
+                                                  "type":  "string"
+                                              },
+                       "rowFilter.teams.name":  {
+                                                    "name":  "name",
+                                                    "required":  false,
+                                                    "in":  "query",
+                                                    "type":  "string"
+                                                },
+                       "rowFilter.teams.color":  {
+                                                     "name":  "color",
+                                                     "required":  false,
+                                                     "in":  "query",
+                                                     "type":  "string"
+                                                 },
+                       "rowFilter.teams.firstPlaceCount":  {
+                                                               "name":  "firstPlaceCount",
+                                                               "required":  false,
+                                                               "in":  "query",
+                                                               "type":  "string"
+                                                           },
+                       "rowFilter.teams.secondPlaceCount":  {
+                                                                "name":  "secondPlaceCount",
+                                                                "required":  false,
+                                                                "in":  "query",
+                                                                "type":  "string"
+                                                            },
+                       "rowFilter.teams.thirdPlaceCount":  {
+                                                               "name":  "thirdPlaceCount",
+                                                               "required":  false,
+                                                               "in":  "query",
+                                                               "type":  "string"
+                                                           },
+                       "rowFilter.teams.totalPoints":  {
+                                                           "name":  "totalPoints",
+                                                           "required":  false,
+                                                           "in":  "query",
+                                                           "type":  "string"
+                                                       },
+                       "body.results":  {
+                                            "name":  "results",
+                                            "description":  "results",
+                                            "required":  false,
+                                            "in":  "body",
+                                            "schema":  {
+                                                           "$ref":  "#/definitions/results"
+                                                       }
+                                        },
+                       "rowFilter.results.id":  {
+                                                    "name":  "id",
+                                                    "required":  false,
+                                                    "in":  "query",
+                                                    "type":  "string"
+                                                },
+                       "rowFilter.results.name":  {
+                                                      "name":  "name",
+                                                      "required":  false,
+                                                      "in":  "query",
+                                                      "type":  "string"
+                                                  },
+                       "rowFilter.results.programmeId":  {
+                                                             "name":  "programmeId",
+                                                             "required":  false,
+                                                             "in":  "query",
+                                                             "type":  "string"
+                                                         },
+                       "rowFilter.results.first":  {
+                                                       "name":  "first",
+                                                       "required":  false,
+                                                       "in":  "query",
+                                                       "type":  "string"
+                                                   },
+                       "rowFilter.results.second":  {
+                                                        "name":  "second",
+                                                        "required":  false,
+                                                        "in":  "query",
+                                                        "type":  "string"
+                                                    },
+                       "rowFilter.results.third":  {
+                                                       "name":  "third",
+                                                       "required":  false,
+                                                       "in":  "query",
+                                                       "type":  "string"
+                                                   },
+                       "rowFilter.results.updatedAt":  {
+                                                           "name":  "updatedAt",
+                                                           "required":  false,
+                                                           "in":  "query",
+                                                           "type":  "string"
+                                                       },
+                       "body.students":  {
+                                             "name":  "students",
+                                             "description":  "students",
+                                             "required":  false,
+                                             "in":  "body",
+                                             "schema":  {
+                                                            "$ref":  "#/definitions/students"
+                                                        }
+                                         },
+                       "rowFilter.students.id":  {
+                                                     "name":  "id",
+                                                     "required":  false,
+                                                     "in":  "query",
+                                                     "type":  "string"
+                                                 },
+                       "rowFilter.students.name":  {
+                                                       "name":  "name",
+                                                       "required":  false,
+                                                       "in":  "query",
+                                                       "type":  "string"
+                                                   },
+                       "rowFilter.students.class":  {
+                                                        "name":  "class",
+                                                        "required":  false,
+                                                        "in":  "query",
+                                                        "type":  "string"
+                                                    },
+                       "rowFilter.students.team":  {
+                                                       "name":  "team",
+                                                       "required":  false,
+                                                       "in":  "query",
+                                                       "type":  "string"
+                                                   },
+                       "rowFilter.students.photoURL":  {
+                                                           "name":  "photoURL",
+                                                           "required":  false,
+                                                           "in":  "query",
+                                                           "type":  "string"
+                                                       },
+                       "rowFilter.students.programmeIds":  {
+                                                               "name":  "programmeIds",
+                                                               "required":  false,
+                                                               "in":  "query",
+                                                               "type":  "string"
+                                                           },
+                       "rowFilter.students.createdAt":  {
+                                                            "name":  "createdAt",
+                                                            "required":  false,
+                                                            "in":  "query",
+                                                            "type":  "string"
+                                                        },
+                       "body.spotlight":  {
+                                              "name":  "spotlight",
+                                              "description":  "spotlight",
+                                              "required":  false,
+                                              "in":  "body",
+                                              "schema":  {
+                                                             "$ref":  "#/definitions/spotlight"
+                                                         }
+                                          },
+                       "rowFilter.spotlight.id":  {
+                                                      "name":  "id",
+                                                      "required":  false,
+                                                      "in":  "query",
+                                                      "type":  "string"
+                                                  },
+                       "rowFilter.spotlight.imageURL":  {
+                                                            "name":  "imageURL",
+                                                            "required":  false,
+                                                            "in":  "query",
+                                                            "type":  "string"
+                                                        },
+                       "rowFilter.spotlight.caption":  {
+                                                           "name":  "caption",
+                                                           "required":  false,
+                                                           "in":  "query",
+                                                           "type":  "string"
+                                                       },
+                       "rowFilter.spotlight.order":  {
+                                                         "name":  "order",
+                                                         "required":  false,
+                                                         "in":  "query",
+                                                         "type":  "string"
+                                                     },
+                       "rowFilter.spotlight.uploadedAt":  {
+                                                              "name":  "uploadedAt",
+                                                              "required":  false,
+                                                              "in":  "query",
+                                                              "type":  "string"
+                                                          },
+                       "body.admin":  {
+                                          "name":  "admin",
+                                          "description":  "admin",
+                                          "required":  false,
+                                          "in":  "body",
+                                          "schema":  {
+                                                         "$ref":  "#/definitions/admin"
+                                                     }
+                                      },
+                       "rowFilter.admin.id":  {
+                                                  "name":  "id",
+                                                  "required":  false,
+                                                  "in":  "query",
+                                                  "type":  "string"
+                                              },
+                       "rowFilter.admin.phone":  {
+                                                     "name":  "phone",
+                                                     "required":  false,
+                                                     "in":  "query",
+                                                     "type":  "string"
+                                                 },
+                       "rowFilter.admin.passwordHash":  {
+                                                            "name":  "passwordHash",
+                                                            "required":  false,
+                                                            "in":  "query",
+                                                            "type":  "string"
+                                                        },
+                       "rowFilter.admin.lastLogin":  {
+                                                         "name":  "lastLogin",
+                                                         "required":  false,
+                                                         "in":  "query",
+                                                         "type":  "string"
+                                                     }
+                   },
+    "externalDocs":  {
+                         "description":  "PostgREST Documentation",
+                         "url":  "https://postgrest.org/en/v14/references/api.html"
+                     }
+}

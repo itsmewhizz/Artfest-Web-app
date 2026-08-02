@@ -1,0 +1,371 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,500&family=Poppins:wght@400;600;700&family=Inter:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: rgb(var(--main-background));
+  color: rgb(var(--main-text));
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+
+:root {
+  --main-background: 40 114 161; /* Ocean Blue #2872A1 */
+  --primary: 31 90 128; /* Deep Navy #1F5A80 */
+  --secondary: 92 147 170; /* Slate Teal #5C93AA */
+  --accent: 232 132 92; /* Sunset Coral #E8845C */
+  --main-text: 234 244 250; /* #EAF4FA light text for dark bg */
+  --muted-text: 169 199 214; /* #A9C7D6 muted light */
+  --success: 76 187 130; /* Sea Green #4CBB82 */
+  --card: 22 64 92; /* Deep Navy card #16405C */
+  --ocean-tint: 132 186 225; /* Ocean Blue light tint #84BAE1 */
+}
+
+@media (min-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .max-w-container {
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.hp-bar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+.hp-bar-shadow-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
+}
+.hp-bar-fill {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.2);
+  z-index: 1;
+  display: flex;
+  flex-direction: column-reverse;
+}
+.hp-bar-highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 35%);
+  pointer-events: none;
+  z-index: 2;
+}
+.hp-wrapper-gloss {
+  position: relative;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(31, 90, 128, 0.55) 0%, rgba(22, 64, 92, 0.68) 100%);
+  box-shadow: 0 8px 32px rgba(2, 12, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.hp-wrapper-gloss::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 23px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 42, 61, 0.35);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #5FB3DF;
+  border-radius: 3px;
+}
+
+::selection {
+  background: rgba(214, 240, 255, 0.75);
+  color: #0F2A3D;
+}
+
+/* ── Background animations ── */
+
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(214, 240, 255, 0.5) 0%, rgba(214, 240, 255, 0.12) 60%, transparent 100%);
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.1; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.aurora-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.7;
+}
+
+.aurora-a {
+  width: 60vw;
+  height: 60vw;
+  max-width: 850px;
+  max-height: 850px;
+  top: -15%;
+  left: -12%;
+  background: radial-gradient(circle, rgba(150, 210, 245, 0.28) 0%, transparent 65%);
+  animation: drift-a 24s ease-in-out infinite;
+}
+
+.aurora-b {
+  width: 50vw;
+  height: 50vw;
+  max-width: 700px;
+  max-height: 700px;
+  bottom: -15%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(210, 230, 245, 0.35) 0%, transparent 65%);
+  animation: drift-b 28s ease-in-out infinite;
+}
+
+.aurora-c {
+  width: 45vw;
+  height: 45vw;
+  max-width: 620px;
+  max-height: 620px;
+  top: 30%;
+  left: 40%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 65%);
+  animation: drift-c 20s ease-in-out infinite;
+}
+
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6vw, 5vh) scale(1.2); }
+}
+
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5vw, -4vh) scale(1.15); }
+}
+
+@keyframes drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3vw, -6vh) scale(1.25); }
+}
+
+.sparkle-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  bottom: -8px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, #EAF6FD 0%, #7FC3EA 55%, transparent 100%);
+  box-shadow: 0 0 6px rgba(160, 215, 245, 0.6), 0 0 14px rgba(160, 215, 245, 0.35);
+  animation: rise linear infinite;
+}
+
+@keyframes rise {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  8% { opacity: 0.9; }
+  80% { opacity: 0.5; }
+  100% { transform: translateY(-105vh) translateX(2vw); opacity: 0; }
+}
+
+.bg-animated {
+  background-size: 200% 200%;
+  animation: gradShift 14s ease-in-out infinite;
+}
+
+@keyframes gradShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star,
+  .aurora-blob,
+  .sparkle,
+  .bg-animated,
+  .bar-grow {
+    animation: none !important;
+  }
+}
+
+.bar-grow {
+  transform-origin: bottom;
+  animation: barGrow 2250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--bar-delay, 0ms);
+}
+
+@keyframes barGrow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.ember-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ember {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, #EAF6FD 0%, #8FC8E6 45%, rgba(140, 205, 240, 0.8) 70%, transparent 100%);
+  box-shadow: 0 0 5px rgba(140, 205, 240, 0.5);
+  animation: emberRise linear infinite;
+}
+
+@keyframes emberRise {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(-320px) translateX(6px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ember {
+    animation: none !important;
+  }
+}
+
+/* ── Lots flip cards ── */
+.lot-card {
+  position: relative;
+  perspective: 900px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lot-card-active {
+  cursor: pointer;
+}
+
+.lot-card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.lot-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.lot-card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.lot-card-back {
+  background: linear-gradient(160deg, #2E74A3 0%, #1F5A80 55%, #123449 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 22px rgba(2, 12, 20, 0.45);
+  overflow: hidden;
+}
+
+.lot-card-back::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 0.7rem;
+}
+
+.lot-card-back::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -40%;
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 60%);
+  pointer-events: none;
+}
+
+.lot-card-icon {
+  position: relative;
+  color: #FFFFFF;
+}
+
+.lot-card-label {
+  position: relative;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.lot-card-front {
+  transform: rotateY(180deg);
+  background: linear-gradient(145deg, #E8845C 0%, #E0754C 55%, #C85F38 100%);
+  box-shadow: 0 8px 22px rgba(232, 132, 92, 0.35);
+}
+
+.lot-card-number {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.75rem, 7vw, 3rem);
+  font-weight: 700;
+  color: #0F2A3D;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lot-card-inner {
+    transition: none;
+  }
+}

@@ -1,0 +1,899 @@
+
+
+
+🎭
+CAMPUS ART FEST
+Management System
+Complete Project Planning Documents · v2 (Merged) · All 6 Docs
+
+
+
+Project
+
+Campus Art Fest App
+
+Stack
+
+React + Supabase
+
+Developer
+
+Farhan
+
+Version
+
+v2.0 · Merged Spec · July 2026
+
+Source
+
+Merged from v1 (Doc Source 1) + Feature Update Notes (Doc Source 2)
+
+
+
+Documents Inside
+
+01 PRD · 02 TRD · 03 App Flow · 04 UI/UX · 05 Backend Schema · 06 Implementation Roadmap
+
+
+
+⚠️ How this version works
+This document merges your original v1 planning docs with your v2 feature notes. Anywhere v2 changes or adds to v1 behavior, it's marked [NEW] or [CHANGED]. Two decisions were inferred from your notes and should be confirmed: (1) result points are now admin-entered per programme instead of a fixed 5/3/1 formula, and (2) team totals are now auto-calculated from results instead of manually edited by admin.
+
+
+
+📋  Document 01
+Product Requirements Document (PRD)
+
+The north star of the entire project. Defines what we're building, who it's for, and what success looks like.
+App Overview
+
+
+App Name
+
+Campus Art Fest Management System
+
+Tagline
+
+Your College Arts Festival — Tracked, Celebrated, Remembered
+
+Purpose
+
+A web app to manage programmes, student results, team scores, and winner posters for a campus arts festival, with fully real-time sync between admin edits and everything students/audience see
+
+Primary Users
+
+Students, Teachers, Audience, Fest Admin
+
+Platform
+
+Web (mobile-responsive), accessible on any device
+The Problem We're Solving
+Results and winners are announced verbally or on paper — easy to lose
+No central place for students to check their programme results
+Team scores are manually tracked — no live visual display
+Downloading winner certificates/posters is not possible currently
+Admin has no easy panel to update data without coding knowledge
+When a result changes, nothing else updates automatically — old totals and pages go stale  [NEW]
+Target Users
+
+
+Students / Candidates
+
+Check their participated programmes, see results, download their result poster
+
+Audience / Visitors
+
+Browse programmes, see team scores and competition winners, browse and download spotlight photos
+
+Admin / Coordinator
+
+Add programmes, update results, manage spotlight photos — team points are calculated automatically
+
+Teachers / Jury
+
+View results by category, see programme completion status
+Core Features — Must Have
+🏠 Section 1: Home / Spotlight
+Auto-scrolling or fading hero banner of campus art fest photos
+Only images an admin has "toggled on" appear in the hero banner — not every uploaded photo  [NEW]
+Below the banner: a full scrollable gallery of ALL uploaded spotlight images — each can be selected and downloaded by any visitor  [NEW]
+Team score bars for all 3 teams, with the current point total shown directly on/above each bar
+Score bars animate (count up / fill in) every time the page loads or is refreshed  [NEW]
+Short "About the Fest" section
+4 quick-nav tiles: Teams, Students, Programmes, About
+🏆 Section 2: Teams & Scores
+3 teams displayed with curved/arc score bar per team, team name inside each bar
+Team total points are calculated automatically as the sum of all points that team's students have won across all results — admin never edits a team total directly  [CHANGED]
+Click any team → opens 3 sub-tabs: 1st Place Wins, 2nd Place Wins, 3rd Place Wins  [CHANGED]
+Each sub-tab lists every programme where that team placed at that position, with the points earned  [NEW]
+Tap a listed programme → see full result detail for that programme
+Download winner poster in 3 design themes
+👤 Section 3: Students / Candidates
+Name search bar with filter by Team Name and Class Category
+Click any student → Student Profile Card opens
+Profile card shows: photo, name, team, class/category
+Circular progress bar showing e.g. 4/7 programmes participated, animated on load/refresh  [CHANGED]
+Total points the student has personally earned, shown alongside the progress ring  [NEW]
+Two sub-tabs: Completed and Pending  [CHANGED]
+Completed tab → list of finished programmes; tap one → see result + Download Poster button
+Pending tab → list of the student's unfinished/upcoming programmes  [NEW]
+Download result poster in 3 design themes
+📋 Section 4: Programmes
+Search bar with filter by Class Category (HS, Minor, Premier, Sub-junior, Junior)
+All programmes listed with Finished ✅ / Pending ❎ badge
+Click any programme → view result: 1st / 2nd / 3rd place — student name, team, and points awarded
+Points per placement are whatever the admin entered for that specific programme (not a fixed formula)  [CHANGED]
+Download result poster in 3 design themes
+🖼️ Result / Winner Posters
+Available in 3 themes/designs (Classic, Vibrant, Minimal)
+Poster contains: Programme name, Category, 1st/2nd/3rd place student names + photos
+Downloadable as image (PNG/JPG)
+🔐 Section 5: Admin Panel
+Secured login (Supabase Auth)
+Programmes: add new programme with name + category; toggle each item Finished ✅ / Pending ❎ from the list  [CHANGED]
+Results: select a programme → category auto-fills from the programme → choose 1st/2nd/3rd candidates and enter the points each earns → save  [CHANGED]
+Candidate dropdown auto-loads the student's photo
+List of all announced results, with an Edit button to reopen and change any result  [NEW]
+Spotlight: upload image + optional caption → appears in the full gallery automatically; a toggle switch controls whether it also shows in the home hero banner; delete option per image  [CHANGED]
+Team points are read-only in the admin panel — they update automatically from Results  [CHANGED]
+All changes reflect live (or on next refresh) across Home, Teams, Programmes, and Student profiles  [NEW]
+Real-Time Sync — Cross-Section Consistency
+Worked example, straight from the v2 notes: editing one result must correctly cascade everywhere it's shown.
+If an admin sets the result for "Elocution English (HS category)" as: 1st — Farhan Musthafa, Team A, 7 points · 2nd — Aslam Musthafa, Team B, 4 points · 3rd — Ali Abbas, Team C, 2 points — then without any other admin action:
+Home page: Team A's score bar rises to reflect +7 points, and the new total is shown on the bar (Team B +4, Team C +2)
+Teams page: Team A's "1st Place Wins" sub-tab now lists Elocution English (7 pts). Team B's "2nd Place Wins" sub-tab lists it (4 pts). Team C's "3rd Place Wins" sub-tab lists it (2 pts)
+Programmes page: Elocution English now shows Finished ✅ with the full 1st/2nd/3rd breakdown
+Students page: Farhan Musthafa's profile shows 1st in Elocution English (7 pts) under Completed; same for Aslam Musthafa (2nd, 4 pts) and Ali Abbas (3rd, 2 pts)
+Nice to Have (v3)
+Push notifications for result announcements
+QR code for each student's profile
+Dark/light mode toggle
+Out of Scope (v2)
+Online registration for students (students added by admin only)
+Payment or ticketing system
+Live video streaming
+Multi-fest / multi-year support
+Success Metrics
+
+
+All students findable
+
+100% of registered students appear in search
+
+All programmes tracked
+
+Every conducted programme has a result entry
+
+Poster download works
+
+All 3 themes downloadable on mobile + desktop
+
+Admin ease
+
+Admin can add a result in under 2 minutes, with zero manual team-total editing
+
+Sync correctness
+
+A single result edit is reflected correctly on Home, Teams (+ sub-tabs), Programmes, and both affected Student profiles
+
+Zero data loss
+
+Supabase keeps all data safe and synced
+
+
+
+⚙️  Document 02
+Technical Requirements Document (TRD)
+
+The technical blueprint. Locks in every stack decision so AI and developers build consistently.
+Tech Stack
+
+
+Frontend Framework
+
+React 18 (Vite) with JavaScript
+
+Styling
+
+Tailwind CSS + custom CSS for animations
+
+Routing
+
+React Router v6 (multi-page navigation, incl. nested tab routes for Teams and Student sub-pages)
+
+State Management
+
+React useState / useContext (no Redux needed)
+
+Database
+
+Supabase (PostgreSQL, real-time)
+
+Real-time sync
+
+Supabase Realtime channels — subscribe to results & teams tables so Home/Teams/Programmes/Students update live  [NEW]
+
+File Storage
+
+Supabase Storage (student photos, spotlight images)
+
+Authentication
+
+Supabase Auth — email/password for admin only
+
+Hosting
+
+Vercel or Netlify (Supabase does not host frontends)
+
+Poster Download
+
+html2canvas + file-saver (convert HTML poster to PNG)
+
+Animated counters/bars
+
+react-countup (or CSS transition + requestAnimationFrame) for score bars & progress rings  [NEW]
+
+Icons
+
+Lucide React
+
+Build Tool
+
+Vite (fast dev server, optimized build)
+Supabase Tables (Database)
+
+
+students
+
+All student/candidate records
+
+programmes
+
+All fest programmes/events
+
+results
+
+Result entries per programme — now stores per-placement points  [CHANGED]
+
+teams
+
+Team names, colors — totalPoints is a derived/computed value, not stored input  [CHANGED]
+
+spotlight
+
+Home banner + gallery image URLs, with a featured/toggle flag  [CHANGED]
+
+admin
+
+Admin credentials (managed by Supabase Auth)
+Third-Party Libraries
+
+
+html2canvas
+
+Renders the poster HTML div as a canvas image for download
+
+file-saver
+
+Triggers browser file download (saveAs function)
+
+react-circular-progressbar
+
+Circular progress bar for student programme count
+
+react-countup
+
+Animates score bars and percentage counters on load/refresh  [NEW]
+
+react-router-dom
+
+Page routing between sections, including tab-style sub-routes
+
+lucide-react
+
+Clean icon set (search, download, check, x icons)
+
+@supabase/supabase-js
+
+Full Supabase SDK (Database, Storage, Auth, Realtime)
+Environment Variables (.env)
+Store these in a .env file — never commit to GitHub:
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+Key Technical Constraints
+Must be fully mobile-responsive — students will use phones
+Poster download must work on mobile Chrome/Safari
+Team totals and student progress must never be hand-edited in the database — always derived from results, so they can't drift out of sync  [NEW]
+Admin panel route must be protected — redirect if not logged in
+Student photos stored in Supabase Storage — not embedded as base64 in the database
+Spotlight images: gallery shows all uploads; hero banner shows only toggled ones — one boolean field drives both views  [NEW]
+Free Supabase tier limits — max 1GB database, 2GB storage, 50MB file size — sufficient for college fest
+
+
+
+🗺️  Document 03
+App Flow — Navigation & User Journey
+
+Every screen, every click, every path — mapped before a single line of code.
+All Pages / Screens
+
+
+/ (Home)
+
+Spotlight hero + gallery + animated team bars + quick nav
+
+/teams
+
+Team totals with arc bars
+
+/teams/:id
+
+Team detail — 1st / 2nd / 3rd Place Wins sub-tabs  [NEW]
+
+/students
+
+Search & filter students, view profile cards
+
+/students/:id
+
+Profile card — Completed / Pending sub-tabs  [CHANGED]
+
+/programmes
+
+Search & filter all programmes
+
+/programmes/:id
+
+Individual programme result page
+
+/admin/login
+
+Admin login screen
+
+/admin
+
+Admin dashboard — protected route
+
+/admin/programmes
+
+Add/edit programmes, toggle finished/pending
+
+/admin/results
+
+Add/edit programme results, list of announced results with Edit  [CHANGED]
+
+/admin/spotlight
+
+Upload/manage photos; per-image hero toggle + delete  [CHANGED]
+
+/admin/students
+
+Add/edit student/candidate records
+Navigation Structure
+Bottom navigation bar (mobile-first) with 4 main tabs: 🏠 Home · 🏆 Teams · 👤 Students · 📋 Programmes. Admin panel accessible via a hidden/small footer link or direct URL /admin/login.
+User Journey 1 — Student checks their result
+
+
+Step 1
+
+Student opens app → sees Home hero + spotlight gallery
+
+Step 2
+
+Taps 'Students' tab in bottom nav
+
+Step 3
+
+Types their name in search bar, optionally filters by Team or Class
+
+Step 4
+
+Finds their name → taps on it → profile card opens with animated 4/7 ring + total points
+
+Step 5
+
+Taps 'Completed' tab → sees list of finished programmes
+
+Step 6
+
+Taps a programme → sees result (1st/2nd/3rd) → taps Download Poster → picks a theme → downloads
+User Journey 2 — Audience checks team scores
+
+
+Step 1
+
+Opens app → taps 'Teams' tab
+
+Step 2
+
+Sees 3 arc score bars animating up to current totals
+
+Step 3
+
+Taps a team → lands on 1st Place Wins sub-tab by default  [CHANGED]
+
+Step 4
+
+Swipes/taps between 1st / 2nd / 3rd sub-tabs to see which programmes were won at each position
+
+Step 5
+
+Taps a listed programme → sees full winner detail with photos
+
+Step 6
+
+Taps Download → picks a poster theme → saves image
+User Journey 3 — Admin adds a result
+
+
+Step 1
+
+Admin logs in at /admin/login
+
+Step 2
+
+Admin dashboard appears → taps 'Results'
+
+Step 3
+
+Selects a programme → category auto-fills
+
+Step 4
+
+Selects 1st/2nd/3rd candidates from dropdowns (photos auto-load) and types the points for each placement  [CHANGED]
+
+Step 5
+
+Saves → result appears in the announced-results list
+
+Step 6
+
+Home, Teams (+ sub-tabs), Programmes, and both students' profiles update automatically — no manual team-total edit needed  [NEW]
+User Journey 4 — Admin manages spotlight photos
+
+
+Step 1
+
+Admin opens /admin/spotlight
+
+Step 2
+
+Chooses a file, adds an optional caption, uploads
+
+Step 3
+
+Image appears in the uploaded-images list, and instantly in the public gallery
+
+Step 4
+
+Admin flips the toggle if this image should also appear in the home hero banner
+
+Step 5
+
+Only toggled images fade in/out in the hero; all uploaded images remain downloadable in the gallery below
+Edge Cases & States
+
+
+No results found in search
+
+Show 'No students found' empty state with illustration
+
+Programme not conducted yet
+
+Show ❎ Pending badge, result section hidden
+
+Student in 0 programmes
+
+Circular bar shows 0/0, message: 'No programmes assigned'
+
+Student has 0 pending programmes
+
+Pending tab shows 'All caught up!' state  [NEW]
+
+Poster download fails
+
+Show error toast: 'Download failed, try again'
+
+Admin wrong password
+
+Show: 'Invalid credentials' — no account lockout in v2
+
+Image not uploaded for student
+
+Show placeholder avatar/silhouette icon
+
+No spotlight images toggled on
+
+Hero banner falls back to a static branded background  [NEW]
+
+
+
+🎨  Document 04
+UI/UX Design Brief
+
+The visual language of the app — so it looks like a real, polished product, not a student project.
+Overall Aesthetic
+Festival-grade dark purple UI. Rich, celebratory, and modern — like a music festival app meets a college management portal. Bold enough to feel exciting, clean enough to be usable. Inspiration: Behance portfolio apps, BYJUS for structure, Spotify for card aesthetics.
+Color Palette
+
+
+Primary Purple
+
+#7C3AED — main brand color, buttons, highlights
+
+Deep Navy
+
+#1E1B4B — page backgrounds, headers
+
+Gold Accent
+
+#F59E0B — winner badges, 1st place highlights, CTAs
+
+Lavender Light
+
+#EDE9FE — card backgrounds, hover states
+
+Purple Mid
+
+#A78BFA — progress bars, chart fills, secondary text
+
+White
+
+#FFFFFF — card surfaces, text on dark bg
+
+Gray Text
+
+#6B7280 — secondary labels, timestamps
+
+Light Gray
+
+#F3F4F6 — input backgrounds, dividers
+Typography
+
+
+Display / Headings
+
+Poppins Bold — section titles, team names, programme titles
+
+Body / UI Text
+
+Inter Regular/Medium — descriptions, labels, search results
+
+Data / Numbers
+
+Inter Mono or Roboto Mono — scores, counts, programme IDs
+
+Base font size
+
+16px body, 24–36px headings, 12px captions
+
+Line height
+
+1.5 for body, 1.2 for headings
+Component Style
+
+
+Border radius
+
+16px for cards, 8px for buttons, 24px for chips/badges
+
+Shadows
+
+Soft shadow: 0 4px 24px rgba(124,58,237,0.10) on cards
+
+Buttons
+
+Filled purple for primary, outlined purple for secondary
+
+Input fields
+
+Light gray background, purple focus border, rounded
+
+Icons
+
+Lucide React — consistent 20px stroke icons throughout
+
+Progress bars
+
+Circular (student card) + horizontal arc (team scores) — both animate on mount/refresh  [CHANGED]
+
+Badges
+
+Pill-shaped: green for Finished, gray for Pending
+
+Tabs
+
+Underline-style sub-tabs for Team 1st/2nd/3rd and Student Completed/Pending  [NEW]
+Screen-by-Screen Design Notes
+Home — Spotlight
+Full-width auto-fading hero banner using only toggled spotlight photos  [CHANGED]
+Dot indicators at bottom to show current slide
+Overlay gradient so text (if any) is readable
+Below the hero: a horizontally scrollable gallery strip of every uploaded spotlight photo, each with a small download icon  [NEW]
+Team score bars sit below the gallery, each showing the point total as large text on/above the bar and animating on load  [CHANGED]
+4 icon quick-nav tiles: Teams, Students, Programmes, About
+Teams Screen
+3 large cards — one per team — with team color coding, arc progress chart showing score proportion
+Clicking a card navigates to /teams/:id, opening a sub-tab view: 1st / 2nd / 3rd Place Wins  [CHANGED]
+Each sub-tab is a list of programme rows (programme name · points) with a trophy icon matching the position  [NEW]
+Gold trophy icon for 1st, silver for 2nd, bronze for 3rd
+Student Profile Card
+Circular student photo at top, name + class + team below
+Large circular progress ring: e.g. '4 / 7' in center text, with total points earned shown just below the ring  [CHANGED]
+Two sub-tabs directly under the ring: Completed and Pending  [CHANGED]
+Completed tab → scrollable list of finished programmes; tap → result + Download Poster button
+Pending tab → scrollable list of unfinished/upcoming programmes, no result section  [NEW]
+Result Poster (3 Themes)
+Theme 1 — Classic: white background, gold border, serif font feel
+Theme 2 — Vibrant: gradient purple-to-gold, bold and celebratory
+Theme 3 — Minimal: dark background, clean white text, modern
+All 3 show: Programme name, Category, 1st/2nd/3rd with photos and points
+Admin Panel
+Same purple brand, but denser layout — data-focused
+Sidebar navigation on desktop, top tabs on mobile
+Tables with edit/save inline — no modal overload
+Green/gray status badges for Finished / Pending
+Spotlight manager shows each image with a delete icon and a hero-toggle switch side by side  [NEW]
+Results list is a table with programme, placements, and an Edit pencil icon per row  [NEW]
+Mobile First
+Designed for 390px wide screens first (iPhone 14 standard)
+Bottom nav bar replaces sidebar on mobile
+All cards full-width on mobile, grid on tablet/desktop
+Poster download tested on mobile Chrome and Safari
+
+
+
+🗄️  Document 05
+Backend Schema — Supabase Data Model
+
+Every Supabase table, every column, every relationship — defined before writing a single database call.
+Table: students
+
+
+id
+
+uuid — auto-generated Supabase row ID
+
+name
+
+string — full name e.g. 'Arjun K'
+
+class_category
+
+string — one of HS, Minor, Premier, Sub-junior, Junior
+
+team
+
+string — ref to teams table: 'team_A', 'team_B', 'team_C'
+
+photoURL
+
+string — Supabase Storage public URL
+
+programmeIds
+
+array<uuid> — programme IDs the student is enrolled in
+
+totalPoints
+
+computed — SUM of points from results where this student placed  [NEW]
+
+createdAt
+
+timestamp
+Table: programmes
+
+
+id
+
+uuid — auto-generated Supabase row ID
+
+name
+
+string — e.g. 'Elocution English'
+
+category
+
+string — HS, Minor, Premier, Sub-junior, Junior
+
+isFinished
+
+boolean — true = Finished ✅, false = Pending ❎
+
+resultId
+
+uuid | null — ref to results row (null if not finished)
+
+createdAt
+
+timestamp
+Table: results
+One row per programme result. Linked from programmes.resultId.
+
+
+id
+
+uuid — auto-generated Supabase row ID
+
+programmeId
+
+uuid — ref to programmes
+
+first
+
+jsonb — { studentId, points }  [CHANGED]
+
+second
+
+jsonb — { studentId, points }  [CHANGED]
+
+third
+
+jsonb — { studentId, points }  [CHANGED]
+
+updatedAt
+
+timestamp — last time admin updated result
+v1 used a single fixed formula (1st×5, 2nd×3, 3rd×1). v2 stores points per placement directly, set by the admin per programme — confirm this is the model you want before building.
+Table: teams
+Exactly 3 rows — one per team. Point totals are never written directly.
+
+
+id
+
+string — e.g. 'team_A', 'team_B', 'team_C'
+
+name
+
+string — team display name e.g. 'Red Eagles'
+
+color
+
+string — hex color for UI e.g. '#EF4444'
+
+firstPlaceCount
+
+computed — count of results where a team member placed 1st
+
+secondPlaceCount
+
+computed — count of results where a team member placed 2nd
+
+thirdPlaceCount
+
+computed — count of results where a team member placed 3rd
+
+totalPoints
+
+computed — SUM of all points earned by this team's students across results  [CHANGED]
+Recommended: implement as a Postgres view (team_totals) or a database trigger on results INSERT/UPDATE, so totals can never drift out of sync with individual results.
+Table: spotlight
+
+
+id
+
+uuid — auto-generated Supabase row ID
+
+imageURL
+
+string — Supabase Storage public URL
+
+caption
+
+string | null — optional caption text
+
+isFeatured
+
+boolean — true = shown in home hero banner; false = gallery-only  [NEW]
+
+order
+
+number — display order in slider/gallery
+
+uploadedAt
+
+timestamp
+Table: admin
+Managed by Supabase Auth. No separate custom table required — use auth.users with an admin role claim, or a minimal profile row.
+
+
+email
+
+string — admin login email
+
+role
+
+string — 'admin'
+
+lastLogin
+
+timestamp
+Supabase Row Level Security (Summary)
+students, programmes, results, teams, spotlight — PUBLIC READ, admin write only
+team totals / student totals — read-only computed views, no direct write policy needed
+Supabase Storage — public read for photos, admin write only
+Admin authentication via Supabase Auth (email/password)
+Data Relationships Diagram
+students.programmeIds → programmes.id
+programmes.resultId → results.id
+results.first/second/third.studentId → students.id
+students.team → teams.id
+teams.totalPoints ← SUM(results.*.points) where results.*.studentId ∈ students of that team
+
+
+
+🚀  Document 06
+Implementation Roadmap
+
+Step-by-step build order. Follow this sequence and you'll never be stuck wondering 'what next?'
+Phase 1 — Project Setup (Day 1)
+Create React app with Vite: npm create vite@latest artfest --template react
+Install dependencies: Tailwind CSS, React Router, @supabase/supabase-js, Lucide React, react-circular-progressbar, react-countup
+Create Supabase project → enable Database, Storage, Authentication, Realtime
+Add .env file with Supabase URL and anon key
+Set up React Router with routes incl. /teams/:id and /students/:id sub-tabs
+Create folder structure: /components, /pages, /supabase, /hooks, /utils
+Phase 2 — Supabase Connection & Derived Data (Day 1–2)
+Create supabase/client.js — initialize Supabase client
+Create the results table with jsonb first/second/third {studentId, points} columns
+Build a Postgres view or trigger for team_totals and student_totals so they're always derived, never manually set
+Create supabase/queries.js — helper functions (getStudents, getProgrammes, getTeamTotals, etc.)
+Seed Supabase tables with test data: 2–3 students, 3 programmes, 3 teams
+Test all read operations, including the computed totals, work before building UI
+Phase 3 — UI Shell & Navigation (Day 2)
+Build App layout with bottom nav bar (Home, Teams, Students, Programmes)
+Create placeholder pages for all 4 main sections
+Set up Tailwind color config using the design palette from Doc 04
+Build reusable components: Card, Badge (Finished/Pending), SearchBar, LoadingSpinner, Tabs
+Phase 4 — Home & Spotlight (Day 3)
+Build hero image slider with auto-fade, filtered to spotlight rows where isFeatured = true
+Build the full downloadable gallery strip below the hero, showing every spotlight row
+Add dot indicators, pause on hover
+Build animated team score bars using react-countup, driven by team_totals
+Add 4 quick-nav icon tiles below
+Phase 5 — Teams Section (Day 3–4)
+Build 3 team cards with SVG arc/semicircle score bars fed by team_totals
+Build /teams/:id with 1st / 2nd / 3rd Place Wins sub-tabs
+Each sub-tab queries results where a team member holds that position, joined to programme name
+Build winner poster component in 3 themes
+Integrate html2canvas + file-saver for poster download
+Phase 6 — Students Section (Day 4–5)
+Build student search bar with real-time filtering
+Add Team filter dropdown + Class Category filter
+Build student list cards with photo + name + team badge
+Build Student Profile page (/students/:id) with animated circular progress + total points
+Build Completed / Pending sub-tabs, each querying the student's programmeIds joined against results
+Completed programme row → result + Download Poster button
+Phase 7 — Programmes Section (Day 5)
+Build programmes search + category filter
+List all programmes with Finished/Pending status
+Click programme → Programme Result page showing 1st/2nd/3rd with photos + points
+Download Poster (3 themes)
+Phase 8 — Admin Panel (Day 6–7)
+Build /admin/login page and Supabase Auth sign-in
+Create protected route HOC — redirect to login if not authenticated
+Admin dashboard with sidebar nav
+Admin: Add/Edit Programmes — form with name, category, status toggle
+Admin: Results Editor — select programme → candidate dropdowns auto-load photos → enter points per placement → save
+Admin: Results list with Edit button per row to reopen and amend a result
+Admin: Spotlight Manager — upload images with caption, per-image hero toggle, delete, reorder
+Admin: Students Manager — add/edit student records, upload photos
+Confirm no admin screen allows direct editing of team totals or student progress — both stay read-only/derived
+Phase 9 — Polish & Testing (Day 7–8)
+Test on mobile (Chrome + Safari): poster download, search, navigation, sub-tabs
+Add loading skeletons for all data-fetching states
+Add empty state illustrations (no results, no programmes, no pending programmes)
+Test all 3 poster themes download correctly
+Verify the full real-time cascade: edit one result → confirm Home, Teams sub-tabs, Programmes, and both students' profiles all update correctly
+Review Supabase Row Level Security (RLS) — lock down admin tables
+Performance: add Supabase query limits and pagination if needed
+Phase 10 — Deployment (Day 8)
+Run: npm run build → generates /dist folder
+Deploy /dist to Vercel or Netlify (Supabase does not host frontends)
+Share live URL with college
+Test live URL on multiple phones
+
+
+
+🎭 You're ready to build. Start with Phase 1.
+Campus Art Fest Management System · Built by Farhan · v2 Merged Spec · 2026

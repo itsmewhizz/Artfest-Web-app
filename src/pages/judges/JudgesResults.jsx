@@ -1,0 +1,482 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { judgeClient, verifyJudgeClient } from '../../supabase/client'
+import { getProgrammes, getStudents, getAllResults, getResultByProgrammeId, getNextResultNo, PROGRAMME_CATEGORIES } from '../../supabase/queries'
+import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff } from 'lucide-react'
+import { useToast } from '../../components/Toast'
+
+function calcGrade(points) {
+  const p = Number(points)
+  if (p === 10) return 'A+'
+  if (p >= 8 && p <= 9) return 'A'
+  if (p >= 6 && p <= 7) return 'B'
+  if (p >= 4 && p <= 5) return 'C'
+  return '-'
+}
+
+function generateCaptcha(len = 6) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let out = ''
+  for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)]
+  return out
+}
+
+export default function JudgesResults() {
+  const [programmes, setProgrammes] = useState([])
+  const [students, setStudents] = useState([])
+  const [savedResults, setSavedResults] = useState([])
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [expandedId, setExpandedId] = useState(null)
+
+  // Edit flow state
+  const [editProg, setEditProg] = useState(null)
+  const [promptOpen, setPromptOpen] = useState(false)
+  const [verifyOpen, setVerifyOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [vName, setVName] = useState('')
+  const [vPassword, setVPassword] = useState('')
+  const [vShowPassword, setVShowPassword] = useState(false)
+  const [captcha, setCaptcha] = useState('')
+  const [vCaptcha, setVCaptcha] = useState('')
+  const [vError, setVError] = useState('')
+  const [vLoading, setVLoading] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Edit form placements
+  const [first, setFirst] = useState('')
+  const [firstPoints, setFirstPoints] = useState('')
+  const [second, setSecond] = useState('')
+  const [secondPoints, setSecondPoints] = useState('')
+  const [third, setThird] = useState('')
+  const [thirdPoints, setThirdPoints] = useState('')
+
+  const navigate = useNavigate()
+  const toast = useToast()
+
+  const loadResults = () => {
+    getAllResults().then(data => {
+      setSavedResults(data || [])
+    }).catch(err => {
+      console.error('Failed to load results:', err)
+      toast('Failed to load results: ' + err.message, 'error')
+    })
+  }
+
+  useEffect(() => {
+    getProgrammes().then(setProgrammes).catch(err => console.error('Failed to load programmes:', err))
+    getStudents().then(setStudents).catch(err => console.error('Failed to load students:', err))
+    loadResults()
+  }, [])
+
+  const getStudentObj = (id) => {
+    const s = students.find(s => s.id === id)
+    return s ? { studentId: s.id, name: s.name, photoURL: s.photoURL } : null
+  }
+
+  const placement = (studentId, points) => {
+    const s = getStudentObj(studentId)
+    return s ? { ...s, points: Number(points) || 0, grade: calcGrade(points) } : null
+  }
+
+  const getProgrammeType = (prog) => prog?.programmeType || prog?.type || prog?.programme_type || ''
+
+  const handleLogout = async () => {
+    await judgeClient.auth.signOut()
+    navigate('/judges/login')
+  }
+
+  const lockedIds = new Set(savedResults.filter(r => r.locked).map(r => r.programmeId))
+  const programmeRows = categoryFilter
+    ? programmes.filter(p => categoryFilter === 'General' ? p.category === 'General' : p.category === categoryFilter)
+    : programmes
+
+  const resetPlacements = () => {
+    setFirst(''); setFirstPoints('')
+    setSecond(''); setSecondPoints('')
+    setThird(''); setThirdPoints('')
+  }
+
+  const openEditFlow = (prog) => {
+    setEditProg(prog)
+    setPromptOpen(true)
+  }
+
+  const closePrompt = () => {
+    setPromptOpen(false)
+    setEditProg(null)
+  }
+
+  const proceedToVerify = () => {
+    setVName('')
+    setVPassword('')
+    setVCaptcha('')
+    setVError('')
+    setVShowPassword(false)
+    setCaptcha(generateCaptcha())
+    setPromptOpen(false)
+    setVerifyOpen(true)
+  }
+
+  const closeVerify = () => {
+    setVerifyOpen(false)
+    setEditProg(null)
+  }
+
+  const handleVerify = async () => {
+    setVError('')
+    if (vCaptcha.trim().toUpperCase() !== captcha) {
+      setVError('Incorrect CAPTCHA. Please try again.')
+      setVCaptcha('')
+      setCaptcha(generateCaptcha())
+      return
+    }
+    setVLoading(true)
+    const { data, error } = await verifyJudgeClient.auth.signInWithPassword({ email: vName.trim(), password: vPassword })
+    setVLoading(false)
+    const role = data?.user?.app_metadata?.role
+    if (error || !data?.user || role !== 'judge') {
+      setVError('Invalid judge name or password.')
+      setVCaptcha('')
+      setCaptcha(generateCaptcha())
+      return
+    }
+    setVerifyOpen(false)
+    openEdit(editProg)
+  }
+
+  const openEdit = (prog) => {
+    const draft = savedResults.find(r => r.programmeId === prog.id && !r.locked)
+    setFirst(draft?.first?.studentId || '')
+    setFirstPoints(draft?.first?.points != null ? String(draft.first.points) : '')
+    setSecond(draft?.second?.studentId || '')
+    setSecondPoints(draft?.second?.points != null ? String(draft.second.points) : '')
+    setThird(draft?.third?.studentId || '')
+    setThirdPoints(draft?.third?.points != null ? String(draft.third.points) : '')
+    setEditError('')
+    setEditOpen(true)
+  }
+
+  const closeEdit = () => {
+    setEditOpen(false)
+    setEditProg(null)
+    resetPlacements()
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editProg) return
+    if (!first) {
+      setEditError('Select the 1st place student')
+      return
+    }
+    setSaving(true)
+    setEditError('')
+
+    const latest = await getResultByProgrammeId(editProg.id)
+    if (latest?.locked) {
+      setEditError('This result is locked and can no longer be edited.')
+      setSaving(false)
+      return
+    }
+
+    const payload = {
+      programmeId: editProg.id,
+      name: editProg.name,
+      first: placement(first, firstPoints),
+      second: placement(second, secondPoints),
+      third: placement(third, thirdPoints),
+      updatedAt: new Date().toISOString(),
+      locked: true,
+    }
+
+    const draft = savedResults.find(r => r.programmeId === editProg.id && !r.locked)
+    let result
+    if (draft) {
+      result = await judgeClient.from('results').update(payload).eq('id', draft.id)
+    } else {
+      payload.resultNo = await getNextResultNo()
+      result = await judgeClient.from('results').insert(payload)
+    }
+
+    if (result.error) {
+      console.error('Edit failed:', result.error)
+      setEditError(result.error.message)
+      setSaving(false)
+      return
+    }
+
+    setSaving(false)
+    closeEdit()
+    toast('Result saved and locked!')
+    loadResults()
+  }
+
+  const placementLabels = ['1st Place', '2nd Place', '3rd Place']
+  const placementVals = [
+    { student: first, setStudent: setFirst, points: firstPoints, setPoints: setFirstPoints },
+    { student: second, setStudent: setSecond, points: secondPoints, setPoints: setSecondPoints },
+    { student: third, setStudent: setThird, points: thirdPoints, setPoints: setThirdPoints },
+  ]
+
+  const editStudentOptions = editProg && editProg.category && editProg.category !== 'General'
+    ? students.filter(s => s.class === editProg.category)
+    : students
+
+  const lockedResults = savedResults.filter(r => r.locked)
+
+  return (
+    <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-mainText hover:opacity-80 transition">
+          <ArrowLeft size={18} /> Home
+        </button>
+        <button onClick={handleLogout} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm">
+          <LogOut size={16} /> Logout
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3 mb-6">
+        <Lock size={20} className="text-mainText" />
+        <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Judges Panel</h2>
+      </div>
+
+      {/* ── Programmes list ── */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText">Programmes</h3>
+        <select
+          className="bg-card text-mainText rounded-xl p-2 outline-none border border-secondary/30 focus:border-mainText text-sm sm:text-base"
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+        >
+          <option value="">All Categories</option>
+          {PROGRAMME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+
+      <div className="space-y-3 mb-8">
+        {programmeRows.length === 0 && <p className="text-mutedText text-center">No programmes found.</p>}
+        {programmeRows.map(prog => {
+          const locked = lockedIds.has(prog.id)
+          return (
+            <div key={prog.id} className="bg-card rounded-xl p-4 flex items-center gap-3 shadow-lg border border-secondary/30">
+              <div className="flex-1 min-w-0">
+                <p className="text-mainText font-medium text-sm sm:text-base truncate">{prog.name}</p>
+                <p className="text-mutedText text-xs truncate">{prog.category}{getProgrammeType(prog) ? ` · ${getProgrammeType(prog)}` : ''}</p>
+              </div>
+              {locked ? (
+                <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded bg-success/15 text-success border border-success/40 shrink-0">
+                  <Lock size={11} /> LOCKED
+                </span>
+              ) : (
+                <button
+                  onClick={() => openEditFlow(prog)}
+                  className="shrink-0 flex items-center gap-1 text-mainText text-xs font-semibold px-3 py-2 rounded-xl bg-secondary/15 border border-secondary/30 hover:bg-secondary/25 transition"
+                  title="Edit result"
+                >
+                  <Pencil size={14} /> Edit
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Submitted (locked) ── */}
+      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-4">Submitted Results</h3>
+      <div className="space-y-3">
+        {lockedResults.length === 0 && <p className="text-mutedText text-center">No results submitted yet.</p>}
+        {lockedResults.map(result => {
+          const prog = programmes.find(p => p.id === result.programmeId)
+          const placementData = [
+            { rank: '1st', data: result.first },
+            { rank: '2nd', data: result.second },
+            { rank: '3rd', data: result.third },
+          ]
+          const isExpanded = expandedId === result.id
+          return (
+            <div key={result.id} className="bg-card rounded-xl p-4 shadow-lg border border-secondary/30">
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : result.id)}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-mainText font-medium text-sm sm:text-base truncate">
+                    {result.resultNo ? <span className="text-accent font-bold text-base sm:text-lg mr-2">#{result.resultNo}</span> : null}
+                    {result.name || prog?.name || 'Result'}
+                  </p>
+                  <p className="text-mutedText text-xs">{prog?.category || ''}</p>
+                </div>
+                <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded bg-success/15 text-success border border-success/40 shrink-0">
+                  <Lock size={11} /> LOCKED
+                </span>
+                <button className="text-mutedText shrink-0">
+                  {isExpanded ? <ChevronUp size={16} className="sm:w-[18px] sm:h-[18px]" /> : <ChevronDown size={16} className="sm:w-[18px] sm:h-[18px]" />}
+                </button>
+              </div>
+              {isExpanded && (
+                <div className="mt-4 pt-3 border-t border-secondary/30 space-y-3">
+                  {placementData.map(({ rank, data }) => {
+                    if (!data) return (
+                      <div key={rank} className="text-mutedText text-sm flex items-center gap-2">
+                        <span className="font-semibold w-8">{rank}</span>
+                        <span className="italic">No entry</span>
+                      </div>
+                    )
+                    return (
+                      <div key={rank} className="bg-secondary/15 rounded-xl p-3 border border-secondary/30">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                          <span className={`text-xs sm:text-sm font-bold min-w-[1.5rem] sm:min-w-[2rem] ${
+                            rank === '1st' ? 'text-accent' : rank === '2nd' ? 'text-secondary' : 'text-mutedText'
+                          }`}>
+                            {rank}
+                          </span>
+                          <span className="text-mainText font-medium text-sm sm:text-base">{data.name}</span>
+                          <span className="text-accent font-bold text-sm sm:text-base ml-auto">{data.points || 0} pts</span>
+                          {data.grade && data.grade !== '-' && (
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                              data.grade === 'A+' ? 'bg-success/15 text-success' :
+                              data.grade === 'A' ? 'bg-blue-500/15 text-blue-400' :
+                              data.grade === 'B' ? 'bg-yellow-500/15 text-yellow-400' :
+                              'bg-orange-500/15 text-orange-400'
+                            }`}>
+                              {data.grade}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── "Are you really a Judge?" ── */}
+      {promptOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70" onClick={closePrompt}>
+          <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-secondary/30" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-poppins font-bold text-mainText mb-2">Are you really a Judge?</h3>
+            <p className="text-mutedText text-sm mb-4">
+              Editing a result requires re-verification before anything is changed.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={proceedToVerify} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold hover:bg-primary/90 transition">
+                Yes
+              </button>
+              <button onClick={closePrompt} className="bg-secondary/15 text-mainText rounded-xl p-3 font-semibold transition">
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Re-verification (name + password + captcha) ── */}
+      {verifyOpen && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70" onClick={() => !vLoading && closeVerify()}>
+          <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-secondary/30" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-poppins font-bold text-mainText mb-1">Re-verify to edit</h3>
+            <p className="text-mutedText text-xs mb-4">Enter your judge name, password and the code below.</p>
+
+            <input
+              className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/30 focus:border-mainText"
+              placeholder="Judge name"
+              autoComplete="off"
+              value={vName}
+              onChange={e => setVName(e.target.value)}
+            />
+            <div className="relative mb-3">
+              <input
+                type={vShowPassword ? 'text' : 'password'}
+                className="w-full bg-black/20 text-mainText rounded-xl p-3 pr-12 outline-none border border-secondary/30 focus:border-mainText"
+                placeholder="Password"
+                autoComplete="off"
+                value={vPassword}
+                onChange={e => setVPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setVShowPassword(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-mutedText hover:text-mainText transition"
+              >
+                {vShowPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center bg-black/20 rounded-xl py-3 mb-2 border border-secondary/30 select-none">
+              <span className="font-display font-bold text-xl tracking-[0.35em] text-mainText">{captcha}</span>
+            </div>
+            <input
+              className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-1 outline-none border border-secondary/30 focus:border-mainText uppercase"
+              placeholder="Type the code above"
+              autoComplete="off"
+              value={vCaptcha}
+              onChange={e => setVCaptcha(e.target.value.toUpperCase())}
+            />
+
+            {vError && <p className="text-red-400 text-sm mt-3">{vError}</p>}
+            <div className="flex gap-2 mt-4">
+              <button onClick={handleVerify} disabled={vLoading} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold hover:bg-primary/90 transition">
+                {vLoading ? 'Verifying...' : 'Verify'}
+              </button>
+              <button onClick={() => !vLoading && closeVerify()} className="bg-secondary/15 text-mainText rounded-xl p-3 font-semibold transition">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit result ── */}
+      {editOpen && editProg && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/70 overflow-y-auto" onClick={() => !saving && closeEdit()}>
+          <div className="bg-card rounded-2xl p-6 w-full max-w-lg my-8 shadow-2xl border border-secondary/30" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-poppins font-bold text-mainText mb-1">Edit Result</h3>
+            <p className="text-mutedText text-sm mb-4 truncate">{editProg.name} · {editProg.category}{getProgrammeType(editProg) ? ` · ${getProgrammeType(editProg)}` : ''}</p>
+
+            {placementLabels.map((label, i) => {
+              const v = placementVals[i]
+              const grade = calcGrade(v.points)
+              return (
+                <div key={label} className="mb-4">
+                  <label className="text-mutedText text-xs sm:text-sm mb-1 block">{label}</label>
+                  <div className="flex gap-2">
+                    <select className="flex-1 bg-black/20 text-mainText rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-sm sm:text-base" value={v.student} onChange={e => v.setStudent(e.target.value)}>
+                      <option value="">Select Student</option>
+                      {editStudentOptions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="Pts"
+                      className="w-16 sm:w-20 bg-black/20 text-mainText rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-center text-sm sm:text-base"
+                      value={v.points}
+                      onChange={e => v.setPoints(e.target.value)}
+                    />
+                    <div className={`flex items-center justify-center w-12 sm:w-14 rounded-xl text-xs sm:text-sm font-bold ${
+                      grade === '-' ? 'bg-secondary/15 border border-secondary/30 text-mutedText' :
+                      grade === 'A+' ? 'bg-success/15 text-success border border-success/40' :
+                      grade === 'A' ? 'bg-blue-500/15 text-blue-400 border border-blue-500/40' :
+                      grade === 'B' ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/40' :
+                      'bg-orange-500/15 text-orange-400 border border-orange-500/40'
+                    }`}>
+                      {grade}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+
+            {editError && <p className="text-red-400 text-sm mt-2">{editError}</p>}
+            <div className="flex gap-2 mt-4">
+              <button onClick={handleSaveEdit} disabled={saving} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold hover:bg-primary/90 transition">
+                {saving ? 'Saving...' : 'Save & Lock Result'}
+              </button>
+              <button onClick={() => !saving && closeEdit()} className="bg-secondary/15 text-mainText rounded-xl p-3 font-semibold transition">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
