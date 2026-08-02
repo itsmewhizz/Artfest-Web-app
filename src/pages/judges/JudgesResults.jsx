@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { judgeClient, verifyJudgeClient } from '../../supabase/client'
-import { getProgrammes, getStudents, getAllResults, getResultByProgrammeId, getNextResultNo, PROGRAMME_CATEGORIES } from '../../supabase/queries'
+import { getProgrammes, getStudents, getAllResults, PROGRAMME_CATEGORIES } from '../../supabase/queries'
 import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 
@@ -12,13 +12,6 @@ function calcGrade(points) {
   if (p >= 6 && p <= 7) return 'B'
   if (p >= 4 && p <= 5) return 'C'
   return '-'
-}
-
-function generateCaptcha(len = 6) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let out = ''
-  for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)]
-  return out
 }
 
 export default function JudgesResults() {
@@ -37,6 +30,7 @@ export default function JudgesResults() {
   const [vPassword, setVPassword] = useState('')
   const [vShowPassword, setVShowPassword] = useState(false)
   const [captcha, setCaptcha] = useState('')
+  const [captchaId, setCaptchaId] = useState('')
   const [vCaptcha, setVCaptcha] = useState('')
   const [vError, setVError] = useState('')
   const [vLoading, setVLoading] = useState(false)
@@ -107,20 +101,34 @@ export default function JudgesResults() {
     setEditProg(null)
   }
 
-  const proceedToVerify = () => {
+  const loadCaptcha = async () => {
+    const { data, error } = await judgeClient.rpc('judge_create_captcha')
+    if (error || data?.error) {
+      setVError('Could not load the security code. Please try again.')
+      return
+    }
+    setCaptcha(data.captcha)
+    setCaptchaId(data.challenge_id)
+  }
+
+  const proceedToVerify = async () => {
     setVName('')
     setVPassword('')
     setVCaptcha('')
     setVError('')
     setVShowPassword(false)
-    setCaptcha(generateCaptcha())
+    setCaptcha('')
+    setCaptchaId('')
     setPromptOpen(false)
     setVerifyOpen(true)
+    await loadCaptcha()
   }
 
   const closeVerify = () => {
     setVerifyOpen(false)
     setEditProg(null)
+    setCaptcha('')
+    setCaptchaId('')
   }
 
   const handleVerify = async () => {
@@ -128,7 +136,7 @@ export default function JudgesResults() {
     if (vCaptcha.trim().toUpperCase() !== captcha) {
       setVError('Incorrect CAPTCHA. Please try again.')
       setVCaptcha('')
-      setCaptcha(generateCaptcha())
+      await loadCaptcha()
       return
     }
     setVLoading(true)
@@ -138,7 +146,7 @@ export default function JudgesResults() {
     if (error || !data?.user || role !== 'judge') {
       setVError('Invalid judge name or password.')
       setVCaptcha('')
-      setCaptcha(generateCaptcha())
+      await loadCaptcha()
       return
     }
     setVerifyOpen(false)
@@ -146,13 +154,13 @@ export default function JudgesResults() {
   }
 
   const openEdit = (prog) => {
-    const draft = savedResults.find(r => r.programmeId === prog.id && !r.locked)
-    setFirst(draft?.first?.studentId || '')
-    setFirstPoints(draft?.first?.points != null ? String(draft.first.points) : '')
-    setSecond(draft?.second?.studentId || '')
-    setSecondPoints(draft?.second?.points != null ? String(draft.second.points) : '')
-    setThird(draft?.third?.studentId || '')
-    setThirdPoints(draft?.third?.points != null ? String(draft.third.points) : '')
+    const latest = savedResults.find(r => r.programmeId === prog.id)
+    setFirst(latest?.first?.studentId || '')
+    setFirstPoints(latest?.first?.points != null ? String(latest.first.points) : '')
+    setSecond(latest?.second?.studentId || '')
+    setSecondPoints(latest?.second?.points != null ? String(latest.second.points) : '')
+    setThird(latest?.third?.studentId || '')
+    setThirdPoints(latest?.third?.points != null ? String(latest.third.points) : '')
     setEditError('')
     setEditOpen(true)
   }
@@ -160,6 +168,8 @@ export default function JudgesResults() {
   const closeEdit = () => {
     setEditOpen(false)
     setEditProg(null)
+    setCaptcha('')
+    setCaptchaId('')
     resetPlacements()
   }
 
@@ -169,15 +179,12 @@ export default function JudgesResults() {
       setEditError('Select the 1st place student')
       return
     }
-    setSaving(true)
-    setEditError('')
-
-    const latest = await getResultByProgrammeId(editProg.id)
-    if (latest?.locked) {
-      setEditError('This result is locked and can no longer be edited.')
-      setSaving(false)
+    if (!captchaId || !vName || !vPassword) {
+      setEditError('Re-verification is required before editing. Please go back and verify again.')
       return
     }
+    setSaving(true)
+    setEditError('')
 
     const payload = {
       programmeId: editProg.id,
@@ -189,18 +196,29 @@ export default function JudgesResults() {
       locked: true,
     }
 
-    const draft = savedResults.find(r => r.programmeId === editProg.id && !r.locked)
-    let result
-    if (draft) {
-      result = await judgeClient.from('results').update(payload).eq('id', draft.id)
-    } else {
-      payload.resultNo = await getNextResultNo()
-      result = await judgeClient.from('results').insert(payload)
-    }
+    // Server re-checks the judge + captcha (single-use) inside judge_reverify_edit
+    // and re-locks the result (locked = true) before returning. A locked row can
+    // therefore ONLY be changed through this re-verified path.
+    const { data: rpcData, error: rpcError } = await judgeClient.rpc('judge_reverify_edit', {
+      p_challenge_id: captchaId,
+      p_captcha: vCaptcha.trim().toUpperCase(),
+      p_judge_email: vName.trim(),
+      p_judge_password: vPassword,
+      p_programme_id: editProg.id,
+      p_programme_name: editProg.name,
+      p_first: payload.first,
+      p_second: payload.second,
+      p_third: payload.third,
+    })
 
-    if (result.error) {
-      console.error('Edit failed:', result.error)
-      setEditError(result.error.message)
+    if (rpcError || rpcData?.error) {
+      console.error('Edit failed:', rpcError || rpcData)
+      const msg =
+        rpcData?.error === 'not_authorized' ? 'You are not authorized to edit this result.' :
+        rpcData?.error === 'invalid_judge' ? 'Judge re-verification failed. Please verify again.' :
+        rpcData?.error === 'captcha_invalid' ? 'Security code was invalid or expired. Please verify again.' :
+        (rpcError?.message || 'Edit failed. Please try again.')
+      setEditError(msg)
       setSaving(false)
       return
     }
@@ -263,19 +281,18 @@ export default function JudgesResults() {
                 <p className="text-mainText font-medium text-sm sm:text-base truncate">{prog.name}</p>
                 <p className="text-mutedText text-xs truncate">{prog.category}{getProgrammeType(prog) ? ` · ${getProgrammeType(prog)}` : ''}</p>
               </div>
-              {locked ? (
+              {locked && (
                 <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded bg-success/15 text-success border border-success/40 shrink-0">
                   <Lock size={11} /> LOCKED
                 </span>
-              ) : (
-                <button
-                  onClick={() => openEditFlow(prog)}
-                  className="shrink-0 flex items-center gap-1 text-mainText text-xs font-semibold px-3 py-2 rounded-xl bg-secondary/15 border border-secondary/30 hover:bg-secondary/25 transition"
-                  title="Edit result"
-                >
-                  <Pencil size={14} /> Edit
-                </button>
               )}
+              <button
+                onClick={() => openEditFlow(prog)}
+                className="shrink-0 flex items-center gap-1 text-mainText text-xs font-semibold px-3 py-2 rounded-xl bg-secondary/15 border border-secondary/30 hover:bg-secondary/25 transition"
+                title={locked ? 'Re-verify to edit locked result' : 'Edit result'}
+              >
+                <Pencil size={14} /> Edit
+              </button>
             </div>
           )
         })}
