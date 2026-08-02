@@ -4,6 +4,7 @@ import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../su
 import { ChevronDown, Download } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import TeamBar from '../components/TeamBar'
+import IsraLogo from '../components/IsraLogo'
 
 export default function Home() {
   const [featured, setFeatured] = useState([])
@@ -131,14 +132,11 @@ export default function Home() {
           type="button"
           aria-label="Go to the festival home"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none"
+          className="group flex items-center select-none text-mainText focus:outline-none"
         >
-          <span className="font-display font-black text-[1.05rem] sm:text-[1.25rem] md:text-[1.45rem] lg:text-[1.55rem] tracking-[0.16em] text-mainText/95 uppercase">
-            ISRA
-          </span>
-          <span className="font-display text-[0.48rem] sm:text-[0.56rem] md:text-[0.62rem] lg:text-[0.68rem] tracking-[0.34em] text-mainText/85 uppercase">
-            Festival
-          </span>
+          <IsraLogo
+            className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 drop-shadow-[0_4px_12px_rgba(2,12,20,0.45)] transition-transform duration-300 group-hover:scale-105"
+          />
         </button>
       </nav>
 
