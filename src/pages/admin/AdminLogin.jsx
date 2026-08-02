@@ -19,8 +19,7 @@ export default function AdminLogin() {
       setError('Invalid credentials. Try again.')
       setLoading(false)
     } else {
-      window.open('/admin', '_blank')
-      navigate('/')
+      navigate('/admin')
     }
   }
 

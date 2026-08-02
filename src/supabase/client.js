@@ -13,8 +13,12 @@ export const judgeClient = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Throwaway client used to re-verify judge credentials without disturbing the
 // judge panel's active session (no persistence, no token swap).
+// Unique storageKey avoids colliding with the main `supabase` client's default
+// key ("sb-<project>-auth-token"), which would trigger the
+// "Multiple GoTrueClient instances" warning and undefined behavior.
 export const verifyJudgeClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
+    storageKey: 'artfest-verify-auth',
   },
 })
