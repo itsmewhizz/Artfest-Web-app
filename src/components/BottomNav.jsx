@@ -10,8 +10,11 @@ const tabs = [
 
 export default function BottomNav() {
   const location = useLocation()
-  const isAdmin = location.pathname.startsWith('/admin')
-  if (isAdmin) return null
+  // Hide the shared bottom nav inside the Student, Judge and Admin panels.
+  // ('/students' and other public pages are unaffected — only the panel
+  //  prefixes '/admin', '/student' and '/judges' are excluded.)
+  const isPanel = ['/admin', '/student', '/judges'].some(p => location.pathname.startsWith(p))
+  if (isPanel) return null
 
   return (
     <nav className="fixed bottom-3 left-1/2 z-50 w-[calc(100%-1rem)] max-w-[28rem] -translate-x-1/2">
