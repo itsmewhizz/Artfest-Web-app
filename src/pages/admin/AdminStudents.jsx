@@ -30,25 +30,34 @@ export default function AdminStudents() {
 
   const handleAdd = async () => {
     if (!name || !category || !team) return toast('Fill all fields', 'error')
+    const wasEditing = Boolean(editingId)
     let photoURL = ''
     if (photo) {
       const { data } = await supabase.storage.from('photos').upload(`students/${Date.now()}_${photo.name}`, photo)
       const { data: urlData } = supabase.storage.from('photos').getPublicUrl(data.path)
       photoURL = urlData.publicUrl
     }
+    let result
     if (editingId) {
-      await supabase.from('students').update({
+      result = await supabase.from('students').update({
         name, chestNo, class: category, team, photoURL: photoURL || undefined,
         programmeIds: selectedProgs, createdAt: new Date().toISOString(),
-      }).eq('id', editingId)
+      }).eq('id', editingId).select().single()
     } else {
-      await supabase.from('students').insert({
+      result = await supabase.from('students').insert({
         name, chestNo, class: category, team, photoURL, programmeIds: selectedProgs,
       })
     }
+    if (result.error) {
+      console.error('Student save failed:', result.error)
+      toast(`Student ${wasEditing ? 'update' : 'add'} failed: ${result.error.message}`, 'error')
+      return
+    }
+
+    const refreshedStudents = await getStudents()
+    setStudents(refreshedStudents)
     setName(''); setChestNo(''); setCategory(''); setTeam(''); setPhoto(null); setEditingId(null); setSelectedProgs([])
-    toast(editingId ? 'Student updated!' : 'Student added!')
-    getStudents().then(setStudents)
+    toast(wasEditing ? 'Student updated!' : 'Student added!')
   }
 
   const handleEdit = (student) => {
