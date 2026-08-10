@@ -236,7 +236,7 @@ export default function JudgesResults() {
     { student: third, setStudent: setThird, points: thirdPoints, setPoints: setThirdPoints },
   ]
 
-  const editStudentOptions = editProg && editProg.category && editProg.category !== 'General'
+  const editStudentOptions = editProg && editProg.category && !editProg.category.startsWith('General')
     ? students.filter(s => s.class === editProg.category)
     : students
 
@@ -248,83 +248,91 @@ export default function JudgesResults() {
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-mainText hover:opacity-80 transition">
           <ArrowLeft size={18} /> Home
         </button>
-        <button onClick={handleLogout} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm">
+        <button onClick={handleLogout} className="flex items-center gap-2 bg-white/10 hover:bg-white/15 text-mainText px-3 py-1.5 rounded-xl font-semibold transition text-xs sm:text-sm">
           <LogOut size={16} /> Logout
         </button>
       </div>
 
-      <div className="flex items-center gap-3 mb-6">
-        <Lock size={20} className="text-mainText" />
-        <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Judges Panel</h2>
+      <div className="bg-card rounded-2xl p-5 mb-6 shadow-sm border border-secondary/30">
+        <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-2">Judges Panel</h2>
+        <p className="text-mutedText text-xs sm:text-sm">Submit results per programme. Locked results require judge authentication and captcha verification to edit.</p>
       </div>
 
-      {/* ── Programmes list ── */}
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText">Programmes</h3>
-        <select
-          className="bg-card text-mainText rounded-xl p-2 outline-none border border-secondary/30 focus:border-mainText text-sm sm:text-base"
-          value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value)}
-        >
-          <option value="">All Categories</option>
-          {PROGRAMME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+      <div className="flex justify-center gap-1.5 sm:gap-2 mb-5 flex-wrap">
+        {['', ...PROGRAMME_CATEGORIES].map(cat => (
+          <button
+            key={cat}
+            onClick={() => setCategoryFilter(cat)}
+            className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
+              categoryFilter === cat
+                ? 'bg-primary text-white shadow-lg shadow-black/40'
+                : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
+            }`}
+          >
+            {cat || 'All'}
+          </button>
+        ))}
       </div>
 
-      <div className="space-y-3 mb-8">
-        {programmeRows.length === 0 && <p className="text-mutedText text-center">No programmes found.</p>}
+      {/* ── Unlocked / Pending Programmes ── */}
+      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-3">All Programmes</h3>
+      <div className="flex flex-col gap-3 mb-8">
+        {programmeRows.length === 0 && <p className="text-mutedText text-center py-4">No programmes found.</p>}
         {programmeRows.map(prog => {
-          const locked = lockedIds.has(prog.id)
+          const isLocked = lockedIds.has(prog.id)
           return (
-            <div key={prog.id} className="bg-card rounded-xl p-4 flex items-center gap-3 shadow-lg border border-secondary/30">
-              <div className="flex-1 min-w-0">
-                <p className="text-mainText font-medium text-sm sm:text-base truncate">{prog.name}</p>
-                <p className="text-mutedText text-xs truncate">{prog.category}{getProgrammeType(prog) ? ` · ${getProgrammeType(prog)}` : ''}</p>
+            <div key={prog.id} className="bg-card rounded-xl p-4 flex items-center justify-between shadow-sm border border-secondary/30 gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-mainText font-semibold text-sm sm:text-base truncate">{prog.name}</p>
+                <p className="text-mutedText text-xs sm:text-sm">{prog.category}{getProgrammeType(prog) ? ` · ${getProgrammeType(prog)}` : ''}</p>
               </div>
-              {locked && (
-                <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded bg-success/15 text-success border border-success/40 shrink-0">
-                  <Lock size={11} /> LOCKED
-                </span>
+              {isLocked ? (
+                <button
+                  onClick={() => openEditFlow(prog)}
+                  className="flex items-center gap-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 border border-amber-500/30"
+                >
+                  <Pencil size={14} /> Edit Result
+                </button>
+              ) : (
+                <button
+                  onClick={() => openEditFlow(prog)}
+                  className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0"
+                >
+                  <Pencil size={14} /> Enter Result
+                </button>
               )}
-              <button
-                onClick={() => openEditFlow(prog)}
-                className="shrink-0 flex items-center gap-1 text-mainText text-xs font-semibold px-3 py-2 rounded-xl bg-secondary/15 border border-secondary/30 hover:bg-secondary/25 transition"
-                title={locked ? 'Re-verify to edit locked result' : 'Edit result'}
-              >
-                <Pencil size={14} /> Edit
-              </button>
             </div>
           )
         })}
       </div>
 
-      {/* ── Submitted (locked) ── */}
-      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-4">Submitted Results</h3>
-      <div className="space-y-3">
-        {lockedResults.length === 0 && <p className="text-mutedText text-center">No results submitted yet.</p>}
+      {/* ── Submitted / Locked Results ── */}
+      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-3">Submitted Results ({lockedResults.length})</h3>
+      <div className="flex flex-col gap-3 mb-8">
+        {lockedResults.length === 0 && <p className="text-mutedText text-center py-4">No results submitted yet.</p>}
         {lockedResults.map(result => {
           const prog = programmes.find(p => p.id === result.programmeId)
+          const isExpanded = expandedId === result.id
           const placementData = [
             { rank: '1st', data: result.first },
             { rank: '2nd', data: result.second },
             { rank: '3rd', data: result.third },
           ]
-          const isExpanded = expandedId === result.id
           return (
-            <div key={result.id} className="bg-card rounded-xl p-4 shadow-lg border border-secondary/30">
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : result.id)}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-mainText font-medium text-sm sm:text-base truncate">
+            <div key={result.id} className="bg-card rounded-xl p-4 shadow-sm border border-secondary/30">
+              <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : result.id)}>
+                <div className="min-w-0 flex-1">
+                  <p className="text-mainText font-semibold text-sm sm:text-base truncate">
                     {result.resultNo ? <span className="text-accent font-bold text-base sm:text-lg mr-2">#{result.resultNo}</span> : null}
-                    {result.name || prog?.name || 'Result'}
+                    {result.name || prog?.name}
                   </p>
                   <p className="text-mutedText text-xs">{prog?.category || ''}</p>
                 </div>
                 <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded bg-success/15 text-success border border-success/40 shrink-0">
                   <Lock size={11} /> LOCKED
                 </span>
-                <button className="text-mutedText shrink-0">
-                  {isExpanded ? <ChevronUp size={16} className="sm:w-[18px] sm:h-[18px]" /> : <ChevronDown size={16} className="sm:w-[18px] sm:h-[18px]" />}
+                <button className="text-mutedText shrink-0 ml-2">
+                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
               </div>
               {isExpanded && (
@@ -360,6 +368,12 @@ export default function JudgesResults() {
                       </div>
                     )
                   })}
+                  <button
+                    onClick={() => openEditFlow(prog || { id: result.programmeId, name: result.name })}
+                    className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl py-2 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 border border-amber-500/30 mt-2"
+                  >
+                    <Pencil size={14} /> Re-verify & Edit
+                  </button>
                 </div>
               )}
             </div>
@@ -367,76 +381,76 @@ export default function JudgesResults() {
         })}
       </div>
 
-      {/* ── "Are you really a Judge?" ── */}
+      {/* ── Prompt modal ── */}
       {promptOpen && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70" onClick={closePrompt}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onClick={closePrompt}>
           <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-secondary/30" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-poppins font-bold text-mainText mb-2">Are you really a Judge?</h3>
-            <p className="text-mutedText text-sm mb-4">
-              Editing a result requires re-verification before anything is changed.
-            </p>
-            <div className="flex gap-2 mt-4">
-              <button onClick={proceedToVerify} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold hover:bg-primary/90 transition">
-                Yes
+            <p className="text-mutedText text-sm mb-6">Editing locked festival results requires judge credentials and single-use security code verification.</p>
+            <div className="flex gap-3">
+              <button onClick={closePrompt} className="flex-1 bg-white/10 text-mainText rounded-xl p-3 font-semibold text-sm hover:bg-white/15 transition">
+                Cancel
               </button>
-              <button onClick={closePrompt} className="bg-secondary/15 text-mainText rounded-xl p-3 font-semibold transition">
-                No
+              <button onClick={proceedToVerify} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold text-sm hover:bg-primary/90 transition">
+                Yes, Continue
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Re-verification (name + password + captcha) ── */}
+      {/* ── Re-verify modal ── */}
       {verifyOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70" onClick={() => !vLoading && closeVerify()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onClick={() => !vLoading && closeVerify()}>
           <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-secondary/30" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-poppins font-bold text-mainText mb-1">Re-verify to edit</h3>
-            <p className="text-mutedText text-xs mb-4">Enter your judge name, password and the code below.</p>
+            <h3 className="text-lg font-poppins font-bold text-mainText mb-1">Judge Verification</h3>
+            <p className="text-mutedText text-xs mb-4">Re-enter your credentials to access result editor for <span className="text-mainText font-semibold">{editProg?.name}</span>.</p>
 
+            {vError && <div className="bg-red-500/15 border border-red-500/40 text-red-300 text-xs p-3 rounded-xl mb-4">{vError}</div>}
+
+            <label className="text-mutedText text-xs mb-1 block">Judge Email / Username</label>
             <input
-              className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/30 focus:border-mainText"
-              placeholder="Judge name"
-              autoComplete="off"
+              type="text"
+              className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/30 focus:border-mainText text-sm"
               value={vName}
               onChange={e => setVName(e.target.value)}
+              placeholder="e.g. judge1@fest.com"
             />
+
+            <label className="text-mutedText text-xs mb-1 block">Password</label>
             <div className="relative mb-3">
               <input
                 type={vShowPassword ? 'text' : 'password'}
-                className="w-full bg-black/20 text-mainText rounded-xl p-3 pr-12 outline-none border border-secondary/30 focus:border-mainText"
-                placeholder="Password"
-                autoComplete="off"
+                className="w-full bg-black/20 text-mainText rounded-xl p-3 pr-10 outline-none border border-secondary/30 focus:border-mainText text-sm"
                 value={vPassword}
                 onChange={e => setVPassword(e.target.value)}
               />
-              <button
-                type="button"
-                onClick={() => setVShowPassword(p => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-mutedText hover:text-mainText transition"
-              >
-                {vShowPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              <button type="button" onClick={() => setVShowPassword(!vShowPassword)} className="absolute right-3 top-3 text-mutedText hover:text-mainText">
+                {vShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 
-            <div className="flex items-center justify-center bg-black/20 rounded-xl py-3 mb-2 border border-secondary/30 select-none">
-              <span className="font-display font-bold text-xl tracking-[0.35em] text-mainText">{captcha}</span>
+            <label className="text-mutedText text-xs mb-1 block">Security Code</label>
+            <div className="flex gap-2 mb-4">
+              <div className="bg-black/40 text-accent font-mono font-bold tracking-widest text-lg px-4 py-2 rounded-xl flex items-center justify-center select-none border border-secondary/40">
+                {captcha || '------'}
+              </div>
+              <input
+                type="text"
+                className="flex-1 bg-black/20 text-mainText uppercase font-mono font-bold tracking-wider rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-center text-sm"
+                maxLength={6}
+                value={vCaptcha}
+                onChange={e => setVCaptcha(e.target.value.toUpperCase())}
+                placeholder="TYPE CODE"
+              />
             </div>
-            <input
-              className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-1 outline-none border border-secondary/30 focus:border-mainText uppercase"
-              placeholder="Type the code above"
-              autoComplete="off"
-              value={vCaptcha}
-              onChange={e => setVCaptcha(e.target.value.toUpperCase())}
-            />
 
-            {vError && <p className="text-red-400 text-sm mt-3">{vError}</p>}
-            <div className="flex gap-2 mt-4">
-              <button onClick={handleVerify} disabled={vLoading} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold hover:bg-primary/90 transition">
-                {vLoading ? 'Verifying...' : 'Verify'}
-              </button>
-              <button onClick={() => !vLoading && closeVerify()} className="bg-secondary/15 text-mainText rounded-xl p-3 font-semibold transition">
+            <div className="flex gap-2">
+              <button onClick={closeVerify} disabled={vLoading} className="bg-white/10 text-mainText rounded-xl p-3 font-semibold text-sm flex-1 hover:bg-white/15 transition">
                 Cancel
+              </button>
+              <button onClick={handleVerify} disabled={vLoading} className="bg-primary text-white rounded-xl p-3 font-semibold text-sm flex-1 hover:bg-primary/90 transition">
+                {vLoading ? 'Verifying...' : 'Verify & Edit'}
               </button>
             </div>
           </div>
@@ -459,7 +473,7 @@ export default function JudgesResults() {
                   <div className="flex gap-2">
                     <select className="flex-1 bg-black/20 text-mainText rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-sm sm:text-base" value={v.student} onChange={e => v.setStudent(e.target.value)}>
                       <option value="">Select Student</option>
-                      {editStudentOptions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      {editStudentOptions.map(s => <option key={s.id} value={s.id}>{s.name}{s.chestNo ? ` (#${s.chestNo})` : ''}</option>)}
                     </select>
                     <input
                       type="number"

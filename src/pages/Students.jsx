@@ -47,10 +47,11 @@ export default function Students() {
   ]
 
   const filtered = students.filter(s => {
-    const matchName = s.name?.toLowerCase().includes(search.toLowerCase())
+    const query = search.toLowerCase()
+    const matchSearch = s.name?.toLowerCase().includes(query) || s.chestNo?.toLowerCase().includes(query)
     const matchTeam = teamFilter ? s.team === teamFilter : true
     const matchClass = classFilter ? s.class === classFilter : true
-    return matchName && matchTeam && matchClass
+    return matchSearch && matchTeam && matchClass
   })
 
   return (
@@ -61,9 +62,9 @@ export default function Students() {
         <Search size={18} color="#0F2A3D" />
         <input
           className="bg-transparent text-[#0F2A3D] placeholder-[#1A4562]/50 p-3 flex-1 outline-none"
-          placeholder="Search by name..."
+          placeholder="Search by name or chest no..."
           value={search}
-          onChange={e => setSearch(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))}
+          onChange={e => setSearch(e.target.value)}
         />
       </div>
 
@@ -95,7 +96,7 @@ export default function Students() {
             <StudentAvatar src={student.photoURL} name={student.name} className="w-10 h-10 sm:w-12 sm:h-12" />
             <div className="min-w-0">
               <p className="text-[#0F2A3D] font-medium text-sm sm:text-base truncate">{student.name}</p>
-              <p className="text-[#1A4562] text-xs sm:text-sm truncate">{teamMap[student.team] || student.team} · {student.class}</p>
+              <p className="text-[#1A4562] text-xs sm:text-sm truncate">{student.chestNo ? `Chest No: ${student.chestNo} · ` : ''}{teamMap[student.team] || student.team} · {student.class}</p>
             </div>
           </div>
         ))}

@@ -23,7 +23,7 @@ export default function Programmes() {
     })
   }, [])
 
-  const orderedCategories = [...PROGRAMME_CATEGORIES.filter(c => c !== 'General'), 'General']
+  const orderedCategories = PROGRAMME_CATEGORIES
 
   const getProgrammeType = (prog) => prog?.programmeType || prog?.type || prog?.programme_type || ''
 

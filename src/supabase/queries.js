@@ -1,7 +1,7 @@
 import { supabase } from './client'
 
 export const STUDENT_CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior']
-export const PROGRAMME_CATEGORIES = ['General', ...STUDENT_CATEGORIES]
+export const PROGRAMME_CATEGORIES = [...STUDENT_CATEGORIES, 'General Cat-A', 'General Cat-B']
 export const PROGRAMME_TYPES = ['On-stage', 'Off-stage']
 export const SESSION_EXPIRY_MS = 8 * 60 * 60 * 1000
 
@@ -310,7 +310,7 @@ export const getTeamCategoryPoints = async () => {
   const studentMap = {}
   students.forEach(s => { studentMap[s.id] = s })
 
-  const categories = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General']
+  const categories = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B']
 
   const teamNameToId = {}
   teams.forEach(t => { teamNameToId[t.name] = t.id })
@@ -322,6 +322,8 @@ export const getTeamCategoryPoints = async () => {
     for (const result of Object.values(latestPerProg)) {
       const prog = progMap[result.programmeId]
       if (!prog) continue
+
+      const catName = prog.category === 'General' ? 'General Cat-A' : prog.category
 
       const placements = [
         result.first && { studentId: result.first.studentId, points: Number(result.first.points) || 0 },
@@ -335,7 +337,7 @@ export const getTeamCategoryPoints = async () => {
         if (student) {
           const studentTeamId = teamNameToId[student.team] || student.team
           if (studentTeamId === team.id) {
-            catPoints[prog.category] = (catPoints[prog.category] || 0) + p.points
+            catPoints[catName] = (catPoints[catName] || 0) + p.points
           }
         }
       }

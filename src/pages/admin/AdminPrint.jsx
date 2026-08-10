@@ -64,14 +64,15 @@ export default function AdminPrint() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  const CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General']
+  const CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B']
   const CATEGORY_COLORS = {
-    Minor:      { light: '#55EFC4', dark: '#00B894' },
-    HS:         { light: '#FF7675', dark: '#D63031' },
-    Premier:    { light: '#74B9FF', dark: '#0984E3' },
-    'Sub Junior': { light: '#A29BFE', dark: '#6C5CE7' },
-    Junior:     { light: '#FDCB6E', dark: '#D68910' },
-    General:    { light: '#D1D5DB', dark: '#9CA3AF' },
+    Minor:          { light: '#55EFC4', dark: '#00B894' },
+    HS:             { light: '#FF7675', dark: '#D63031' },
+    Premier:        { light: '#74B9FF', dark: '#0984E3' },
+    'Sub Junior':   { light: '#A29BFE', dark: '#6C5CE7' },
+    Junior:         { light: '#FDCB6E', dark: '#D68910' },
+    'General Cat-A': { light: '#D1D5DB', dark: '#9CA3AF' },
+    'General Cat-B': { light: '#FFFFFF', dark: '#F5F5F5' },
   }
 
   const teamMap = {}
@@ -122,7 +123,7 @@ export default function AdminPrint() {
             key: `prog-${prog.id}-${s.id}`,
             si: i + 1,
             studentId: s.id,
-            name: s.name,
+            name: s.chestNo ? `${s.name} (#${s.chestNo})` : s.name,
             teamId: s.team,
             team: teamMap[s.team] || s.team || ''
           }))

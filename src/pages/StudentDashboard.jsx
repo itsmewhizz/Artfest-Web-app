@@ -9,6 +9,7 @@ export default function StudentDashboard() {
   const [student, setStudent] = useState(null)
   const [programmes, setProgrammes] = useState([])
   const [name, setName] = useState('')
+  const [chestNo, setChestNo] = useState('')
   const [category, setCategory] = useState('')
   const [photo, setPhoto] = useState(null)
   const [selectedProgs, setSelectedProgs] = useState([])
@@ -40,6 +41,7 @@ export default function StudentDashboard() {
       }
       setStudent(s)
       setName(s.name)
+      setChestNo(s.chestNo || '')
       setCategory(s.class || '')
       setSelectedProgs(s.programmeIds || [])
     }
@@ -73,6 +75,7 @@ export default function StudentDashboard() {
 
     const ok = await updateStudentProfile(studentId, {
       name: name.trim(),
+      chestNo: chestNo.trim(),
       photoURL,
       class: category,
       programmeIds: selectedProgs,
@@ -81,7 +84,7 @@ export default function StudentDashboard() {
 
     if (ok) {
       toast('Profile updated!')
-      setStudent(prev => ({ ...prev, name: name.trim(), photoURL, programmeIds: selectedProgs }))
+      setStudent(prev => ({ ...prev, name: name.trim(), chestNo: chestNo.trim(), photoURL, programmeIds: selectedProgs }))
       setPhoto(null)
     } else {
       toast('Failed to save', 'error')
@@ -114,7 +117,7 @@ export default function StudentDashboard() {
             <StudentAvatar src={student.photoURL} name={student.name} className="w-16 h-16 text-xl" />
             <div>
               <p className="text-mainText font-semibold text-lg">{student.name}</p>
-              <p className="text-mutedText text-sm">{student.class} · {student.team}</p>
+              <p className="text-mutedText text-sm">{student.chestNo ? `Chest No: ${student.chestNo} · ` : ''}{student.class} · {student.team}</p>
             </div>
           </div>
         </div>
@@ -128,6 +131,14 @@ export default function StudentDashboard() {
             className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-4 outline-none border border-secondary/40 focus:border-mainText"
             value={name}
             onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))}
+          />
+
+          <label className="text-mutedText text-sm block mb-1">Chest No</label>
+          <input
+            className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-4 outline-none border border-secondary/40 focus:border-mainText"
+            placeholder="Chest No (e.g. 101)"
+            value={chestNo}
+            onChange={e => setChestNo(e.target.value)}
           />
 
           <label className="text-mutedText text-sm block mb-1">Category</label>

@@ -105,7 +105,7 @@ export default function StudentProfile() {
       <div className="bg-card rounded-2xl p-5 sm:p-6 flex flex-col items-center mb-6 shadow-lg border border-secondary/30">
         <StudentAvatar src={student.photoURL} name={student.name} className="w-20 h-20 sm:w-24 sm:h-24 mb-3" />
         <h2 className="text-mainText font-poppins font-bold text-lg sm:text-xl">{student.name}</h2>
-        <p className="text-mutedText text-sm sm:text-base">{teamMap[student.team] || student.team} · {student.class}</p>
+        <p className="text-mutedText text-sm sm:text-base">{student.chestNo ? `Chest No: ${student.chestNo} · ` : ''}{teamMap[student.team] || student.team} · {student.class}</p>
 
         <div className="w-24 h-24 sm:w-28 sm:h-28 mt-4">
           <CircularProgressbar
@@ -136,7 +136,7 @@ export default function StudentProfile() {
             >
               All
             </button>
-            {['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General'].map(cat => (
+            {['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B'].map(cat => (
               <button
                 key={cat}
                 onClick={() => setCatFilter(cat)}

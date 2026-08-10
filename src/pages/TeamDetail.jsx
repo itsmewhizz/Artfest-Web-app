@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getTeams, getTeamPlacements, getProgrammeById, getStudentsByTeamId, getStudentResults } from '../supabase/queries'
 import { ArrowLeft, Trophy } from 'lucide-react'
 
-const CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General']
+const CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B']
 const CATEGORY_COLORS = {
-  Minor:      { light: '#55EFC4', dark: '#00B894' },
-  HS:         { light: '#FF7675', dark: '#D63031' },
-  Premier:    { light: '#74B9FF', dark: '#0984E3' },
-  'Sub Junior': { light: '#A29BFE', dark: '#6C5CE7' },
-  Junior:     { light: '#FDCB6E', dark: '#D68910' },
-  General:    { light: '#D1D5DB', dark: '#9CA3AF' },
+  Minor:          { light: '#55EFC4', dark: '#00B894' },
+  HS:             { light: '#FF7675', dark: '#D63031' },
+  Premier:        { light: '#74B9FF', dark: '#0984E3' },
+  'Sub Junior':   { light: '#A29BFE', dark: '#6C5CE7' },
+  Junior:         { light: '#FDCB6E', dark: '#D68910' },
+  'General Cat-A': { light: '#D1D5DB', dark: '#9CA3AF' },
+  'General Cat-B': { light: '#FFFFFF', dark: '#F5F5F5' },
 }
 
 export default function TeamDetail() {
@@ -113,7 +114,7 @@ export default function TeamDetail() {
                 <button
                   key={cat}
                   onClick={() => setCatFilter(cat)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition ${catFilter === cat ? 'text-white shadow' : 'bg-secondary/15 text-mutedText'}`}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full transition ${catFilter === cat ? (cat === 'General Cat-B' ? 'text-gray-900 font-bold shadow' : 'text-white shadow') : 'bg-secondary/15 text-mutedText'}`}
                   style={catFilter === cat ? { background: `linear-gradient(135deg, ${colors.light}, ${colors.dark})` } : {}}
                 >
                   {cat}
@@ -151,7 +152,7 @@ export default function TeamDetail() {
                       </div>
                       <div>
                         <p className="text-mainText font-semibold">{student.name}</p>
-                        <p className="text-mutedText text-xs">{student.class}</p>
+                        <p className="text-mutedText text-xs">{student.chestNo ? `Chest No: ${student.chestNo} · ` : ''}{student.class}</p>
                       </div>
                     </div>
                     <span className="text-accent font-bold">{totalPts} pts</span>

@@ -11,6 +11,7 @@ export default function AdminStudents() {
   const [teams, setTeams] = useState([])
   const [programmes, setProgrammes] = useState([])
   const [name, setName] = useState('')
+  const [chestNo, setChestNo] = useState('')
   const [category, setCategory] = useState('')
   const [team, setTeam] = useState('')
   const [studentFilter, setStudentFilter] = useState('')
@@ -37,15 +38,15 @@ export default function AdminStudents() {
     }
     if (editingId) {
       await supabase.from('students').update({
-        name, class: category, team, photoURL: photoURL || undefined,
+        name, chestNo, class: category, team, photoURL: photoURL || undefined,
         programmeIds: selectedProgs, createdAt: new Date().toISOString(),
       }).eq('id', editingId)
     } else {
       await supabase.from('students').insert({
-        name, class: category, team, photoURL, programmeIds: selectedProgs,
+        name, chestNo, class: category, team, photoURL, programmeIds: selectedProgs,
       })
     }
-    setName(''); setCategory(''); setTeam(''); setPhoto(null); setEditingId(null); setSelectedProgs([])
+    setName(''); setChestNo(''); setCategory(''); setTeam(''); setPhoto(null); setEditingId(null); setSelectedProgs([])
     toast(editingId ? 'Student updated!' : 'Student added!')
     getStudents().then(setStudents)
   }
@@ -53,6 +54,7 @@ export default function AdminStudents() {
   const handleEdit = (student) => {
     setEditingId(student.id)
     setName(student.name)
+    setChestNo(student.chestNo || '')
     setCategory(student.class || '')
     setTeam(student.team)
     setSelectedProgs(student.programmeIds || [])
@@ -62,7 +64,7 @@ export default function AdminStudents() {
 
   const cancelEdit = () => {
     setEditingId(null)
-    setName(''); setCategory(''); setTeam(''); setPhoto(null); setSelectedProgs([])
+    setName(''); setChestNo(''); setCategory(''); setTeam(''); setPhoto(null); setSelectedProgs([])
   }
 
   const toggleProg = (progId) => {
@@ -74,8 +76,8 @@ export default function AdminStudents() {
   const teamMap = Object.fromEntries(teams.map(t => [t.id, t.name]))
   const filteredProgrammes = category
     ? programmes.filter(p => p.category === category)
-    : programmes.filter(p => p.category !== 'General')
-  const generalProgrammes = programmes.filter(p => p.category === 'General')
+    : programmes.filter(p => !p.category?.startsWith('General'))
+  const generalProgrammes = programmes.filter(p => p.category?.startsWith('General'))
 
   let progList
   if (programmes.length === 0) {
@@ -113,6 +115,8 @@ export default function AdminStudents() {
         <h3 className="text-mainText font-bold mb-3 text-sm sm:text-base">{editingId ? 'Edit Student' : 'Add New Student'}</h3>
 
         <input className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" placeholder="Full name" value={name} onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))} />
+
+        <input className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" placeholder="Chest No (e.g. 101)" value={chestNo} onChange={e => setChestNo(e.target.value)} />
 
         <select className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" value={category} onChange={e => setCategory(e.target.value)}>
           <option value="">Select Category</option>
@@ -189,7 +193,7 @@ export default function AdminStudents() {
             <StudentAvatar src={s.photoURL} name={s.name} className="w-10 h-10" />
             <div className="flex-1 min-w-0">
               <p className="text-mainText font-medium text-sm sm:text-base truncate">{s.name}</p>
-              <p className="text-mutedText text-xs sm:text-sm">{teamMap[s.team] || s.team} · {s.class}</p>
+              <p className="text-mutedText text-xs sm:text-sm">{s.chestNo ? `Chest No: ${s.chestNo} · ` : ''}{teamMap[s.team] || s.team} · {s.class}</p>
             </div>
             <button onClick={() => handleEdit(s)} className="text-mutedText hover:text-mainText shrink-0">
               <Pencil size={14} className="sm:w-4 sm:h-4" />
