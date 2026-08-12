@@ -32,6 +32,11 @@ CREATE TABLE IF NOT EXISTS public.categories (
 
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 
+-- Table-level privileges (a fresh table has none for anon/authenticated,
+-- so PostgREST returns 42501 before RLS is even consulted).
+GRANT SELECT ON TABLE public.categories TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE public.categories TO authenticated;
+
 DROP POLICY IF EXISTS "public_read_categories" ON public.categories;
 CREATE POLICY "public_read_categories" ON public.categories
   FOR SELECT TO public USING (true);

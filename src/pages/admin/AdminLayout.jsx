@@ -9,7 +9,6 @@ import {
   GalleryHorizontalEnd,
   FileText,
   Printer,
-  Shuffle,
   Layers,
   LogOut,
   Menu,
@@ -28,7 +27,6 @@ const navItems = [
   { label: 'Results', path: '/admin/results', icon: FileText },
   { label: 'Result Poster', path: '/admin/result-poster', icon: Printer },
   { label: 'Print', path: '/admin/print', icon: FileText },
-  { label: 'Lots', path: '/admin/lots', icon: Shuffle },
 ]
 
 export default function AdminLayout() {

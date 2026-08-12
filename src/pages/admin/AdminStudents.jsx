@@ -43,9 +43,20 @@ export default function AdminStudents() {
       }
       if (photoURL) updates.photoURL = photoURL
       const { data: updated, error } = await supabase.from('students').update(updates).eq('id', editingId).select()
-      if (error || !updated || updated.length === 0) {
-        console.error('Student update failed:', error || { message: 'No matching student row' })
-        toast(`Student update failed: ${error?.message || 'No matching student row was found. The edit was cancelled.'}`, 'error')
+      if (error) {
+        console.error('Student update failed:', error)
+        toast(`Student update failed: ${error.message}`, 'error')
+        return
+      }
+      if (!updated || updated.length === 0) {
+        const { data: existing } = await supabase.from('students').select('id').eq('id', editingId).maybeSingle()
+        if (existing) {
+          console.error('Student update failed:', { message: 'Row exists but the update was rejected by database permissions (RLS).' })
+          toast('Student update failed: the database rejected the update (permission denied). If the failure persists, log out of Admin and log back in.', 'error')
+        } else {
+          console.error('Student update failed:', { message: 'No matching student row. The edited student may have been deleted.' })
+          toast('Student update failed: the student no longer exists. Reload the panel and try again.', 'error')
+        }
         return
       }
     } else {

@@ -22,7 +22,6 @@ import AdminStudents from './pages/admin/AdminStudents'
 import AdminPrint from './pages/admin/AdminPrint'
 import AdminResults from './pages/admin/AdminResults'
 import AdminResultPoster from './pages/admin/AdminResultPoster'
-import AdminLots from './pages/admin/AdminLots'
 import LotsAccess from './pages/LotsAccess'
 import LotsDraw from './pages/LotsDraw'
 import AdminCategories from './pages/admin/AdminCategories'
@@ -81,7 +80,6 @@ function App() {
             <Route path="print" element={<AdminPrint />} />
             <Route path="results" element={<AdminResults />} />
             <Route path="result-poster" element={<AdminResultPoster />} />
-            <Route path="lots" element={<AdminLots />} />
             <Route path="categories" element={<AdminCategories />} />
           </Route>
           <Route path="/lots" element={<LotsAccess />} />
