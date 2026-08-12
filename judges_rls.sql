@@ -16,7 +16,7 @@
 --    Add or remove emails as needed, separated by commas.
 -- ------------------------------------------------------------
 DO $$
-DECLARE judge_emails text[] := ARRAY['judgehere1@fest.com','judgehere2@fest.com'];
+DECLARE judge_emails text[] := ARRAY['judge1here@fest.com','judgehere2@fest.com'];
 BEGIN
   UPDATE auth.users
   SET raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
