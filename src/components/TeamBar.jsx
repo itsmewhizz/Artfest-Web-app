@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import TeamBreakdown from './TeamBreakdown'
+import TeamBreakdown, { shortCategoryLabel } from './TeamBreakdown'
 
 export const CATEGORY_COLORS = {
   Minor:          { light: '#55EFC4', dark: '#00B894' },
@@ -107,7 +107,7 @@ export default function TeamBar({ team, categories, displayPoints, barHeight, is
                         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-1">
                           {showBoth && (
                             <span className={`text-[8px] sm:text-[9px] font-semibold ${textColor} drop-shadow-sm leading-tight`}>
-                              {cat}
+                              {shortCategoryLabel(cat)}
                             </span>
                           )}
                           <span className={`text-[9px] sm:text-[10px] font-bold ${textColor} drop-shadow-sm leading-tight`}>

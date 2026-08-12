@@ -91,8 +91,16 @@ export default function Students() {
           <div
             key={student.id}
             onClick={() => navigate(`/students/${student.id}`)}
-            className="bg-oceanTint rounded-xl p-4 flex items-center gap-4 cursor-pointer border border-white/40 shadow-md shadow-black/25 hover:shadow-xl hover:shadow-black/30 hover:-translate-y-0.5 hover:brightness-105 active:scale-[0.99] transition-all duration-200"
+            className="relative bg-oceanTint rounded-xl p-4 flex items-center gap-4 cursor-pointer border border-white/40 shadow-md shadow-black/25 hover:shadow-xl hover:shadow-black/30 hover:-translate-y-0.5 hover:brightness-105 active:scale-[0.99] transition-all duration-200"
           >
+            <span
+              className={`absolute -top-2 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-md ${
+                student.chestNo ? 'bg-primary text-white' : 'bg-black/20 text-[#1A4562]'
+              }`}
+              title="Chest No"
+            >
+              {student.chestNo ? `#${student.chestNo}` : '—'}
+            </span>
             <StudentAvatar src={student.photoURL} name={student.name} className="w-10 h-10 sm:w-12 sm:h-12" />
             <div className="min-w-0">
               <p className="text-[#0F2A3D] font-medium text-sm sm:text-base truncate">{student.name}</p>

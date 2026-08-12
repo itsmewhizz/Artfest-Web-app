@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  ArrowLeft,
 } from 'lucide-react'
 import IsraLogo from '../../components/IsraLogo'
 
@@ -32,6 +33,8 @@ export default function AdminLayout() {
   const [open, setOpen] = useState(false)
   const [adminEmail, setAdminEmail] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const isDashboard = location.pathname === '/admin'
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setAdminEmail(data.user?.email || ''))
@@ -129,6 +132,14 @@ export default function AdminLayout() {
       {/* Main content */}
       <main className="lg:pl-72 pt-14 lg:pt-0">
         <div className="p-4 md:p-6 lg:p-8">
+          {!isDashboard && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="flex items-center gap-2 text-mutedText hover:text-mainText transition mb-4 text-sm sm:text-base"
+            >
+              <ArrowLeft size={18} /> Back
+            </button>
+          )}
           <Outlet />
         </div>
       </main>

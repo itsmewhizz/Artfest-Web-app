@@ -12,6 +12,12 @@ const CATEGORY_COLORS = {
   'General Cat-B': { light: '#FFFFFF', dark: '#F5F5F5' },
 }
 
+// Shortened labels used ONLY inside the team points stat, so the stacked bar / breakdown
+// stays legible. Everywhere else the full "General Cat-A" / "General Cat-B" text is used.
+export const shortCategoryLabel = cat =>
+  cat === 'General Cat-A' ? 'Gen Cat-A' :
+  cat === 'General Cat-B' ? 'Gen Cat-B' : cat
+
 export default function TeamBreakdown({ team, isExpanded, onToggle, children, onViewDetails }) {
   const [placements, setPlacements] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -74,7 +80,7 @@ export default function TeamBreakdown({ team, isExpanded, onToggle, children, on
                         className={`px-3 py-1 text-xs font-semibold rounded-full transition ${catFilter === cat ? (cat === 'General Cat-B' ? 'text-gray-900 font-bold shadow' : 'text-white shadow') : 'bg-white/10 text-mutedText'}`}
                         style={catFilter === cat ? { background: `linear-gradient(135deg, ${colors.light}, ${colors.dark})` } : {}}
                       >
-                        {cat}
+                        {shortCategoryLabel(cat)}
                       </button>
                     )
                   })}
