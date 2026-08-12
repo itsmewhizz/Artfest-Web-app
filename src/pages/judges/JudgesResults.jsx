@@ -33,6 +33,7 @@ export default function JudgesResults() {
   const [captchaId, setCaptchaId] = useState('')
   const [captchaExpiresAt, setCaptchaExpiresAt] = useState('')
   const [captchaLoading, setCaptchaLoading] = useState(false)
+  const [vLoading, setVLoading] = useState(false)
   const [vCaptcha, setVCaptcha] = useState('')
   const [vError, setVError] = useState('')
   const [editError, setEditError] = useState('')
@@ -133,6 +134,12 @@ export default function JudgesResults() {
         if (error) {
           lastError = error
           console.error('judge_create_captcha RPC failed:', error)
+          if (error.message?.includes('404') || error.details?.includes('rpc') || error.code === 'PGRST100') {
+            setVError('Security code service unavailable. Run judge_reverify_flow.sql in Supabase to install judge_create_captcha().')
+            setCaptchaLoading(false)
+            clearCaptchaState()
+            return false
+          }
         } else if (data?.error) {
           lastError = new Error(data.error)
           console.error('judge_create_captcha returned error payload:', data)
@@ -230,13 +237,18 @@ export default function JudgesResults() {
       return
     }
 
+    if (!vName.trim() || !vPassword) {
+      setVError('Please enter both judge email and password.')
+      return
+    }
+
     setVLoading(true)
     const { data, error } = await verifyJudgeClient.auth.signInWithPassword({ email: vName.trim(), password: vPassword })
     setVLoading(false)
     const role = data?.user?.app_metadata?.role
     if (error || !data?.user || role !== 'judge') {
       console.error('Judge reverify sign-in failed:', error || data)
-      setVError('Invalid judge name or password.')
+      setVError(error?.message || 'Invalid judge name or password.')
       setVCaptcha('')
       await loadCaptcha()
       return
