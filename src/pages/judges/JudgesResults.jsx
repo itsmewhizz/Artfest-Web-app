@@ -588,7 +588,11 @@ export default function JudgesResults() {
                   <div className="flex gap-2">
                     <select className="flex-1 bg-black/20 text-mainText rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-sm sm:text-base" value={v.student} onChange={e => v.setStudent(e.target.value)}>
                       <option value="">Select Student</option>
-                      {editStudentOptions.map(s => <option key={s.id} value={s.id}>{s.name}{s.chestNo ? ` (#${s.chestNo})` : ''}</option>)}
+                      {editStudentOptions.map(s => (
+                        <option key={s.id} value={s.id} label={s.name}>
+                          {s.name}{s.chestNo ? ` (#${s.chestNo})` : ''}
+                        </option>
+                      ))}
                     </select>
                     <input
                       type="number"
