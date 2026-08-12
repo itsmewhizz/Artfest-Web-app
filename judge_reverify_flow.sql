@@ -65,8 +65,9 @@ create policy "admins_select_edit_log" on public.result_edit_log
 
 -- ------------------------------------------------------------
 -- 3. judge_create_captcha() - issue a server-side captcha
---    Returns { challenge_id, captcha }. Only a logged-in judge
---    may request one.
+--    Returns { challenge_id, captcha, expires_at }. Only a logged-in judge
+--    may request one. expires_at lets the client show/auto-refresh the code
+--    before it goes stale.
 -- ------------------------------------------------------------
 create or replace function public.judge_create_captcha()
 returns jsonb
@@ -92,7 +93,11 @@ begin
   values (auth.uid(), v_captcha)
   returning id into v_id;
 
-  return jsonb_build_object('challenge_id', v_id, 'captcha', v_captcha);
+  return jsonb_build_object(
+    'challenge_id', v_id,
+    'captcha', v_captcha,
+    'expires_at', to_char(now() + interval '5 minutes', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
+  );
 end;
 $$;
 

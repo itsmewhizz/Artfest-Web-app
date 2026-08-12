@@ -31,9 +31,10 @@ export default function JudgesResults() {
   const [vShowPassword, setVShowPassword] = useState(false)
   const [captcha, setCaptcha] = useState('')
   const [captchaId, setCaptchaId] = useState('')
+  const [captchaExpiresAt, setCaptchaExpiresAt] = useState('')
+  const [captchaLoading, setCaptchaLoading] = useState(false)
   const [vCaptcha, setVCaptcha] = useState('')
   const [vError, setVError] = useState('')
-  const [vLoading, setVLoading] = useState(false)
   const [editError, setEditError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -101,14 +102,76 @@ export default function JudgesResults() {
     setEditProg(null)
   }
 
-  const loadCaptcha = async () => {
-    const { data, error } = await judgeClient.rpc('judge_create_captcha')
-    if (error || data?.error) {
-      setVError('Could not load the security code. Please try again.')
-      return
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+  const clearCaptchaState = () => {
+    setCaptcha('')
+    setCaptchaId('')
+    setCaptchaExpiresAt('')
+    setVCaptcha('')
+  }
+
+  const loadCaptcha = async ({ retries = 2, delayMs = 450 } = {}) => {
+    setVError('')
+    setCaptchaLoading(true)
+
+    const sessionResp = await judgeClient.auth.getSession()
+    if (!sessionResp?.data?.session?.user) {
+      const missingSessionError = new Error('No authenticated judge session available')
+      console.error('judge_create_captcha prevented by missing session:', missingSessionError)
+      setVError('Your judge session is not available. Please refresh or log in again.')
+      setCaptchaLoading(false)
+      clearCaptchaState()
+      return false
     }
-    setCaptcha(data.captcha)
-    setCaptchaId(data.challenge_id)
+
+    let lastError = null
+
+    for (let attempt = 1; attempt <= retries; attempt += 1) {
+      try {
+        const { data, error } = await judgeClient.rpc('judge_create_captcha')
+        if (error) {
+          lastError = error
+          console.error('judge_create_captcha RPC failed:', error)
+        } else if (data?.error) {
+          lastError = new Error(data.error)
+          console.error('judge_create_captcha returned error payload:', data)
+          if (data.error === 'not_authorized') {
+            setVError('Judge session is invalid. Please refresh or log in again.')
+            setCaptchaLoading(false)
+            clearCaptchaState()
+            return false
+          }
+        } else if (data?.challenge_id && data?.captcha) {
+          setCaptcha(data.captcha)
+          setCaptchaId(data.challenge_id)
+          setCaptchaExpiresAt(data.expires_at || '')
+          setVError('')
+          setCaptchaLoading(false)
+          return true
+        } else {
+          lastError = new Error('Unexpected captcha response')
+          console.error('Unexpected judge_create_captcha response:', data)
+        }
+      } catch (err) {
+        lastError = err
+        console.error('Failed to load captcha attempt', attempt, err)
+      }
+
+      if (attempt < retries) {
+        await sleep(delayMs)
+      }
+    }
+
+    setCaptcha('')
+    setCaptchaId('')
+    setCaptchaExpiresAt('')
+    setVError('Could not load the security code. Please try again.')
+    if (lastError) {
+      console.error('Captcha load failed after retries:', lastError)
+    }
+    setCaptchaLoading(false)
+    return false
   }
 
   const proceedToVerify = async () => {
@@ -117,50 +180,82 @@ export default function JudgesResults() {
     setVCaptcha('')
     setVError('')
     setVShowPassword(false)
-    setCaptcha('')
-    setCaptchaId('')
+    clearCaptchaState()
     setPromptOpen(false)
     setVerifyOpen(true)
     await loadCaptcha()
   }
 
+  useEffect(() => {
+    if (!verifyOpen || !captchaExpiresAt) return
+
+    const expiresAt = new Date(captchaExpiresAt)
+    if (Number.isNaN(expiresAt.getTime())) return
+
+    const now = new Date()
+    const msUntilExpiry = expiresAt.getTime() - now.getTime()
+    if (msUntilExpiry <= 0) {
+      setVError('Security code expired. Generating a new one.')
+      loadCaptcha().catch(err => console.error('Failed to refresh expired captcha:', err))
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setVError('Security code expired. Generating a new one.')
+      loadCaptcha().catch(err => console.error('Failed to refresh expired captcha:', err))
+    }, msUntilExpiry + 100)
+
+    return () => clearTimeout(timer)
+  }, [verifyOpen, captchaExpiresAt])
+
   const closeVerify = () => {
     setVerifyOpen(false)
     setEditProg(null)
-    setCaptcha('')
-    setCaptchaId('')
+    clearCaptchaState()
   }
 
   const handleVerify = async () => {
     setVError('')
+
+    if (!captchaId) {
+      setVError('Security code session expired. Generating a new code now.')
+      await loadCaptcha()
+      return
+    }
+
     if (vCaptcha.trim().toUpperCase() !== captcha) {
       setVError('Incorrect CAPTCHA. Please try again.')
       setVCaptcha('')
       await loadCaptcha()
       return
     }
+
     setVLoading(true)
     const { data, error } = await verifyJudgeClient.auth.signInWithPassword({ email: vName.trim(), password: vPassword })
     setVLoading(false)
     const role = data?.user?.app_metadata?.role
     if (error || !data?.user || role !== 'judge') {
+      console.error('Judge reverify sign-in failed:', error || data)
       setVError('Invalid judge name or password.')
       setVCaptcha('')
       await loadCaptcha()
       return
     }
+
     setVerifyOpen(false)
     openEdit(editProg)
   }
 
-  const openEdit = (prog) => {
+  const openEdit = (prog, preserveFields = false) => {
     const latest = savedResults.find(r => r.programmeId === prog.id)
-    setFirst(latest?.first?.studentId || '')
-    setFirstPoints(latest?.first?.points != null ? String(latest.first.points) : '')
-    setSecond(latest?.second?.studentId || '')
-    setSecondPoints(latest?.second?.points != null ? String(latest.second.points) : '')
-    setThird(latest?.third?.studentId || '')
-    setThirdPoints(latest?.third?.points != null ? String(latest.third.points) : '')
+    if (!preserveFields) {
+      setFirst(latest?.first?.studentId || '')
+      setFirstPoints(latest?.first?.points != null ? String(latest.first.points) : '')
+      setSecond(latest?.second?.studentId || '')
+      setSecondPoints(latest?.second?.points != null ? String(latest.second.points) : '')
+      setThird(latest?.third?.studentId || '')
+      setThirdPoints(latest?.third?.points != null ? String(latest.third.points) : '')
+    }
     setEditError('')
     setEditOpen(true)
   }
@@ -168,8 +263,7 @@ export default function JudgesResults() {
   const closeEdit = () => {
     setEditOpen(false)
     setEditProg(null)
-    setCaptcha('')
-    setCaptchaId('')
+    clearCaptchaState()
     resetPlacements()
   }
 
@@ -445,12 +539,21 @@ export default function JudgesResults() {
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <button onClick={closeVerify} disabled={vLoading} className="bg-white/10 text-mainText rounded-xl p-3 font-semibold text-sm flex-1 hover:bg-white/15 transition">
                 Cancel
               </button>
               <button onClick={handleVerify} disabled={vLoading} className="bg-primary text-white rounded-xl p-3 font-semibold text-sm flex-1 hover:bg-primary/90 transition">
                 {vLoading ? 'Verifying...' : 'Verify & Edit'}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => loadCaptcha({ retries: 2, delayMs: 450 })}
+                disabled={captchaLoading}
+                className="flex-1 bg-secondary/15 text-mainText rounded-xl p-3 font-semibold text-sm hover:bg-secondary/20 transition"
+              >
+                {captchaLoading ? 'Refreshing...' : 'Reload security code'}
               </button>
             </div>
           </div>
