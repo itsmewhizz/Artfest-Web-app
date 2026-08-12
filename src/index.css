@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,500&family=Poppins:wght@400;600;700&family=Inter:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,7 +13,7 @@
 body {
   background-color: rgb(var(--main-background));
   color: rgb(var(--main-text));
-  font-family: 'Inter', sans-serif;
+  font-family: 'Sora', sans-serif;
   min-height: 100vh;
 }
 
@@ -343,7 +343,7 @@ body {
 
 .lot-card-label {
   position: relative;
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Sora', sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.35em;
   text-transform: uppercase;
@@ -357,7 +357,7 @@ body {
 }
 
 .lot-card-number {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: clamp(1.75rem, 7vw, 3rem);
   font-weight: 700;
   color: #0F2A3D;

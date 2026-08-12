@@ -19,9 +19,9 @@ export default {
         gold: 'rgb(var(--accent) / <alpha-value>)',
       },
       fontFamily: {
-        poppins: ['Poppins', 'sans-serif'],
-        inter: ['Inter', 'sans-serif'],
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        poppins: ['Sora', 'sans-serif'],
+        inter: ['Sora', 'sans-serif'],
+        display: ['Sora', 'sans-serif'],
       },
     },
   },
