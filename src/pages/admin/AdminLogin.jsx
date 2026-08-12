@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { Eye, EyeOff } from 'lucide-react'
@@ -10,15 +10,6 @@ export default function AdminLogin() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-
-  // If a session already exists while arriving at /admin/login (e.g. via the phone
-  // back button or a stale history entry), drop straight through to the dashboard.
-  // The login page should only stick around when no session is active.
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate('/admin', { replace: true })
-    })
-  }, [navigate])
 
   const handleLogin = async () => {
     setLoading(true)

@@ -133,12 +133,14 @@ export default function AdminLayout() {
       <main className="lg:pl-72 pt-14 lg:pt-0">
         <div className="p-4 md:p-6 lg:p-8">
           {!isDashboard && (
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex items-center gap-2 text-mutedText hover:text-mainText transition mb-4 text-sm sm:text-base"
-            >
-              <ArrowLeft size={18} /> Back
-            </button>
+            <div className="mb-4">
+              <button
+                onClick={() => navigate('/admin')}
+                className="inline-flex items-center gap-2 bg-card border border-secondary/40 rounded-xl px-4 py-2 text-sm sm:text-base font-semibold text-mainText shadow-sm hover:bg-white/10 hover:border-mainText/40 transition"
+              >
+                <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px]" /> Back to Dashboard
+              </button>
+            </div>
           )}
           <Outlet />
         </div>

@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { supabase } from './supabase/client'
 import BottomNav from './components/BottomNav'
 import Home from './pages/Home'
 import Teams from './pages/Teams'
@@ -28,9 +30,30 @@ import JudgesRoute from './components/JudgesRoute'
 import Starfield from './components/Starfield'
 import HamburgerMenu from './components/HamburgerMenu'
 
+// Guarantees the admin login page is unreachable while a session is active —
+// no matter how the browser history got there (back/back-back, stale entries,
+// the hamburger "Admin" link). The login page only stays when the admin is
+// signed out after clicking Logout.
+function AdminSessionRedirect() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (location.pathname !== '/admin/login') return
+    let cancelled = false
+    supabase.auth.getUser().then(({ data }) => {
+      if (!cancelled && data.user) navigate('/admin', { replace: true })
+    })
+    return () => { cancelled = true }
+  }, [location.pathname, navigate])
+
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <AdminSessionRedirect />
       <div className="min-h-screen bg-mainBackground pb-20 text-mainText">
         <Starfield />
         <div className="relative z-10">

@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate('/admin/login')
+      if (!session) navigate('/admin/login', { replace: true })
       else setUser(session.user)
       setLoading(false)
     })
