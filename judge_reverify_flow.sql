@@ -155,7 +155,7 @@ begin
   select exists (
     select 1 from auth.users
     where id = auth.uid()
-      and encrypted_password = crypt(p_judge_password, encrypted_password)
+      and encrypted_password = crypt(p_judge_password::text, encrypted_password::text)
   ) into v_judge_ok;
   if not v_judge_ok then
     return jsonb_build_object('error', 'invalid_judge');
