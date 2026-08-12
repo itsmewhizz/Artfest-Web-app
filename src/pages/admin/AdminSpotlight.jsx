@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
 import { getSpotlight } from '../../supabase/queries'
-import { Upload, Trash2, ToggleLeft, ToggleRight, Pencil, X } from 'lucide-react'
+import { Upload, ToggleLeft, ToggleRight, X, Pencil, Trash2 } from 'lucide-react'
+import KebabMenu from '../../components/KebabMenu'
 import { useToast } from '../../components/Toast'
 
 const NEW_ALBUM = '__new__'
@@ -153,12 +154,12 @@ export default function AdminSpotlight() {
             >
               {img.isFeatured ? <ToggleRight size={18} className="sm:w-5 sm:h-5" /> : <ToggleLeft size={18} className="sm:w-5 sm:h-5" />}
             </button>
-            <button onClick={() => startEdit(img)} className="text-mutedText hover:text-mainText shrink-0" title="Edit caption / album">
-              <Pencil size={16} className="sm:w-[18px] sm:h-[18px]" />
-            </button>
-            <button onClick={() => handleDelete(img.id)} className="text-red-500 shrink-0" title="Delete">
-              <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
-            </button>
+            <KebabMenu
+              items={[
+                { label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(img) },
+                { label: 'Delete', icon: <Trash2 size={15} />, danger: true, onClick: () => handleDelete(img.id) },
+              ]}
+            />
           </div>
         ))}
       </div>

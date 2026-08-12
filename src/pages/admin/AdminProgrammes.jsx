@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../../supabase/queries'
-import { Plus, Pencil, X, Printer } from 'lucide-react'
+import { Plus, X, Printer, Pencil } from 'lucide-react'
+import KebabMenu from '../../components/KebabMenu'
 import { useToast } from '../../components/Toast'
 
 export default function AdminProgrammes() {
@@ -17,6 +18,7 @@ export default function AdminProgrammes() {
   const [resultNoMap, setResultNoMap] = useState({})
   const [categories, setCategories] = useState(PROGRAMME_CATEGORIES)
   const [students, setStudents] = useState([])
+  const [showAdd, setShowAdd] = useState(false)
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
   const [programmeType, setProgrammeType] = useState('')
@@ -59,7 +61,7 @@ export default function AdminProgrammes() {
       const rpcMsg = noErr?.message || rpcData?.error
       if (rpcMsg) return toast('Programme added but result number not saved: ' + rpcMsg, 'error')
     }
-    setName(''); setCategory(''); setProgrammeType(''); setAddResultNo('')
+    setName(''); setCategory(''); setProgrammeType(''); setAddResultNo(''); setShowAdd(false)
     toast('Programme added!')
     loadData()
   }
@@ -152,34 +154,14 @@ export default function AdminProgrammes() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Programmes</h2>
-        <button onClick={() => navigate('/admin/print')} className="flex items-center gap-2 bg-success hover:bg-success/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
-          <Printer size={16} className="sm:w-[18px] sm:h-[18px]" /> Print
-        </button>
-      </div>
-
-      <div className="bg-card rounded-2xl p-4 mb-6 shadow-sm border border-secondary/30">
-        <h3 className="text-mainText font-bold mb-3 text-sm sm:text-base">Add New Programme</h3>
-        <input ref={addNameRef} className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" placeholder="Programme name" value={name} onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCatRef.current?.focus() } }} />
-        <select ref={addCatRef} className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" value={category} onChange={e => setCategory(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addNoRef.current?.focus() } }}>
-          <option value="">Select Category</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" value={programmeType} onChange={e => setProgrammeType(e.target.value)}>
-          <option value="">Select Type</option>
-          {PROGRAMME_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
-        </select>
-        <input
-          ref={addNoRef}
-          type="number"
-          className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base"
-          placeholder="Result number"
-          value={addResultNo}
-          onChange={e => setAddResultNo(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
-        />
-        <button onClick={handleAdd} className="w-full bg-primary text-white rounded-xl p-3 font-semibold flex items-center justify-center gap-2 text-sm sm:text-base">
-          <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Programme
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
+            <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Programme
+          </button>
+          <button onClick={() => navigate('/admin/print')} className="flex items-center gap-2 bg-success hover:bg-success/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
+            <Printer size={16} className="sm:w-[18px] sm:h-[18px]" /> Print
+          </button>
+        </div>
       </div>
 
       <div className="flex justify-center gap-1.5 sm:gap-2 mb-3 flex-wrap">
@@ -232,19 +214,84 @@ export default function AdminProgrammes() {
               <p className="text-mutedText text-xs sm:text-sm">{prog.category} · {(prog.programmeType || prog.type || 'Unspecified')}</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
-              <button onClick={() => startEdit(prog)} className="text-mutedText hover:text-mainText transition">
-                <Pencil size={14} className="sm:w-4 sm:h-4" />
-              </button>
               <button
                 onClick={() => toggleFinished(prog)}
                 className={`relative w-12 h-6 sm:w-14 sm:h-7 rounded-full transition-colors duration-300 ${prog.isFinished ? 'bg-green-500' : 'bg-white/20'}`}
+                title={prog.isFinished ? 'Finished' : 'Not finished'}
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full shadow transition-transform duration-300 ${prog.isFinished ? 'translate-x-5 sm:translate-x-7' : ''}`} />
               </button>
+              <KebabMenu
+                items={[{ label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(prog) }]}
+              />
             </div>
           </div>
         ))}
       </div>
+
+      {/* Add Modal */}
+      {showAdd && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#CBDDE9] rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-black font-bold text-lg">Add New Programme</h3>
+              <button onClick={() => setShowAdd(false)} className="text-black/60 hover:text-black transition">
+                <X size={20} />
+              </button>
+            </div>
+
+            <label className="text-black text-sm block mb-1">Programme Name</label>
+            <input
+              ref={addNameRef}
+              className="w-full bg-white text-black rounded-xl p-3 mb-3 outline-none border border-black/20 focus:border-black"
+              placeholder="Programme name"
+              value={name}
+              onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCatRef.current?.focus() } }}
+            />
+
+            <label className="text-black text-sm block mb-1">Category</label>
+            <select
+              ref={addCatRef}
+              className="w-full bg-white text-black rounded-xl p-3 mb-3 outline-none border border-black/20 focus:border-black"
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addNoRef.current?.focus() } }}
+            >
+              <option value="">Select Category</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <label className="text-black text-sm block mb-1">Type</label>
+            <select
+              className="w-full bg-white text-black rounded-xl p-3 mb-3 outline-none border border-black/20 focus:border-black"
+              value={programmeType}
+              onChange={e => setProgrammeType(e.target.value)}
+            >
+              <option value="">Select Type</option>
+              {PROGRAMME_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+            </select>
+
+            <label className="text-black text-sm block mb-1">Result Number</label>
+            <input
+              ref={addNoRef}
+              type="number"
+              className="w-full bg-white text-black rounded-xl p-3 mb-3 outline-none border border-black/20 focus:border-black"
+              placeholder="Result number"
+              value={addResultNo}
+              onChange={e => setAddResultNo(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
+            />
+
+            <button
+              onClick={handleAdd}
+              className="w-full bg-primary text-white rounded-xl p-3 font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition"
+            >
+              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Programme
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingId && (

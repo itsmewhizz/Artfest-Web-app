@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
 import { getTeamCategoryPoints } from '../../supabase/queries'
-import { Trophy, Medal, Star, Pencil, X, Check } from 'lucide-react'
+import { X, Check, Pencil } from 'lucide-react'
 import TeamBreakdown from '../../components/TeamBreakdown'
+import KebabMenu from '../../components/KebabMenu'
 import { useToast } from '../../components/Toast'
 
 const TEAM_COLORS = [
@@ -13,6 +14,7 @@ const TEAM_COLORS = [
 
 export default function AdminTeams() {
   const [teamData, setTeamData] = useState([])
+  const [students, setStudents] = useState([])
   const [expandedTeam, setExpandedTeam] = useState(null)
   const [editing, setEditing] = useState(null)
   const [editName, setEditName] = useState('')
@@ -25,9 +27,12 @@ export default function AdminTeams() {
       const sorted = [...data].sort((a, b) => b.totalPoints - a.totalPoints)
       setTeamData(sorted)
     })
+    supabase.from('students').select('id, team').then(({ data }) => setStudents(data || []))
   }
 
   useEffect(() => { load() }, [])
+
+  const memberCount = (teamId) => (students || []).filter(s => s.team === teamId).length
 
   const startEdit = (team) => {
     setEditing(team)
@@ -77,25 +82,12 @@ export default function AdminTeams() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 sm:gap-4 shrink-0 ml-2">
-                  <div className="text-center">
-                    <Trophy size={14} className="sm:w-[18px] sm:h-[18px] text-accent mx-auto" />
-                    <span className="text-mainText font-bold text-[11px] sm:text-sm block">{team.firstPlaceCount || 0}</span>
-                  </div>
-                  <div className="text-center">
-                    <Medal size={14} className="sm:w-[18px] sm:h-[18px] text-slate-400 mx-auto" />
-                    <span className="text-mainText font-bold text-[11px] sm:text-sm block">{team.secondPlaceCount || 0}</span>
-                  </div>
-                  <div className="text-center">
-                    <Star size={14} className="sm:w-[18px] sm:h-[18px] text-amber-600 mx-auto" />
-                    <span className="text-mainText font-bold text-[11px] sm:text-sm block">{team.thirdPlaceCount || 0}</span>
-                  </div>
-                  <button
-                    onClick={e => { e.stopPropagation(); startEdit(team) }}
-                    className="text-mutedText hover:text-mainText transition p-1"
-                    title="Edit team"
-                  >
-                    <Pencil size={16} className="sm:w-[18px] sm:h-[18px]" />
-                  </button>
+                  <span className="text-mainText font-bold text-[11px] sm:text-sm bg-secondary/20 rounded-full px-3 py-1.5">
+                    {memberCount(team.id)} members
+                  </span>
+                  <KebabMenu
+                    items={[{ label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(team) }]}
+                  />
                 </div>
               </div>
             </TeamBreakdown>
