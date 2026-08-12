@@ -44,15 +44,20 @@ export default function AdminProgrammes() {
 
   const handleAdd = async () => {
     if (!name || !category || !programmeType) return toast('Fill all fields', 'error')
-    const { data: newProg, error: progErr } = await supabase.from('programmes').insert({ name, category, programmeType, isFinished: false }).select('id').single()
-    if (progErr) return toast('Failed: ' + progErr.message, 'error')
+    const { data: newProg, error: progErr } = await supabase.from('programmes').insert({ name, category, programmeType, isFinished: false }).select('id')
+    if (progErr || !newProg || newProg.length === 0) {
+      console.error('Programme add failed:', progErr || { message: 'Insert returned no rows (RLS).' })
+      return toast('Failed to add programme: ' + (progErr?.message || 'the database rejected the insert (permission denied).'), 'error')
+    }
+    const addedId = newProg[0].id
     if (addResultNo) {
-      const { error: noErr } = await supabase.rpc('admin_set_result_no', {
-        p_programme_id: newProg.id,
+      const { data: rpcData, error: noErr } = await supabase.rpc('admin_set_result_no', {
+        p_programme_id: addedId,
         p_programme_name: name,
         p_result_no: Number(addResultNo),
       })
-      if (noErr) return toast('Programme added but result number not saved: ' + noErr.message, 'error')
+      const rpcMsg = noErr?.message || rpcData?.error
+      if (rpcMsg) return toast('Programme added but result number not saved: ' + rpcMsg, 'error')
     }
     setName(''); setCategory(''); setProgrammeType(''); setAddResultNo('')
     toast('Programme added!')
@@ -64,8 +69,9 @@ export default function AdminProgrammes() {
     setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: !originalStatus } : p))
 
     try {
-      const { error } = await supabase.from('programmes').update({ isFinished: !originalStatus }).eq('id', prog.id)
+      const { data: updated, error } = await supabase.from('programmes').update({ isFinished: !originalStatus }).eq('id', prog.id).select('id')
       if (error) throw error
+      if (!updated || updated.length === 0) throw new Error('the database rejected the update (permission denied)')
     } catch (err) {
       setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: originalStatus } : p))
       toast('Failed to update status: ' + err.message, 'error')
@@ -88,18 +94,22 @@ export default function AdminProgrammes() {
 
   const handleEditSave = async () => {
     if (!editName || !editCategory || !editProgrammeType) return toast('Fill all fields', 'error')
-    const { error: progErr } = await supabase.from('programmes').update({
+    const { data: updated, error: progErr } = await supabase.from('programmes').update({
       name: editName, category: editCategory, programmeType: editProgrammeType, isFinished: editFinished,
-    }).eq('id', editingId)
-    if (progErr) return toast('Failed to update programme: ' + progErr.message, 'error')
+    }).eq('id', editingId).select('id')
+    if (progErr || !updated || updated.length === 0) {
+      console.error('Programme update failed:', progErr || { message: 'Update returned no rows (RLS).' })
+      return toast('Failed to update programme: ' + (progErr?.message || 'the database rejected the update (permission denied).'), 'error')
+    }
 
     if (editResultNo) {
-      const { error: noErr } = await supabase.rpc('admin_set_result_no', {
+      const { data: rpcData, error: noErr } = await supabase.rpc('admin_set_result_no', {
         p_programme_id: editingId,
         p_programme_name: editName,
         p_result_no: Number(editResultNo),
       })
-      if (noErr) return toast('Failed to save result number: ' + noErr.message, 'error')
+      const rpcMsg = noErr?.message || rpcData?.error
+      if (rpcMsg) return toast('Failed to save result number: ' + rpcMsg, 'error')
     }
 
     toast('Programme updated!')

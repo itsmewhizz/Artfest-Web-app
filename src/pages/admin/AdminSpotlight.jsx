@@ -78,8 +78,9 @@ export default function AdminSpotlight() {
     setImages(prev => prev.map(i => i.id === img.id ? { ...i, isFeatured: !originalStatus } : i))
 
     try {
-      const { error } = await supabase.from('spotlight').update({ isFeatured: !originalStatus }).eq('id', img.id)
+      const { data: updated, error } = await supabase.from('spotlight').update({ isFeatured: !originalStatus }).eq('id', img.id).select('id')
       if (error) throw error
+      if (!updated || updated.length === 0) throw new Error('the database rejected the update (permission denied)')
     } catch (err) {
       setImages(prev => prev.map(i => i.id === img.id ? { ...i, isFeatured: originalStatus } : i))
       toast('Failed to update featured status: ' + err.message, 'error')

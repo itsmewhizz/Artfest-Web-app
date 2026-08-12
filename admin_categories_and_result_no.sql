@@ -91,7 +91,11 @@ AS $$
 DECLARE
   v_id uuid;
 BEGIN
-  IF NOT public.is_admin() THEN
+  -- Any signed-in admin/judge may set the display number. Like the relaxed
+  -- table policies (see fix_admin_rls_audit.sql), this intentionally does
+  -- NOT depend on the JWT `role` claim, which may be missing from tokens
+  -- issued before the judges_rls.sql migration.
+  IF auth.uid() IS NULL THEN
     RETURN jsonb_build_object('error', 'not_authorized');
   END IF;
 
