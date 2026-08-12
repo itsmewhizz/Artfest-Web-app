@@ -15,10 +15,11 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false)
 
   const loadCounts = async () => {
-    const [students, teams, programmes] = await Promise.all([
+    const [students, teams, programmes, categories] = await Promise.all([
       countRows('students'),
       countRows('teams'),
       countRows('programmes'),
+      countRows('categories'),
     ])
     const { data: progData } = await supabase.from('programmes').select('category')
     const distinctCategories = new Set((progData || []).map(p => p.category).filter(Boolean)).size
@@ -26,7 +27,7 @@ export default function AdminDashboard() {
       students,
       teams,
       programmes,
-      categories: programmes > 0 ? distinctCategories : PROGRAMME_CATEGORIES.length,
+      categories: categories > 0 ? categories : (programmes > 0 ? distinctCategories : PROGRAMME_CATEGORIES.length),
     })
   }
 

@@ -13,6 +13,7 @@ const logins = [
   { label: 'Student', path: '/student/login' },
   { label: 'Judges', path: '/judges/login' },
   { label: 'Admin', path: '/admin/login' },
+  { label: 'Lots', path: '/lots' },
 ]
 
 export default function HamburgerMenu() {

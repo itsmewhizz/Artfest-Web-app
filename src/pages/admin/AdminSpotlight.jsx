@@ -74,8 +74,16 @@ export default function AdminSpotlight() {
   }
 
   const toggleFeatured = async (img) => {
-    const { error } = await supabase.from('spotlight').update({ isFeatured: !img.isFeatured }).eq('id', img.id)
-    if (!error) load()
+    const originalStatus = img.isFeatured
+    setImages(prev => prev.map(i => i.id === img.id ? { ...i, isFeatured: !originalStatus } : i))
+
+    try {
+      const { error } = await supabase.from('spotlight').update({ isFeatured: !originalStatus }).eq('id', img.id)
+      if (error) throw error
+    } catch (err) {
+      setImages(prev => prev.map(i => i.id === img.id ? { ...i, isFeatured: originalStatus } : i))
+      toast('Failed to update featured status: ' + err.message, 'error')
+    }
   }
 
   const startEdit = (img) => {

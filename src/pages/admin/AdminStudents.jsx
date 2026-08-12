@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
-import { getStudents, getTeams, getProgrammes, STUDENT_CATEGORIES } from '../../supabase/queries'
+import { getStudents, getTeams, getProgrammes, getCategories, STUDENT_CATEGORIES } from '../../supabase/queries'
 import { Plus, Pencil } from 'lucide-react'
 import StudentAvatar from '../../components/StudentAvatar'
 import { useToast } from '../../components/Toast'
@@ -14,7 +14,7 @@ export default function AdminStudents() {
   const [category, setCategory] = useState('')
   const [team, setTeam] = useState('')
   const [studentFilter, setStudentFilter] = useState('')
-  const categories = STUDENT_CATEGORIES
+  const [categories, setCategories] = useState(STUDENT_CATEGORIES)
   const [photo, setPhoto] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [selectedProgs, setSelectedProgs] = useState([])
@@ -24,6 +24,7 @@ export default function AdminStudents() {
     getStudents().then(setStudents)
     getTeams().then(setTeams)
     getProgrammes().then(setProgrammes)
+    getCategories().then(({ student }) => setCategories(student))
   }, [])
 
   const handleAdd = async () => {
@@ -35,21 +36,27 @@ export default function AdminStudents() {
       const { data: urlData } = supabase.storage.from('photos').getPublicUrl(data.path)
       photoURL = urlData.publicUrl
     }
-    let result
     if (editingId) {
-      result = await supabase.from('students').update({
-        name, chestNo, class: category, team, photoURL: photoURL || undefined,
-        programmeIds: selectedProgs, createdAt: new Date().toISOString(),
-      }).eq('id', editingId).select().single()
+      const updates = {
+        name, chestNo, class: category, team,
+        programmeIds: selectedProgs,
+      }
+      if (photoURL) updates.photoURL = photoURL
+      const { data: updated, error } = await supabase.from('students').update(updates).eq('id', editingId).select()
+      if (error || !updated || updated.length === 0) {
+        console.error('Student update failed:', error || { message: 'No matching student row' })
+        toast(`Student update failed: ${error?.message || 'No matching student row was found. The edit was cancelled.'}`, 'error')
+        return
+      }
     } else {
-      result = await supabase.from('students').insert({
+      const { error } = await supabase.from('students').insert({
         name, chestNo, class: category, team, photoURL, programmeIds: selectedProgs,
       })
-    }
-    if (result.error) {
-      console.error('Student save failed:', result.error)
-      toast(`Student ${wasEditing ? 'update' : 'add'} failed: ${result.error.message}`, 'error')
-      return
+      if (error) {
+        console.error('Student add failed:', error)
+        toast(`Student add failed: ${error.message}`, 'error')
+        return
+      }
     }
 
     const refreshedStudents = await getStudents()

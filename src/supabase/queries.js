@@ -1,9 +1,36 @@
 import { supabase } from './client'
 
-export const STUDENT_CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior']
-export const PROGRAMME_CATEGORIES = [...STUDENT_CATEGORIES, 'General Cat-A', 'General Cat-B']
+export const DEFAULT_STUDENT_CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior']
+export const DEFAULT_PROGRAMME_CATEGORIES = [...DEFAULT_STUDENT_CATEGORIES, 'General Cat-A', 'General Cat-B']
+export const STUDENT_CATEGORIES = DEFAULT_STUDENT_CATEGORIES
+export const PROGRAMME_CATEGORIES = DEFAULT_PROGRAMME_CATEGORIES
 export const PROGRAMME_TYPES = ['On-stage', 'Off-stage']
 export const SESSION_EXPIRY_MS = 8 * 60 * 60 * 1000
+
+export const getCategories = async () => {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('name')
+    .order('sortOrder', { ascending: true, nullsFirst: false })
+    .order('name', { ascending: true })
+  if (error || !data || data.length === 0) {
+    return { student: DEFAULT_STUDENT_CATEGORIES, programme: DEFAULT_PROGRAMME_CATEGORIES }
+  }
+  const names = data.map(c => c.name).filter(Boolean)
+  return {
+    student: names.filter(n => !n.startsWith('General')),
+    programme: names,
+  }
+}
+
+// result number per programme built from the SAME latest-per-programme
+// source used by the Admin Result List, so both views always agree.
+export const getResultNoMap = async () => {
+  const results = await getAllResults()
+  const map = {}
+  ;(results || []).forEach(r => { if (r.programmeId) map[r.programmeId] = r.resultNo })
+  return map
+}
 
 const getLocalSessionState = (studentId) => {
   const token = localStorage.getItem(`student_session_${studentId}`)
@@ -310,7 +337,7 @@ export const getTeamCategoryPoints = async () => {
   const studentMap = {}
   students.forEach(s => { studentMap[s.id] = s })
 
-  const categories = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B']
+  const categories = (await getCategories()).programme
 
   const teamNameToId = {}
   teams.forEach(t => { teamNameToId[t.name] = t.id })

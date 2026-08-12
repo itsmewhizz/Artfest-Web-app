@@ -23,6 +23,9 @@ import AdminPrint from './pages/admin/AdminPrint'
 import AdminResults from './pages/admin/AdminResults'
 import AdminResultPoster from './pages/admin/AdminResultPoster'
 import AdminLots from './pages/admin/AdminLots'
+import LotsAccess from './pages/LotsAccess'
+import LotsDraw from './pages/LotsDraw'
+import AdminCategories from './pages/admin/AdminCategories'
 import JudgesLogin from './pages/judges/JudgesLogin'
 import JudgesResults from './pages/judges/JudgesResults'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -79,7 +82,10 @@ function App() {
             <Route path="results" element={<AdminResults />} />
             <Route path="result-poster" element={<AdminResultPoster />} />
             <Route path="lots" element={<AdminLots />} />
+            <Route path="categories" element={<AdminCategories />} />
           </Route>
+          <Route path="/lots" element={<LotsAccess />} />
+          <Route path="/lots/draw" element={<LotsDraw />} />
           <Route path="/judges/login" element={<JudgesLogin />} />
           <Route path="/judges/results" element={<JudgesRoute><JudgesResults /></JudgesRoute>} />
           </Routes>

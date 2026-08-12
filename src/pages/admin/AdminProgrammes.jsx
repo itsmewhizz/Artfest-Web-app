@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
-import { getProgrammes, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../../supabase/queries'
+import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../../supabase/queries'
 import { Plus, Pencil, X, Printer } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 
@@ -15,6 +15,7 @@ export default function AdminProgrammes() {
 
   const [programmes, setProgrammes] = useState([])
   const [resultNoMap, setResultNoMap] = useState({})
+  const [categories, setCategories] = useState(PROGRAMME_CATEGORIES)
   const [students, setStudents] = useState([])
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
@@ -34,19 +35,9 @@ export default function AdminProgrammes() {
 
   const loadData = () => {
     getProgrammes().then(setProgrammes)
+    getResultNoMap().then(setResultNoMap)
+    getCategories().then(({ programme }) => setCategories(programme))
     supabase.from('students').select('id, name, programmeIds').then(({ data }) => setStudents(data || []))
-    supabase.from('results').select('*').then(({ data }) => {
-      const latestUnlocked = {}
-      ;(data || []).forEach(r => {
-        if (r.locked) return
-        if (!latestUnlocked[r.programmeId] || r.updatedAt > latestUnlocked[r.programmeId].updatedAt) {
-          latestUnlocked[r.programmeId] = r
-        }
-      })
-      const map = {}
-      Object.values(latestUnlocked).forEach(r => { if (r.programmeId) map[r.programmeId] = r.resultNo })
-      setResultNoMap(map)
-    })
   }
 
   useEffect(() => { loadData() }, [])
@@ -56,7 +47,12 @@ export default function AdminProgrammes() {
     const { data: newProg, error: progErr } = await supabase.from('programmes').insert({ name, category, programmeType, isFinished: false }).select('id').single()
     if (progErr) return toast('Failed: ' + progErr.message, 'error')
     if (addResultNo) {
-      await supabase.from('results').insert({ programmeId: newProg.id, name, resultNo: Number(addResultNo) })
+      const { error: noErr } = await supabase.rpc('admin_set_result_no', {
+        p_programme_id: newProg.id,
+        p_programme_name: name,
+        p_result_no: Number(addResultNo),
+      })
+      if (noErr) return toast('Programme added but result number not saved: ' + noErr.message, 'error')
     }
     setName(''); setCategory(''); setProgrammeType(''); setAddResultNo('')
     toast('Programme added!')
@@ -64,8 +60,16 @@ export default function AdminProgrammes() {
   }
 
   const toggleFinished = async (prog) => {
-    await supabase.from('programmes').update({ isFinished: !prog.isFinished }).eq('id', prog.id)
-    loadData()
+    const originalStatus = prog.isFinished
+    setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: !originalStatus } : p))
+
+    try {
+      const { error } = await supabase.from('programmes').update({ isFinished: !originalStatus }).eq('id', prog.id)
+      if (error) throw error
+    } catch (err) {
+      setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: originalStatus } : p))
+      toast('Failed to update status: ' + err.message, 'error')
+    }
   }
 
   const startEdit = (prog) => {
@@ -89,16 +93,13 @@ export default function AdminProgrammes() {
     }).eq('id', editingId)
     if (progErr) return toast('Failed to update programme: ' + progErr.message, 'error')
 
-    const progResults = await supabase.from('results').select('*').eq('programmeId', editingId).order('updatedAt', { ascending: false }).then(({ data }) => data || [])
-    const existingUnlocked = progResults.find(r => !r.locked)
     if (editResultNo) {
-      if (existingUnlocked) {
-        const { error } = await supabase.from('results').update({ resultNo: Number(editResultNo) }).eq('id', existingUnlocked.id)
-        if (error) return toast('Failed to save result number: ' + error.message, 'error')
-      } else if (progResults.length === 0) {
-        const { error } = await supabase.from('results').insert({ programmeId: editingId, name: editName, resultNo: Number(editResultNo) })
-        if (error) return toast('Failed to save result number: ' + error.message, 'error')
-      }
+      const { error: noErr } = await supabase.rpc('admin_set_result_no', {
+        p_programme_id: editingId,
+        p_programme_name: editName,
+        p_result_no: Number(editResultNo),
+      })
+      if (noErr) return toast('Failed to save result number: ' + noErr.message, 'error')
     }
 
     toast('Programme updated!')
@@ -151,7 +152,7 @@ export default function AdminProgrammes() {
         <input ref={addNameRef} className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" placeholder="Programme name" value={name} onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCatRef.current?.focus() } }} />
         <select ref={addCatRef} className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" value={category} onChange={e => setCategory(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addNoRef.current?.focus() } }}>
           <option value="">Select Category</option>
-          {PROGRAMME_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" value={programmeType} onChange={e => setProgrammeType(e.target.value)}>
           <option value="">Select Type</option>
@@ -172,7 +173,7 @@ export default function AdminProgrammes() {
       </div>
 
       <div className="flex justify-center gap-1.5 sm:gap-2 mb-3 flex-wrap">
-        {['', ...PROGRAMME_CATEGORIES].map(cat => (
+        {['', ...categories].map(cat => (
           <button
             key={cat}
             onClick={() => setProgFilter(cat)}
@@ -208,7 +209,10 @@ export default function AdminProgrammes() {
         ))}
       </div>
       <div className="flex flex-col gap-3">
-        {programmes.filter(p => (!progFilter || p.category === progFilter) && (!progTypeFilter || (p.programmeType || p.type || '') === progTypeFilter)).map(prog => (
+        {programmes
+          .filter(p => (!progFilter || p.category === progFilter) && (!progTypeFilter || (p.programmeType || p.type || '') === progTypeFilter))
+          .sort((a, b) => (resultNoMap[a.id] || Number.MAX_SAFE_INTEGER) - (resultNoMap[b.id] || Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
+          .map(prog => (
           <div key={prog.id} className="bg-card rounded-xl p-4 flex justify-between items-center shadow-sm border border-secondary/30">
             <div className="cursor-pointer flex-1 min-w-0" onClick={() => setViewProg(prog)}>
               <p className="text-mainText font-medium text-sm sm:text-base truncate">
@@ -260,7 +264,7 @@ export default function AdminProgrammes() {
               onChange={e => setEditCategory(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); editNoRef.current?.focus() } }}
             >
-              {PROGRAMME_CATEGORIES.map(c => (
+              {categories.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>

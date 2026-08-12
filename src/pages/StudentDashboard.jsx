@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase/client'
-import { getStudentById, getProgrammes, updateStudentProfile, STUDENT_CATEGORIES, getStudentSessionState, clearStudentSession } from '../supabase/queries'
+import { getStudentById, getProgrammes, updateStudentProfile, getCategories, STUDENT_CATEGORIES, getStudentSessionState, clearStudentSession } from '../supabase/queries'
 import { useToast } from '../components/Toast'
 import StudentAvatar from '../components/StudentAvatar'
 
@@ -13,6 +13,7 @@ export default function StudentDashboard() {
   const [category, setCategory] = useState('')
   const [photo, setPhoto] = useState(null)
   const [selectedProgs, setSelectedProgs] = useState([])
+  const [categories, setCategories] = useState(STUDENT_CATEGORIES)
   const [saving, setSaving] = useState(false)
   const [loggedOut, setLoggedOut] = useState(false)
   const navigate = useNavigate()
@@ -48,6 +49,7 @@ export default function StudentDashboard() {
 
     loadStudent()
     getProgrammes().then(setProgrammes)
+    getCategories().then(({ student }) => setCategories(student))
   }, [navigate, studentId])
 
   const toggleProg = (progId) => {
@@ -148,7 +150,7 @@ export default function StudentDashboard() {
             onChange={e => setCategory(e.target.value)}
           >
             <option value="">Select Category</option>
-            {STUDENT_CATEGORIES.map(c => (
+            {categories.map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>

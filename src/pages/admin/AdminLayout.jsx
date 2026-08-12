@@ -10,6 +10,7 @@ import {
   FileText,
   Printer,
   Shuffle,
+  Layers,
   LogOut,
   Menu,
   X,
@@ -20,6 +21,7 @@ import IsraLogo from '../../components/IsraLogo'
 const navItems = [
   { label: 'Dashboard', path: '/admin', end: true, icon: LayoutDashboard },
   { label: 'Programmes', path: '/admin/programmes', icon: BookOpen },
+  { label: 'Categories', path: '/admin/categories', icon: Layers },
   { label: 'Teams', path: '/admin/teams', icon: Trophy },
   { label: 'Students', path: '/admin/students', icon: Users },
   { label: 'Spotlight / Gallery', path: '/admin/spotlight', icon: GalleryHorizontalEnd },

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { judgeClient, verifyJudgeClient } from '../../supabase/client'
-import { getProgrammes, getStudents, getAllResults, PROGRAMME_CATEGORIES } from '../../supabase/queries'
+import { getProgrammes, getStudents, getAllResults, getCategories, PROGRAMME_CATEGORIES } from '../../supabase/queries'
 import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 
@@ -19,6 +19,7 @@ export default function JudgesResults() {
   const [students, setStudents] = useState([])
   const [savedResults, setSavedResults] = useState([])
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [categories, setCategories] = useState(PROGRAMME_CATEGORIES)
   const [expandedId, setExpandedId] = useState(null)
 
   // Edit flow state
@@ -62,6 +63,7 @@ export default function JudgesResults() {
   useEffect(() => {
     getProgrammes().then(setProgrammes).catch(err => console.error('Failed to load programmes:', err))
     getStudents().then(setStudents).catch(err => console.error('Failed to load students:', err))
+    getCategories().then(({ programme }) => setCategories(programme)).catch(err => console.error('Failed to load categories:', err))
     loadResults()
   }, [])
 
@@ -82,10 +84,35 @@ export default function JudgesResults() {
     navigate('/judges/login')
   }
 
-  const lockedIds = new Set(savedResults.filter(r => r.locked).map(r => r.programmeId))
-  const programmeRows = categoryFilter
+  const getResultNoMap = () => {
+    const map = {}
+    savedResults.forEach(r => {
+      if (r.programmeId) map[r.programmeId] = r.resultNo
+    })
+    return map
+  }
+
+  const resultNoMap = getResultNoMap()
+  const filteredProgrammes = categoryFilter
     ? programmes.filter(p => categoryFilter === 'General' ? p.category === 'General' : p.category === categoryFilter)
     : programmes
+
+  // A programme counts as "submitted" only once its result row is locked
+  // (i.e. carries placements). Placeholder rows that just hold a result
+  // number are NOT submitted — they still go in the "Not Submitted" list.
+  const lockedProgrammeIds = new Set(savedResults.filter(r => r.locked).map(r => r.programmeId))
+
+  const notSubmitted = filteredProgrammes
+    .filter(p => !lockedProgrammeIds.has(p.id))
+    .sort((a, b) => (resultNoMap[a.id] || 999) - (resultNoMap[b.id] || 999) || a.name.localeCompare(b.name))
+
+  const lockedResults = savedResults.filter(r => r.locked)
+  const filteredLockedResults = categoryFilter
+    ? lockedResults.filter(r => {
+        const prog = programmes.find(p => p.id === r.programmeId)
+        return categoryFilter === 'General' ? prog?.category === 'General' : prog?.category === categoryFilter
+      })
+    : lockedResults
 
   const resetPlacements = () => {
     setFirst(''); setFirstPoints('')
@@ -302,9 +329,6 @@ export default function JudgesResults() {
       locked: true,
     }
 
-    // Server re-checks the judge + captcha (single-use) inside judge_reverify_edit
-    // and re-locks the result (locked = true) before returning. A locked row can
-    // therefore ONLY be changed through this re-verified path.
     const { data: rpcData, error: rpcError } = await judgeClient.rpc('judge_reverify_edit', {
       p_challenge_id: captchaId,
       p_captcha: vCaptcha.trim().toUpperCase(),
@@ -351,8 +375,6 @@ export default function JudgesResults() {
     ? students.filter(s => s.class === editProg.category)
     : students
 
-  const lockedResults = savedResults.filter(r => r.locked)
-
   return (
     <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
@@ -370,7 +392,7 @@ export default function JudgesResults() {
       </div>
 
       <div className="flex justify-center gap-1.5 sm:gap-2 mb-5 flex-wrap">
-        {['', ...PROGRAMME_CATEGORIES].map(cat => (
+        {['', ...categories].map(cat => (
           <button
             key={cat}
             onClick={() => setCategoryFilter(cat)}
@@ -385,43 +407,34 @@ export default function JudgesResults() {
         ))}
       </div>
 
-      {/* ── Unlocked / Pending Programmes ── */}
-      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-3">All Programmes</h3>
+      {/* ── Not Submitted / Pending Programmes ── */}
+      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-3">Not Submitted</h3>
       <div className="flex flex-col gap-3 mb-8">
-        {programmeRows.length === 0 && <p className="text-mutedText text-center py-4">No programmes found.</p>}
-        {programmeRows.map(prog => {
-          const isLocked = lockedIds.has(prog.id)
-          return (
-            <div key={prog.id} className="bg-card rounded-xl p-4 flex items-center justify-between shadow-sm border border-secondary/30 gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-mainText font-semibold text-sm sm:text-base truncate">{prog.name}</p>
-                <p className="text-mutedText text-xs sm:text-sm">{prog.category}{getProgrammeType(prog) ? ` · ${getProgrammeType(prog)}` : ''}</p>
-              </div>
-              {isLocked ? (
-                <button
-                  onClick={() => openEditFlow(prog)}
-                  className="flex items-center gap-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 border border-amber-500/30"
-                >
-                  <Pencil size={14} /> Edit Result
-                </button>
-              ) : (
-                <button
-                  onClick={() => openEditFlow(prog)}
-                  className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0"
-                >
-                  <Pencil size={14} /> Enter Result
-                </button>
-              )}
-            </div>
-          )
-        })}
+        {notSubmitted.length === 0 && <p className="text-mutedText text-center py-4">No pending programmes in this category.</p>}
+        {notSubmitted.map(prog => (
+          <div key={prog.id} className="bg-card rounded-xl p-4 flex items-center justify-between shadow-sm border border-secondary/30 gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-mainText font-semibold text-sm sm:text-base truncate">
+                {resultNoMap[prog.id] ? <span className="text-accent font-bold text-base sm:text-lg mr-2">#{resultNoMap[prog.id]}</span> : null}
+                {prog.name}
+              </p>
+              <p className="text-mutedText text-xs sm:text-sm">{prog.category}{getProgrammeType(prog) ? ` · ${getProgrammeType(prog)}` : ''}</p>
+            </div >
+            <button
+              onClick={() => openEditFlow(prog)}
+              className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0"
+            >
+              <Pencil size={14} /> Enter Result
+            </button>
+          </div >
+        ))}
       </div>
 
       {/* ── Submitted / Locked Results ── */}
-      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-3">Submitted Results ({lockedResults.length})</h3>
+      <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText mb-3">Submitted Results ({filteredLockedResults.length})</h3>
       <div className="flex flex-col gap-3 mb-8">
-        {lockedResults.length === 0 && <p className="text-mutedText text-center py-4">No results submitted yet.</p>}
-        {lockedResults.map(result => {
+        {filteredLockedResults.length === 0 && <p className="text-mutedText text-center py-4">No results submitted yet.</p>}
+        {filteredLockedResults.map(result => {
           const prog = programmes.find(p => p.id === result.programmeId)
           const isExpanded = expandedId === result.id
           const placementData = [
@@ -438,14 +451,14 @@ export default function JudgesResults() {
                     {result.name || prog?.name}
                   </p>
                   <p className="text-mutedText text-xs">{prog?.category || ''}</p>
-                </div>
+                </div >
                 <span className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded bg-success/15 text-success border border-success/40 shrink-0">
                   <Lock size={11} /> LOCKED
-                </span>
+                </span >
                 <button className="text-mutedText shrink-0 ml-2">
                   {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
-              </div>
+              </div >
               {isExpanded && (
                 <div className="mt-4 pt-3 border-t border-secondary/30 space-y-3">
                   {placementData.map(({ rank, data }) => {
@@ -453,7 +466,7 @@ export default function JudgesResults() {
                       <div key={rank} className="text-mutedText text-sm flex items-center gap-2">
                         <span className="font-semibold w-8">{rank}</span>
                         <span className="italic">No entry</span>
-                      </div>
+                      </div >
                     )
                     return (
                       <div key={rank} className="bg-secondary/15 rounded-xl p-3 border border-secondary/30">
@@ -462,7 +475,7 @@ export default function JudgesResults() {
                             rank === '1st' ? 'text-accent' : rank === '2nd' ? 'text-secondary' : 'text-mutedText'
                           }`}>
                             {rank}
-                          </span>
+                          </span >
                           <span className="text-mainText font-medium text-sm sm:text-base">{data.name}</span>
                           <span className="text-accent font-bold text-sm sm:text-base ml-auto">{data.points || 0} pts</span>
                           {data.grade && data.grade !== '-' && (
@@ -473,10 +486,10 @@ export default function JudgesResults() {
                               'bg-orange-500/15 text-orange-400'
                             }`}>
                               {data.grade}
-                            </span>
+                            </span >
                           )}
-                        </div>
-                      </div>
+                        </div >
+                      </div >
                     )
                   })}
                   <button
@@ -485,12 +498,12 @@ export default function JudgesResults() {
                   >
                     <Pencil size={14} /> Re-verify & Edit
                   </button>
-                </div>
+                </div >
               )}
-            </div>
+            </div >
           )
         })}
-      </div>
+      </div >
 
       {/* ── Prompt modal ── */}
       {promptOpen && (
@@ -505,9 +518,9 @@ export default function JudgesResults() {
               <button onClick={proceedToVerify} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold text-sm hover:bg-primary/90 transition">
                 Yes, Continue
               </button>
-            </div>
-          </div>
-        </div>
+            </div >
+          </div >
+        </div >
       )}
 
       {/* ── Re-verify modal ── */}
@@ -517,7 +530,7 @@ export default function JudgesResults() {
             <h3 className="text-lg font-poppins font-bold text-mainText mb-1">Judge Verification</h3>
             <p className="text-mutedText text-xs mb-4">Re-enter your credentials to access result editor for <span className="text-mainText font-semibold">{editProg?.name}</span>.</p>
 
-            {vError && <div className="bg-red-500/15 border border-red-500/40 text-red-300 text-xs p-3 rounded-xl mb-4">{vError}</div>}
+            {vError && <div className="bg-red-500/15 border border-red-500/40 text-red-300 text-xs p-3 rounded-xl mb-4">{vError}</div >}
 
             <label className="text-mutedText text-xs mb-1 block">Judge Email / Username</label>
             <input
@@ -539,13 +552,13 @@ export default function JudgesResults() {
               <button type="button" onClick={() => setVShowPassword(!vShowPassword)} className="absolute right-3 top-3 text-mutedText hover:text-mainText">
                 {vShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
-            </div>
+            </div >
 
             <label className="text-mutedText text-xs mb-1 block">Security Code</label>
             <div className="flex gap-2 mb-4">
               <div className="bg-black/40 text-accent font-mono font-bold tracking-widest text-lg px-4 py-2 rounded-xl flex items-center justify-center select-none border border-secondary/40">
                 {captcha || '------'}
-              </div>
+              </div >
               <input
                 type="text"
                 className="flex-1 bg-black/20 text-mainText uppercase font-mono font-bold tracking-wider rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-center text-sm"
@@ -554,7 +567,7 @@ export default function JudgesResults() {
                 onChange={e => setVCaptcha(e.target.value.toUpperCase())}
                 placeholder="TYPE CODE"
               />
-            </div>
+            </div >
 
             <div className="flex gap-2 mb-3">
               <button onClick={closeVerify} disabled={vLoading} className="bg-white/10 text-mainText rounded-xl p-3 font-semibold text-sm flex-1 hover:bg-white/15 transition">
@@ -563,7 +576,7 @@ export default function JudgesResults() {
               <button onClick={handleVerify} disabled={vLoading} className="bg-primary text-white rounded-xl p-3 font-semibold text-sm flex-1 hover:bg-primary/90 transition">
                 {vLoading ? 'Verifying...' : 'Verify & Edit'}
               </button>
-            </div>
+            </div >
             <div className="flex gap-2">
               <button
                 onClick={() => loadCaptcha({ retries: 2, delayMs: 450 })}
@@ -572,9 +585,9 @@ export default function JudgesResults() {
               >
                 {captchaLoading ? 'Refreshing...' : 'Reload security code'}
               </button>
-            </div>
-          </div>
-        </div>
+            </div >
+          </div >
+        </div >
       )}
 
       {/* ── Edit result ── */}
@@ -614,9 +627,9 @@ export default function JudgesResults() {
                       'bg-orange-500/15 text-orange-400 border border-orange-500/40'
                     }`}>
                       {grade}
-                    </div>
-                  </div>
-                </div>
+                    </div >
+                  </div >
+                </div >
               )
             })}
 
@@ -628,10 +641,10 @@ export default function JudgesResults() {
               <button onClick={() => !saving && closeEdit()} className="bg-secondary/15 text-mainText rounded-xl p-3 font-semibold transition">
                 Cancel
               </button>
-            </div>
-          </div>
-        </div>
+            </div >
+          </div >
+        </div >
       )}
-    </div>
+    </div >
   )
 }

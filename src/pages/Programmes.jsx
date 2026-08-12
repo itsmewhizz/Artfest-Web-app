@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProgrammes, getAllResults, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../supabase/queries'
+import { getProgrammes, getAllResults, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../supabase/queries'
 import { Search, CheckCircle, XCircle, MicVocal, Brush } from 'lucide-react'
 import FilterDropdown from '../components/FilterDropdown'
 import { CATEGORY_COLORS } from '../components/TeamBar'
@@ -10,20 +10,20 @@ export default function Programmes() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [programmeType, setProgrammeType] = useState('')
+  const [orderedCategories, setOrderedCategories] = useState(PROGRAMME_CATEGORIES)
   const navigate = useNavigate()
 
   const [resultNoMap, setResultNoMap] = useState({})
 
   useEffect(() => {
     getProgrammes().then(setProgrammes)
+    getCategories().then(({ programme }) => setOrderedCategories(programme))
     getAllResults().then(results => {
       const map = {}
       results.forEach(r => { if (r.programmeId) map[r.programmeId] = r.resultNo })
       setResultNoMap(map)
     })
   }, [])
-
-  const orderedCategories = PROGRAMME_CATEGORIES
 
   const getProgrammeType = (prog) => prog?.programmeType || prog?.type || prog?.programme_type || ''
 
