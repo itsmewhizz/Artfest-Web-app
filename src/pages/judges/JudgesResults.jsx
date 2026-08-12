@@ -319,9 +319,12 @@ export default function JudgesResults() {
 
     if (rpcError || rpcData?.error) {
       console.error('Edit failed:', rpcError || rpcData)
+      const rpcMessage = rpcError?.message || ''
+      const is404 = rpcError?.status === 404 || rpcMessage.includes('404') || rpcMessage.includes('Not Found')
+      const isCrypt = rpcMessage.includes('crypt(') || rpcMessage.includes('42883') || rpcMessage.includes('does not exist')
       const msg =
-        rpcError?.status === 404 ? 'Judge reverify service unavailable. Run judge_reverify_flow.sql in Supabase to create judge_reverify_edit().' :
-        rpcError?.message?.includes('crypt(') ? 'Server password verification failed. Ensure pgcrypto is enabled and judge_reverify_flow.sql has been applied.' :
+        is404 ? 'Judge reverify service unavailable. Run judge_reverify_flow.sql in Supabase to create judge_reverify_edit().' :
+        isCrypt ? 'Server password verification failed. Ensure pgcrypto is enabled and judge_reverify_flow.sql has been applied.' :
         rpcData?.error === 'not_authorized' ? 'You are not authorized to edit this result.' :
         rpcData?.error === 'invalid_judge' ? 'Judge re-verification failed. Please verify again.' :
         rpcData?.error === 'captcha_invalid' ? 'Security code was invalid or expired. Please verify again.' :
