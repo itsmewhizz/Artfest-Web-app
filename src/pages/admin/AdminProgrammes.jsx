@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { getProgrammes, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../../supabase/queries'
-import { ArrowLeft, Plus, Pencil, X, Printer } from 'lucide-react'
+import { Plus, Pencil, X, Printer } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 
 export default function AdminProgrammes() {
@@ -138,10 +138,7 @@ export default function AdminProgrammes() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-mutedText mb-4 hover:text-mainText transition">
-        <ArrowLeft size={18} /> Back
-      </button>
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Programmes</h2>
         <button onClick={() => navigate('/admin/print')} className="flex items-center gap-2 bg-success hover:bg-success/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">

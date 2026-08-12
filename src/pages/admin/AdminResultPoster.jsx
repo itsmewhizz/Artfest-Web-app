@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import html2canvas from 'html2canvas'
-import { AlertCircle, ArrowLeft, Download, Image } from 'lucide-react'
+import { AlertCircle, Download, Image } from 'lucide-react'
 import { getAllResults, getProgrammes, getStudents, getTeams } from '../../supabase/queries'
 
 const STORAGE_KEY = 'result_posters'
@@ -17,7 +16,6 @@ const posterStyle = {
 }
 
 export default function AdminResultPoster() {
-  const navigate = useNavigate()
   const previewRef = useRef(null)
   const [programmes, setProgrammes] = useState([])
   const [students, setStudents] = useState([])
@@ -143,11 +141,7 @@ export default function AdminResultPoster() {
   }
 
   return (
-    <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-mainText mb-4 hover:opacity-80 transition">
-        <ArrowLeft size={18} /> Back
-      </button>
-
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-white/10 rounded-xl p-3">
           <Image size={22} className="text-mainText" />

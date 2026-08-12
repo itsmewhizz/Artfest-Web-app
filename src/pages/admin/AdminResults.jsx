@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Eye, Search, Trophy } from 'lucide-react'
+import { Eye, Search, Trophy } from 'lucide-react'
 import { getAllResults, getProgrammes, getStudents, getTeams } from '../../supabase/queries'
 
 export default function AdminResults() {
-  const navigate = useNavigate()
   const [programmes, setProgrammes] = useState([])
   const [students, setStudents] = useState([])
   const [teams, setTeams] = useState([])
@@ -71,11 +69,7 @@ export default function AdminResults() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto">
-      <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-mutedText mb-4 hover:text-mainText transition">
-        <ArrowLeft size={18} /> Back
-      </button>
-
+    <div className="max-w-5xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-card rounded-xl p-3 shadow-sm border border-secondary/30">
           <Trophy size={22} className="text-accent" />

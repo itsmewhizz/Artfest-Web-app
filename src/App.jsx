@@ -9,7 +9,9 @@ import Programmes from './pages/Programmes'
 import ProgrammeResult from './pages/ProgrammeResult'
 import StudentLogin from './pages/StudentLogin'
 import StudentDashboard from './pages/StudentDashboard'
+import Gallery from './pages/Gallery'
 import AdminLogin from './pages/admin/AdminLogin'
+import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProgrammes from './pages/admin/AdminProgrammes'
 import AdminTeams from './pages/admin/AdminTeams'
@@ -34,6 +36,7 @@ function App() {
         <div className="relative z-10">
           <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/teams" element={<Teams />} />
           <Route path="/teams/:id" element={<TeamDetail />} />
           <Route path="/students" element={<Students />} />
@@ -43,15 +46,17 @@ function App() {
           <Route path="/student/login" element={<StudentLogin />} />
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/programmes" element={<ProtectedRoute><AdminProgrammes /></ProtectedRoute>} />
-          <Route path="/admin/teams" element={<ProtectedRoute><AdminTeams /></ProtectedRoute>} />
-          <Route path="/admin/spotlight" element={<ProtectedRoute><AdminSpotlight /></ProtectedRoute>} />
-          <Route path="/admin/students" element={<ProtectedRoute><AdminStudents /></ProtectedRoute>} />
-          <Route path="/admin/print" element={<ProtectedRoute><AdminPrint /></ProtectedRoute>} />
-          <Route path="/admin/results" element={<ProtectedRoute><AdminResults /></ProtectedRoute>} />
-          <Route path="/admin/result-poster" element={<ProtectedRoute><AdminResultPoster /></ProtectedRoute>} />
-          <Route path="/admin/lots" element={<ProtectedRoute><AdminLots /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="programmes" element={<AdminProgrammes />} />
+            <Route path="teams" element={<AdminTeams />} />
+            <Route path="spotlight" element={<AdminSpotlight />} />
+            <Route path="students" element={<AdminStudents />} />
+            <Route path="print" element={<AdminPrint />} />
+            <Route path="results" element={<AdminResults />} />
+            <Route path="result-poster" element={<AdminResultPoster />} />
+            <Route path="lots" element={<AdminLots />} />
+          </Route>
           <Route path="/judges/login" element={<JudgesLogin />} />
           <Route path="/judges/results" element={<JudgesRoute><JudgesResults /></JudgesRoute>} />
           </Routes>

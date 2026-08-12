@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Shuffle, RefreshCw, Hash, Type } from 'lucide-react'
+import { Shuffle, RefreshCw, Hash, Type } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 
 const MAX_CARDS = 60
@@ -42,7 +41,6 @@ export default function AdminLots() {
   const [count, setCount] = useState('')
   const [cards, setCards] = useState([])
   const [drawId, setDrawId] = useState(0)
-  const navigate = useNavigate()
   const toast = useToast()
 
   const flippedCount = cards.filter(c => c.flipped).length
@@ -87,10 +85,7 @@ export default function AdminLots() {
   const activeMode = MODES.find(m => m.id === mode)
 
   return (
-    <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-mainText mb-4 hover:opacity-80 transition">
-        <ArrowLeft size={18} /> Back
-      </button>
+    <div className="max-w-4xl mx-auto">
       <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-1">Lot Draw</h2>
       <p className="text-mutedText text-sm mb-6">
         Draw the stage-entry order for a programme&apos;s candidates. Each card hides a unique value, randomly placed.

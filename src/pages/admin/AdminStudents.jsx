@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { getStudents, getTeams, getProgrammes, STUDENT_CATEGORIES } from '../../supabase/queries'
-import { ArrowLeft, Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import StudentAvatar from '../../components/StudentAvatar'
 import { useToast } from '../../components/Toast'
 
@@ -19,7 +18,6 @@ export default function AdminStudents() {
   const [photo, setPhoto] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [selectedProgs, setSelectedProgs] = useState([])
-  const navigate = useNavigate()
   const toast = useToast()
 
   useEffect(() => {
@@ -114,10 +112,7 @@ export default function AdminStudents() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-mutedText mb-4 hover:text-mainText transition">
-        <ArrowLeft size={18} /> Back
-      </button>
+    <div className="max-w-4xl mx-auto">
       <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-6">Students</h2>
 
       <div className="bg-card rounded-2xl p-4 mb-6 shadow-sm border border-secondary/30">

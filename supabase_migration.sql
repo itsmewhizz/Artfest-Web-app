@@ -84,3 +84,6 @@ FROM (
   FROM results
 ) sub
 WHERE r.id = sub.id AND r."resultNo" = 0;
+
+-- 6. Add album column to spotlight for gallery grouping (e.g. "Inauguration Ceremony", "Day 1", "Day 2", "Mass Gala")
+ALTER TABLE spotlight ADD COLUMN IF NOT EXISTS album TEXT;

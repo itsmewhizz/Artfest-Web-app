@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { getProgrammes, getStudents, getTeams } from '../../supabase/queries'
 import { ArrowLeft, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react'
@@ -14,7 +13,6 @@ function calcGrade(points) {
 }
 
 export default function AdminPrint() {
-  const navigate = useNavigate()
   const [programmes, setProgrammes] = useState([])
   const [allResults, setAllResults] = useState([])
   const [students, setStudents] = useState([])
@@ -207,10 +205,7 @@ export default function AdminPrint() {
 
       {/* ====== LIST VIEW ====== */}
       {screenMode === 'list' && (
-        <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
-          <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-mainText mb-4 hover:opacity-80 transition">
-            <ArrowLeft size={18} /> Back
-          </button>
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-6">Print</h2>
 
           {/* Committee Stamp Upload */}
@@ -390,7 +385,7 @@ export default function AdminPrint() {
       {screenMode === 'preview' && (
         <div>
           {/* Admin chrome - hidden on print */}
-          <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto no-print">
+          <div className="max-w-4xl mx-auto no-print">
             <button onClick={backToList} className="flex items-center gap-2 text-mainText mb-4 hover:opacity-80 transition">
               <ArrowLeft size={18} /> Back to list
             </button>

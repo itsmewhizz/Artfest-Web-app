@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
-import { ChevronDown, Download } from 'lucide-react'
+import { ChevronDown, Download, ArrowRight } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import TeamBar from '../components/TeamBar'
 
@@ -15,6 +15,7 @@ export default function Home() {
   const [posters, setPosters] = useState({})
   const [expandedPoster, setExpandedPoster] = useState(null)
   const location = useLocation()
+  const navigate = useNavigate()
   const intervalRef = useRef(null)
   const toast = useToast()
   const teamsRef = useRef(null)
@@ -292,42 +293,27 @@ export default function Home() {
         {/* Gallery */}
         {allImages.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-xl md:text-2xl font-display text-mainText mb-4">Gallery</h3>
-            <div className="relative group">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl md:text-2xl font-display text-mainText">Gallery</h3>
               <button
-                onClick={() => {
-                  const el = document.getElementById('gallery-scroll')
-                  if (el) el.scrollBy({ left: -el.clientWidth * 0.7, behavior: 'smooth' })
-                }}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-10 md:h-10 rounded-full bg-card border border-secondary/40 flex items-center justify-center text-mainText shadow-md opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-secondary/15"
+                onClick={() => navigate('/gallery')}
+                className="flex items-center gap-1.5 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="md:w-5 md:h-5"><path d="M15 18l-6-6 6-6"/></svg>
+                View Gallery <ArrowRight size={15} />
               </button>
-              <div
-                id="gallery-scroll"
-                className="flex gap-3 overflow-x-auto pb-2 snap-x scroll-smooth"
-              >
-                {allImages.map(img => (
-                  <div key={img.id} className="relative flex-shrink-0 snap-start">
-                    <img src={img.imageURL} alt={img.caption || ''} className="w-56 h-36 sm:w-72 sm:h-48 md:w-96 md:h-64 rounded-xl object-cover" />
-                    <button
-                      onClick={() => handleDownloadImage(img.imageURL, `spotlight_${img.id}.jpg`)}
-                      className="absolute bottom-2 right-2 bg-black/60 p-1.5 md:p-2 rounded-lg"
-                    >
-                      <Download size={14} className="md:w-[18px] md:h-[18px]" color="white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => {
-                  const el = document.getElementById('gallery-scroll')
-                  if (el) el.scrollBy({ left: el.clientWidth * 0.7, behavior: 'smooth' })
-                }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-10 md:h-10 rounded-full bg-card border border-secondary/40 flex items-center justify-center text-mainText shadow-md opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-secondary/15"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="md:w-5 md:h-5"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+              {allImages.slice(0, 6).map(img => (
+                <div key={img.id} className="relative group">
+                  <img src={img.imageURL} alt={img.caption || ''} className="w-full h-24 sm:h-32 md:h-36 rounded-xl object-cover" />
+                  <button
+                    onClick={() => handleDownloadImage(img.imageURL, `spotlight_${img.id}.jpg`)}
+                    className="absolute bottom-1.5 right-1.5 bg-black/60 hover:bg-black/80 p-1 rounded-lg transition"
+                  >
+                    <Download size={12} color="white" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { getTeamCategoryPoints } from '../../supabase/queries'
-import { ArrowLeft, Trophy, Medal, Star } from 'lucide-react'
+import { Trophy, Medal, Star } from 'lucide-react'
 import TeamBreakdown from '../../components/TeamBreakdown'
 
 export default function AdminTeams() {
   const [teamData, setTeamData] = useState([])
   const [expandedTeam, setExpandedTeam] = useState(null)
-  const navigate = useNavigate()
 
   useEffect(() => {
     getTeamCategoryPoints().then(({ teamData: data }) => {
@@ -17,11 +15,8 @@ export default function AdminTeams() {
   }, [])
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-3xl mx-auto">
-      <button onClick={() => navigate('/admin')} className="flex items-center gap-2 text-mutedText mb-4 hover:text-mainText transition">
-        <ArrowLeft size={18} /> Back
-      </button>
-      <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-6">Team Scores</h2>
+    <div className="max-w-3xl mx-auto">
+      <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-2">Team Scores</h2>
       <p className="text-mutedText text-xs sm:text-sm mb-6">Points are automatically calculated from programme results.</p>
 
       <div className="flex flex-col gap-4">
