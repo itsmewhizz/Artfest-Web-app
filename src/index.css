@@ -18,6 +18,18 @@ body {
   min-height: 100vh;
 }
 
+:root {
+  --main-background: 40 114 161; /* Ocean Blue #2872A1 */
+  --primary: 31 90 128; /* Deep Navy #1F5A80 */
+  --secondary: 92 147 170; /* Slate Teal #5C93AA */
+  --accent: 232 132 92; /* Sunset Coral #E8845C */
+  --main-text: 234 244 250; /* #EAF4FA light text for dark bg */
+  --muted-text: 169 199 214; /* #A9C7D6 muted light */
+  --success: 76 187 130; /* Sea Green #4CBB82 */
+  --card: 22 64 92; /* Deep Navy card #16405C */
+  --ocean-tint: 132 186 225; /* Ocean Blue light tint #84BAE1 */
+}
+
 [data-theme='light'] {
   --main-background: 248 250 252; /* #f8fafc */
   --primary: 99 165 241; /* #63a5f1 */
@@ -39,18 +51,6 @@ body {
       color 0.3s ease,
       border-color 0.3s ease;
   }
-}
-
-:root {
-  --main-background: 40 114 161; /* Ocean Blue #2872A1 */
-  --primary: 31 90 128; /* Deep Navy #1F5A80 */
-  --secondary: 92 147 170; /* Slate Teal #5C93AA */
-  --accent: 232 132 92; /* Sunset Coral #E8845C */
-  --main-text: 234 244 250; /* #EAF4FA light text for dark bg */
-  --muted-text: 169 199 214; /* #A9C7D6 muted light */
-  --success: 76 187 130; /* Sea Green #4CBB82 */
-  --card: 22 64 92; /* Deep Navy card #16405C */
-  --ocean-tint: 132 186 225; /* Ocean Blue light tint #84BAE1 */
 }
 
 @media (min-width: 768px) {

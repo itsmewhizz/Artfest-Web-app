@@ -14,13 +14,13 @@ const stats = [
 ]
 
 const teamMembers = [
-  { name: 'Farhan Musthafa', role: 'Festival Director', initials: 'FM', tint: 'from-[#6366F1] to-[#7BEAFE]' },
-  { name: 'Aysha Rameez', role: 'Programme Coordinator', initials: 'AR', tint: 'from-[#7BEAFE] to-[#FFDA63]' },
-  { name: 'Mohammed Suhail', role: 'Results & Data', initials: 'MS', tint: 'from-[#FFDA63] to-[#6366F1]' },
-  { name: 'Fathima Rinaz', role: 'Stage & Events', initials: 'FR', tint: 'from-[#6366F1] to-[#A78BFA]' },
-  { name: 'Niyas K', role: 'Media & Gallery', initials: 'NK', tint: 'from-[#A78BFA] to-[#7BEAFE]' },
-  { name: 'Safna Noushad', role: 'Volunteer Lead', initials: 'SN', tint: 'from-[#7BEAFE] to-[#94A3B8]' },
-  { name: 'Ibrahim Ashkar', role: 'Logistics', initials: 'IA', tint: 'from-[#FFDA63] to-[#A78BFA]' },
+  { name: 'Anwar Ahmed', role: 'Festival Chairman', initials: 'AA', tint: 'from-[#6366F1] to-[#7BEAFE]', photo: 'public/team/Anwar.jpg' },
+  { name: 'Muhammed AbdulQadar', role: 'Festival Convenor', initials: 'MA', tint: 'from-[#7BEAFE] to-[#FFDA63]', photo: 'public/team/Mohammed.jpeg' },
+  { name: 'Sayyid Mueen Hussain', role: 'Finance Convenor', initials: 'SM', tint: 'from-[#FFDA63] to-[#6366F1]', photo: 'public/team/Moinu.jpeg' },
+  { name: 'Shammas Mujeeb', role: 'Vice Chairman', initials: 'SM', tint: 'from-[#6366F1] to-[#A78BFA]', photo: 'public/team/Shammas.jpeg' },
+  { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#A78BFA] to-[#7BEAFE]', photo: 'public/team/moidu.jpg' },
+  { name: 'Afsal Sharafudheen', role: 'Joint Convenor', initials: 'AS', tint: 'from-[#7BEAFE] to-[#94A3B8]', photo: 'public/team/Afsal.jpg' },
+  { name: 'Vahid', role: 'Joint Convenor', initials: 'v', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: 'public/team/vahid.jpg' },
 ]
 
 export default function Home() {
@@ -360,11 +360,19 @@ export default function Home() {
           <div className="flex flex-wrap justify-center gap-x-10 gap-y-10">
             {teamMembers.map(member => (
               <div key={member.name} className="w-[150px] text-center">
-                <div
-                  className={`mx-auto mb-3 h-20 w-20 rounded-full bg-gradient-to-br ${member.tint} flex items-center justify-center font-playfair text-2xl font-bold text-white shadow-lg`}
-                >
-                  {member.initials}
-                </div>
+                {member.photo ? (
+                  <img
+                    src={member.photo}
+                    alt={member.name}
+                    className="mx-auto mb-3 h-20 w-20 rounded-full object-cover shadow-lg"
+                  />
+                ) : (
+                  <div
+                    className={`mx-auto mb-3 h-20 w-20 rounded-full bg-gradient-to-br ${member.tint} flex items-center justify-center font-playfair text-2xl font-bold text-white shadow-lg`}
+                  >
+                    {member.initials}
+                  </div>
+                )}
                 <p className="font-semibold text-sm text-mainText">{member.name}</p>
                 <p className="text-xs text-accent mt-1">{member.role}</p>
               </div>
