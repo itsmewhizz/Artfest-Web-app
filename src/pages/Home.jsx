@@ -5,7 +5,6 @@ import { ChevronDown, Download, ArrowRight } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import TeamBar from '../components/TeamBar'
 import FloatingCards from '../components/FloatingCards'
-import HeroAnimation from '../components/HeroAnimation'
 
 export default function Home() {
   const [featured, setFeatured] = useState([])
@@ -147,8 +146,6 @@ export default function Home() {
 
       {/* ── Full-Viewport Hero ── */}
       <section className="relative h-screen w-full overflow-hidden">
-        <HeroAnimation spotlightImages={allImages} />
-        
         {featured.length > 0 ? (
           featured.map((img, i) => (
             <img
