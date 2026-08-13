@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Hero Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .hero-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Frosted glass background */
+        .hero-background {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #2a251f 0%, #3a3530 50%, #2a251f 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            opacity: 0.95;
+        }
+
+        /* Golden ambient glow - backlit effect */
+        .glow-layer {
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(ellipse at center, rgba(218, 165, 32, 0.15) 0%, transparent 70%);
+            filter: blur(60px);
+            pointer-events: none;
+            animation: glowPulse 6s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Cards container */
+        .cards-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* Individual card */
+        .card {
+            position: absolute;
+            width: 280px;
+            height: 380px;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 0 40px rgba(218, 165, 32, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(218, 165, 32, 0.15);
+            transform-origin: center;
+            filter: drop-shadow(0 10px 30px rgba(218, 165, 32, 0.1));
+        }
+
+        /* Golden rim light effect */
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            background: linear-gradient(
+                135deg,
+                rgba(218, 165, 32, 0.3) 0%,
+                transparent 40%,
+                transparent 60%,
+                rgba(218, 165, 32, 0.15) 100%
+            );
+            pointer-events: none;
+            opacity: 0;
+            animation: rimLight 4s ease-in-out infinite;
+        }
+
+        @keyframes rimLight {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Card image */
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.9) contrast(1.1);
+        }
+
+        /* Card 1 - enters first, swoops from top-left */
+        .card:nth-child(1) {
+            animation: 
+                swoopIn1 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0s,
+                settleIn1 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s,
+                spreadOut1 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.2s forwards;
+        }
+
+        @keyframes swoopIn1 {
+            0% {
+                transform: translate(-100px, -150px) scale(0.6) rotateZ(-8deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-100px, 0) scale(1) rotateZ(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes settleIn1 {
+            0% {
+                transform: translate(-100px, 0) scale(1);
+            }
+            50% {
+                transform: translate(-100px, -15px) scale(1.02);
+            }
+            100% {
+                transform: translate(-100px, 0) scale(1);
+            }
+        }
+
+        @keyframes spreadOut1 {
+            0% {
+                transform: translate(-100px, 0) scale(1);
+            }
+            100% {
+                transform: translate(-280px, 0) scale(1);
+            }
+        }
+
+        /* Card 2 - enters second, center */
+        .card:nth-child(2) {
+            z-index: 20;
+            animation: 
+                swoopIn2 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s,
+                settleIn2 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.35s,
+                spreadOut2 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.35s forwards;
+        }
+
+        @keyframes swoopIn2 {
+            0% {
+                transform: translate(0, -180px) scale(0.5) rotateZ(0deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(0, 0) scale(1) rotateZ(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes settleIn2 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            50% {
+                transform: translate(0, -18px) scale(1.03);
+            }
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes spreadOut2 {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        /* Card 3 - enters last, swoops from top-right */
+        .card:nth-child(3) {
+            animation: 
+                swoopIn3 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s,
+                settleIn3 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s,
+                spreadOut3 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) 2.5s forwards;
+        }
+
+        @keyframes swoopIn3 {
+            0% {
+                transform: translate(100px, -150px) scale(0.6) rotateZ(8deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(100px, 0) scale(1) rotateZ(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes settleIn3 {
+            0% {
+                transform: translate(100px, 0) scale(1);
+            }
+            50% {
+                transform: translate(100px, -15px) scale(1.02);
+            }
+            100% {
+                transform: translate(100px, 0) scale(1);
+            }
+        }
+
+        @keyframes spreadOut3 {
+            0% {
+                transform: translate(100px, 0) scale(1);
+            }
+            100% {
+                transform: translate(280px, 0) scale(1);
+            }
+        }
+
+        /* Placeholder images with gradient */
+        .card-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #1a1612 0%, #2a251f 100%);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .card {
+                width: 240px;
+                height: 340px;
+                border-radius: 24px;
+            }
+
+            @keyframes spreadOut1 {
+                0% { transform: translate(-80px, 0) scale(1); }
+                100% { transform: translate(-240px, 0) scale(1); }
+            }
+
+            @keyframes spreadOut3 {
+                0% { transform: translate(80px, 0) scale(1); }
+                100% { transform: translate(240px, 0) scale(1); }
+            }
+
+            @keyframes swoopIn1 {
+                0% { transform: translate(-80px, -150px) scale(0.6) rotateZ(-8deg); opacity: 0; }
+                100% { transform: translate(-80px, 0) scale(1) rotateZ(0deg); opacity: 1; }
+            }
+
+            @keyframes settleIn1 {
+                0% { transform: translate(-80px, 0) scale(1); }
+                50% { transform: translate(-80px, -15px) scale(1.02); }
+                100% { transform: translate(-80px, 0) scale(1); }
+            }
+
+            @keyframes swoopIn3 {
+                0% { transform: translate(80px, -150px) scale(0.6) rotateZ(8deg); opacity: 0; }
+                100% { transform: translate(80px, 0) scale(1) rotateZ(0deg); opacity: 1; }
+            }
+
+            @keyframes settleIn3 {
+                0% { transform: translate(80px, 0) scale(1); }
+                50% { transform: translate(80px, -15px) scale(1.02); }
+                100% { transform: translate(80px, 0) scale(1); }
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                width: 200px;
+                height: 300px;
+                border-radius: 20px;
+            }
+
+            @keyframes spreadOut1 {
+                0% { transform: translate(-60px, 0) scale(1); }
+                100% { transform: translate(-200px, 0) scale(1); }
+            }
+
+            @keyframes spreadOut3 {
+                0% { transform: translate(60px, 0) scale(1); }
+                100% { transform: translate(200px, 0) scale(1); }
+            }
+
+            @keyframes swoopIn1 {
+                0% { transform: translate(-60px, -120px) scale(0.6) rotateZ(-8deg); opacity: 0; }
+                100% { transform: translate(-60px, 0) scale(1) rotateZ(0deg); opacity: 1; }
+            }
+
+            @keyframes settleIn1 {
+                0% { transform: translate(-60px, 0) scale(1); }
+                50% { transform: translate(-60px, -12px) scale(1.02); }
+                100% { transform: translate(-60px, 0) scale(1); }
+            }
+
+            @keyframes swoopIn3 {
+                0% { transform: translate(60px, -120px) scale(0.6) rotateZ(8deg); opacity: 0; }
+                100% { transform: translate(60px, 0) scale(1) rotateZ(0deg); opacity: 1; }
+            }
+
+            @keyframes settleIn3 {
+                0% { transform: translate(60px, 0) scale(1); }
+                50% { transform: translate(60px, -12px) scale(1.02); }
+                100% { transform: translate(60px, 0) scale(1); }
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-container">
+        <div class="hero-background"></div>
+        <div class="glow-layer"></div>
+        
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-placeholder">📸</div>
+            </div>
+            <div class="card">
+                <div class="card-placeholder">📸</div>
+            </div>
+            <div class="card">
+                <div class="card-placeholder">📸</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Optional: Replace placeholder images with actual images
+        // Uncomment and modify the following code to use real images:
+        
+        /*
+        const images = [
+            'image1.jpg',
+            'image2.jpg',
+            'image3.jpg'
+        ];
+
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            const img = document.createElement('img');
+            img.src = images[index];
+            img.className = 'card-image';
+            card.innerHTML = '';
+            card.appendChild(img);
+        });
+        */
+
+        // Animation sequence info (for debugging/monitoring)
+        console.log('🎬 Premium Hero Animation Loaded');
+        console.log('Timeline:');
+        console.log('0.0s - Card 1 begins swooping in from top-left');
+        console.log('0.15s - Card 2 begins swooping in from top');
+        console.log('0.3s - Card 3 begins swooping in from top-right');
+        console.log('1.2s - Card 1 completes swoop, begins elastic settle');
+        console.log('1.35s - Card 2 completes swoop, begins elastic settle');
+        console.log('1.5s - Card 3 completes swoop, begins elastic settle');
+        console.log('2.0s - All cards settled, holding in center');
+        console.log('2.2s - Cards begin spreading apart horizontally');
+        console.log('3.4s - Cards reach final positions and hold');
+    </script>
+</body>
+</html>
