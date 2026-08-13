@@ -22,6 +22,7 @@ export default {
         poppins: ['Sora', 'sans-serif'],
         inter: ['Sora', 'sans-serif'],
         display: ['Sora', 'sans-serif'],
+        playfair: ['"Playfair Display"', 'serif'],
       },
     },
   },

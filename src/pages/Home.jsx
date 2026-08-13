@@ -93,20 +93,6 @@ export default function Home() {
   const maxPoints = Math.max(...teamData.map(t => t.totalPoints || 0), 1)
   const maxBarHeight = 300
 
-  const handleDownloadImage = async (url, name) => {
-    try {
-      const res = await fetch(url)
-      const blob = await res.blob()
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = name || 'spotlight.jpg'
-      a.click()
-      URL.revokeObjectURL(a.href)
-    } catch {
-      toast('Download failed, try again', 'error')
-    }
-  }
-
   const handleDownloadPoster = (count) => {
     const poster = posters[count]
     if (!poster?.imageUrl) {
@@ -293,25 +279,34 @@ export default function Home() {
             ref={galleryReveal.ref}
             className={`mb-8 reveal ${galleryReveal.visible ? 'reveal-visible' : ''}`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl md:text-2xl font-display text-mainText">Gallery</h3>
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <p className="text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] mb-2">
+                  From the Fest
+                </p>
+                <h3 className="text-4xl md:text-5xl font-playfair font-bold text-mainText leading-tight">
+                  Gallery
+                </h3>
+                <p className="mt-2 text-sm md:text-base text-mainText/70 font-display italic max-w-md">
+                  Scenes from ISRA life Festival 2026 as it unfolds.
+                </p>
+              </div>
               <button
                 onClick={() => navigate('/gallery')}
-                className="flex items-center gap-1.5 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition"
+                className="group flex items-center gap-2 text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.22em] whitespace-nowrap mt-1 hover:opacity-80 transition"
               >
-                View Gallery <ArrowRight size={15} />
+                View All
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </button>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
-              {allImages.slice(0, 6).map(img => (
-                <div key={img.id} className="relative group">
-                  <img src={img.imageURL} alt={img.caption || ''} className="w-full h-24 sm:h-32 md:h-36 rounded-xl object-cover" />
-                  <button
-                    onClick={() => handleDownloadImage(img.imageURL, `spotlight_${img.id}.jpg`)}
-                    className="absolute bottom-1.5 right-1.5 bg-black/60 hover:bg-black/80 p-1 rounded-lg transition"
-                  >
-                    <Download size={12} color="white" />
-                  </button>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              {allImages.slice(0, 8).map(img => (
+                <div key={img.id} className="relative overflow-hidden rounded-xl aspect-[4/3]">
+                  <img
+                    src={img.imageURL}
+                    alt={img.caption || ''}
+                    className="w-full h-full object-cover transition-transform duration-300 ease-out hover:scale-105"
+                  />
                 </div>
               ))}
             </div>
