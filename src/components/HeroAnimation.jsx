@@ -4,6 +4,9 @@ export default function HeroAnimation({ spotlightImages = [] }) {
   // Get first 3 images, with fallback
   const cardImages = spotlightImages.slice(0, 3)
 
+  // We duplicate the cards to create a seamless infinite loop
+  const allCards = [...cardImages, ...cardImages]
+
   return (
     <>
       <style>{`
@@ -22,7 +25,6 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         .hero-animation-bg {
           position: absolute;
           inset: 0;
-          /* Ocean blue tone consistent with the site's palette */
           background: radial-gradient(circle at center, #2872A1 0%, #1F5A80 100%);
           backdrop-filter: blur(40px);
           -webkit-backdrop-filter: blur(40px);
@@ -43,14 +45,19 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           50% { opacity: 0.6; }
         }
 
-        .hero-cards-container {
+        .hero-cards-wrapper {
           position: relative;
-          width: 100%;
-          height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 10;
+          will-change: transform;
+          /* Drift starts after swoop-in (~1.6s) */
+          animation: heroInfiniteDrift 30s linear 1.6s infinite;
+        }
+
+        @keyframes heroInfiniteDrift {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(960px); }
         }
 
         .hero-card {
@@ -66,7 +73,6 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           border: 1px solid rgba(255, 255, 255, 0.15);
           transform-origin: center;
           will-change: transform, opacity;
-          /* Faded, semi-transparent look */
           opacity: 0.7;
         }
 
@@ -88,118 +94,80 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         }
 
         /*
-           ANIMATION SEQUENCE:
-           1. Swoop In: curved arc from bottom to settled position.
-           2. Settle: gentle ease/bounce.
-           3. Continuous Drift: slow linear movement to the right.
+           Swoop In Animations
+           Only applied to the first 3 cards.
+           The clones (4-6) are pre-positioned to the left.
         */
-
-        /* Card 1 */
         .hero-card:nth-child(1) {
-          animation:
-              heroSwoopIn1 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0s forwards,
-              heroDrift1 30s linear 1.6s infinite;
+          animation: heroSwoopIn1 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0s forwards;
         }
-
         @keyframes heroSwoopIn1 {
-          0% {
-            transform: translate(-300px, 100vh) scale(0.6) rotateZ(-12deg);
-            opacity: 0;
-          }
-          100% {
-            transform: translate(-320px, 0) scale(1) rotateZ(0deg);
-            opacity: 1;
-          }
+          0% { transform: translate(-320px, 100vh) scale(0.6) rotateZ(-12deg); opacity: 0; }
+          100% { transform: translate(-320px, 0) scale(1) rotateZ(0deg); opacity: 0.7; }
         }
 
-        @keyframes heroDrift1 {
-          0% { transform: translate(-320px, 0) scale(1); }
-          100% { transform: translate(100vw, 0) scale(1); }
-        }
-
-        /* Card 2 */
         .hero-card:nth-child(2) {
           z-index: 20;
-          animation:
-              heroSwoopIn2 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards,
-              heroDrift2 30s linear 1.8s infinite;
+          animation: heroSwoopIn2 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
         }
-
         @keyframes heroSwoopIn2 {
-          0% {
-            transform: translate(0, 100vh) scale(0.5) rotateZ(0deg);
-            opacity: 0;
-          }
-          100% {
-            transform: translate(0, 0) scale(1) rotateZ(0deg);
-            opacity: 1;
-          }
+          0% { transform: translate(0, 100vh) scale(0.5) rotateZ(0deg); opacity: 0; }
+          100% { transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 0.7; }
         }
 
-        @keyframes heroDrift2 {
-          0% { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(100vw, 0) scale(1); }
-        }
-
-        /* Card 3 */
         .hero-card:nth-child(3) {
-          animation:
-              heroSwoopIn3 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards,
-              heroDrift3 30s linear 2.0s infinite;
+          animation: heroSwoopIn3 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
         }
-
         @keyframes heroSwoopIn3 {
-          0% {
-            transform: translate(300px, 100vh) scale(0.6) rotateZ(12deg);
-            opacity: 0;
-          }
-          100% {
-            transform: translate(320px, 0) scale(1) rotateZ(0deg);
-            opacity: 1;
-          }
+          0% { transform: translate(320px, 100vh) scale(0.6) rotateZ(12deg); opacity: 0; }
+          100% { transform: translate(320px, 0) scale(1) rotateZ(0deg); opacity: 0.7; }
         }
 
-        @keyframes heroDrift3 {
-          0% { transform: translate(320px, 0) scale(1); }
-          100% { transform: translate(100vw + 320px, 0) scale(1); }
-        }
+        /*
+           Clone Positions:
+           Set A: -320, 0, 320
+           Set B: -1280, -960, -640
+        */
+        .hero-card:nth-child(4) { transform: translate(-1280px, 0); }
+        .hero-card:nth-child(5) { transform: translate(-960px, 0); }
+        .hero-card:nth-child(6) { transform: translate(-640px, 0); }
 
         @media (max-width: 1200px) {
-          .hero-card {
-            width: 260px;
-            height: 360px;
+          .hero-card { width: 260px; height: 360px; }
+          .hero-cards-wrapper { animation-duration: 25s; }
+          @keyframes heroInfiniteDrift {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(780px); }
           }
-          @keyframes heroSwoopIn1 {
-            100% { transform: translate(-260px, 0) scale(1) rotateZ(0deg); opacity: 1; }
-          }
-          @keyframes heroDrift1 {
-            0% { transform: translate(-260px, 0) scale(1); }
-          }
-          @keyframes heroSwoopIn3 {
-            100% { transform: translate(260px, 0) scale(1) rotateZ(0deg); opacity: 1; }
-          }
-          @keyframes heroDrift3 {
-            0% { transform: translate(260px, 0) scale(1); }
-          }
+          /* Adjusted positions for 260px width */
+          .hero-card:nth-child(1) { animation: heroSwoopIn1-sm 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0s forwards; }
+          @keyframes heroSwoopIn1-sm { 0% { transform: translate(-260px, 100vh) scale(0.6); opacity: 0; } 100% { transform: translate(-260px, 0) scale(1); opacity: 0.7; } }
+          .hero-card:nth-child(2) { animation: heroSwoopIn2-sm 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards; }
+          @keyframes heroSwoopIn2-sm { 0% { transform: translate(0, 100vh) scale(0.5); opacity: 0; } 100% { transform: translate(0, 0) scale(1); opacity: 0.7; } }
+          .hero-card:nth-child(3) { animation: heroSwoopIn3-sm 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards; }
+          @keyframes heroSwoopIn3-sm { 0% { transform: translate(260px, 100vh) scale(0.6); opacity: 0; } 100% { transform: translate(260px, 0) scale(1); opacity: 0.7; } }
+          .hero-card:nth-child(4) { transform: translate(-1040px, 0); }
+          .hero-card:nth-child(5) { transform: translate(-780px, 0); }
+          .hero-card:nth-child(6) { transform: translate(-520px, 0); }
         }
 
         @media (max-width: 768px) {
-          .hero-card {
-            width: 200px;
-            height: 280px;
+          .hero-card { width: 200px; height: 280px; }
+          .hero-cards-wrapper { animation-duration: 20s; }
+          @keyframes heroInfiniteDrift {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(600px); }
           }
-          @keyframes heroSwoopIn1 {
-            100% { transform: translate(-200px, 0) scale(1) rotateZ(0deg); opacity: 1; }
-          }
-          @keyframes heroDrift1 {
-            0% { transform: translate(-200px, 0) scale(1); }
-          }
-          @keyframes heroSwoopIn3 {
-            100% { transform: translate(200px, 0) scale(1) rotateZ(0deg); opacity: 1; }
-          }
-          @keyframes heroDrift3 {
-            0% { transform: translate(200px, 0) scale(1); }
-          }
+          /* Adjusted positions for 200px width */
+          .hero-card:nth-child(1) { animation: heroSwoopIn1-xs 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0s forwards; }
+          @keyframes heroSwoopIn1-xs { 0% { transform: translate(-200px, 100vh) scale(0.6); opacity: 0; } 100% { transform: translate(-200px, 0) scale(1); opacity: 0.7; } }
+          .hero-card:nth-child(2) { animation: heroSwoopIn2-xs 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards; }
+          @keyframes heroSwoopIn2-xs { 0% { transform: translate(0, 100vh) scale(0.5); opacity: 0; } 100% { transform: translate(0, 0) scale(1); opacity: 0.7; } }
+          .hero-card:nth-child(3) { animation: heroSwoopIn3-xs 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards; }
+          @keyframes heroSwoopIn3-xs { 0% { transform: translate(200px, 100vh) scale(0.6); opacity: 0; } 100% { transform: translate(200px, 0) scale(1); opacity: 0.7; } }
+          .hero-card:nth-child(4) { transform: translate(-800px, 0); }
+          .hero-card:nth-child(5) { transform: translate(-600px, 0); }
+          .hero-card:nth-child(6) { transform: translate(-400px, 0); }
         }
       `}</style>
 
@@ -207,28 +175,16 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         <div className="hero-animation-bg" />
         <div className="hero-animation-glow" />
 
-        <div className="hero-cards-container">
-          <div className="hero-card">
-            {cardImages[0]?.imageURL ? (
-              <img src={cardImages[0].imageURL} alt="spotlight" className="hero-card-image" />
-            ) : (
-              <div className="hero-card-placeholder">📸</div>
-            )}
-          </div>
-          <div className="hero-card">
-            {cardImages[1]?.imageURL ? (
-              <img src={cardImages[1].imageURL} alt="spotlight" className="hero-card-image" />
-            ) : (
-              <div className="hero-card-placeholder">📸</div>
-            )}
-          </div>
-          <div className="hero-card">
-            {cardImages[2]?.imageURL ? (
-              <img src={cardImages[2].imageURL} alt="spotlight" className="hero-card-image" />
-            ) : (
-              <div className="hero-card-placeholder">📸</div>
-            )}
-          </div>
+        <div className="hero-cards-wrapper">
+          {allCards.map((img, i) => (
+            <div key={i} className="hero-card">
+              {img?.imageURL ? (
+                <img src={img.imageURL} alt="spotlight" className="hero-card-image" />
+              ) : (
+                <div className="hero-card-placeholder">📸</div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </>
