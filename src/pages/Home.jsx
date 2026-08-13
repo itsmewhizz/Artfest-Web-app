@@ -3,21 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
 import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers } from 'lucide-react'
 import HeroAnimation from '../components/HeroAnimation'
+import TeamBar from '../components/TeamBar'
 import useScrollReveal from '../hooks/useScrollReveal'
-
-const CATEGORY_BARS = {
-  Minor: '#6366F1',
-  HS: '#7BEAFE',
-  Premier: '#FFDA63',
-  'Sub Junior': '#A78BFA',
-  Junior: '#34D399',
-  'General Cat-A': '#94A3B8',
-  'General Cat-B': '#E2E8F0',
-}
-
-const categoryLabel = cat =>
-  cat === 'General Cat-A' ? 'Gen Cat-A' :
-  cat === 'General Cat-B' ? 'Gen Cat-B' : cat
 
 const stats = [
   { value: '3', label: 'Teams', icon: Users },
@@ -91,10 +78,9 @@ export default function Home() {
     }
   }, [location.state])
 
-  const maxCat = Math.max(
-    ...teamData.flatMap(t => categories.map(c => t.catPoints?.[c] || 0)),
-    1
-  )
+  const [expandedTeamId, setExpandedTeamId] = useState(null)
+  const maxPoints = Math.max(...teamData.map(t => t.totalPoints || 0), 1)
+  const maxBarHeight = 300
 
   const scrollTo = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -201,80 +187,26 @@ export default function Home() {
             ))}
           </div>
           <h2 className="relative z-10 text-2xl md:text-3xl font-playfair font-bold text-mainText mb-8 text-center">
-            Team <span className="text-accent">Standings</span>
+            Team <span className="text-mainText">Standings</span>
           </h2>
 
-          <div className="relative z-10 grid lg:grid-cols-[1fr_340px] gap-8 items-start">
-            {/* Left — grouped category bars per team */}
-            <div>
-              <div className="flex flex-wrap justify-center items-end gap-x-4 sm:gap-x-8 gap-y-10">
-                {teamData.map(team => (
-                  <button
-                    key={team.id}
-                    onClick={() => navigate(`/teams/${team.id}`)}
-                    className="group flex flex-col items-center cursor-pointer"
-                  >
-                    <span className="font-playfair text-2xl font-bold text-mainText">
-                      {team.totalPoints}
-                    </span>
-                    <div className="flex items-end gap-1 sm:gap-1.5 h-[180px] mt-2">
-                      {categories.map(cat => {
-                        const pts = team.catPoints?.[cat] || 0
-                        const h = Math.max(6, Math.round((pts / maxCat) * 176))
-                        return (
-                          <div
-                            key={cat}
-                            title={`${categoryLabel(cat)}: ${pts} pts`}
-                            className="w-3.5 sm:w-5 rounded-t-md transition-all duration-300 group-hover:opacity-90"
-                            style={{ height: h, background: CATEGORY_BARS[cat] || '#94A3B8' }}
-                          />
-                        )
-                      })}
-                    </div>
-                    <span className="mt-3 text-xs sm:text-sm font-semibold text-mutedText truncate max-w-[90px] sm:max-w-[130px]">
-                      {team.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-8">
-                {categories.map(cat => (
-                  <span
-                    key={cat}
-                    className="flex items-center gap-1.5 text-[10px] sm:text-xs text-mutedText uppercase tracking-wider"
-                  >
-                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: CATEGORY_BARS[cat] }} />
-                    {categoryLabel(cat)}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Right — Leading Teams card */}
-            <aside className="bg-card rounded-2xl border border-secondary/40 shadow-lg overflow-hidden">
-              <div className="px-5 py-4 border-b border-secondary/30 flex items-center justify-between">
-                <h3 className="font-playfair text-xl font-bold text-mainText">Leading Teams</h3>
-                <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">Rank</span>
-              </div>
-              <div className="px-5 py-2">
-                {teamData.slice(0, 5).map((team, i) => (
-                  <div
-                    key={team.id}
-                    className="flex items-center gap-4 py-3 border-b border-secondary/20 last:border-0"
-                  >
-                    <span className={`font-playfair text-lg font-bold w-6 ${i === 0 ? 'text-accent' : 'text-mutedText'}`}>
-                      {i + 1}
-                    </span>
-                    <span className="text-sm font-semibold text-mainText truncate">{team.name}</span>
-                    <span className="ml-auto font-playfair font-bold text-accent">{team.totalPoints} pts</span>
-                  </div>
-                ))}
-                {teamData.length === 0 && (
-                  <p className="py-6 text-center text-mutedText text-sm">Loading standings…</p>
-                )}
-              </div>
-            </aside>
+          <div className="relative z-10 flex flex-wrap justify-center items-end gap-4 sm:gap-6">
+            {teamData.map((team, i) => {
+              const barHeight = Math.max(70, (team.totalPoints / maxPoints) * maxBarHeight)
+              const isExpanded = expandedTeamId === team.id
+              return (
+                <TeamBar
+                  key={team.id}
+                  team={team}
+                  categories={categories}
+                  displayPoints={team.totalPoints}
+                  barHeight={barHeight}
+                  isExpanded={isExpanded}
+                  index={i}
+                  onToggle={() => setExpandedTeamId(isExpanded ? null : team.id)}
+                />
+              )
+            })}
           </div>
         </div>
 
@@ -292,7 +224,7 @@ export default function Home() {
                   className="bg-card rounded-2xl border border-secondary/40 p-6 text-center cursor-pointer hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/40 transition-all duration-300"
                 >
                   <Icon size={22} className="mx-auto mb-3 text-accent" />
-                  <div className="font-playfair font-bold text-4xl md:text-5xl text-primary leading-none">
+                  <div className="font-playfair font-bold text-4xl md:text-5xl text-accent leading-none">
                     {stat.value}
                   </div>
                   <div className="mt-2 text-xs md:text-sm uppercase tracking-[0.18em] text-mutedText font-semibold">

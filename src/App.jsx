@@ -31,7 +31,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 import JudgesRoute from './components/JudgesRoute'
 import Starfield from './components/Starfield'
 import HamburgerMenu from './components/HamburgerMenu'
-import ThemeToggle from './components/ThemeToggle'
 
 // Guarantees the admin login page is unreachable while a session is active —
 // no matter how the browser history got there (back/back-back, stale entries,
@@ -91,7 +90,6 @@ function App() {
         </div>
         <BottomNav />
         <HamburgerMenu />
-        <ThemeToggle />
       </div>
     </BrowserRouter>
   )
