@@ -232,7 +232,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
               ))}
             </div>
           </div>
-        </div}
+        </div>
       </div>
     </>
   )
