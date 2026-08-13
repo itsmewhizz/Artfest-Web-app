@@ -5,6 +5,7 @@ import { ChevronDown, Download, ArrowRight } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import TeamBar from '../components/TeamBar'
 import HeroAnimation from '../components/HeroAnimation'
+import useScrollReveal from '../hooks/useScrollReveal'
 
 export default function Home() {
   const [featured, setFeatured] = useState([])
@@ -21,6 +22,10 @@ export default function Home() {
   const toast = useToast()
   const teamsRef = useRef(null)
   const aboutRef = useRef(null)
+  const teamsReveal = useScrollReveal()
+  const downloadReveal = useScrollReveal()
+  const galleryReveal = useScrollReveal()
+  const aboutReveal = useScrollReveal()
 
   const sparkles = useMemo(
     () =>
@@ -201,7 +206,13 @@ export default function Home() {
       <div className="bg-mainBackground p-4 md:p-8 lg:p-12 max-w-7xl mx-auto relative z-20">
 
         {/* Team Standings */}
-        <div ref={teamsRef} className="hp-wrapper-gloss p-4 md:p-6 w-full mb-8 scroll-mt-24">
+        <div
+          ref={(el) => {
+            teamsRef.current = el
+            teamsReveal.ref.current = el
+          }}
+          className={`hp-wrapper-gloss p-4 md:p-6 w-full mb-8 scroll-mt-24 reveal ${teamsReveal.visible ? 'reveal-visible' : ''}`}
+        >
           <div className="ember-field">
             {embers.map(e => (
               <span
@@ -242,7 +253,10 @@ export default function Home() {
         </div>
 
         {/* Download Total result */}
-        <div className="mb-8">
+        <div
+          ref={downloadReveal.ref}
+          className={`mb-8 reveal ${downloadReveal.visible ? 'reveal-visible' : ''}`}
+        >
           <h3 className="text-xl md:text-2xl font-display text-black mb-4">Download Total result</h3>
           {publishedCounts.length === 0 ? (
             <p className="text-black text-sm">No result posters have been published yet.</p>
@@ -275,7 +289,10 @@ export default function Home() {
 
         {/* Gallery */}
         {allImages.length > 0 && (
-          <div className="mb-8">
+          <div
+            ref={galleryReveal.ref}
+            className={`mb-8 reveal ${galleryReveal.visible ? 'reveal-visible' : ''}`}
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl md:text-2xl font-display text-mainText">Gallery</h3>
               <button
@@ -302,7 +319,14 @@ export default function Home() {
         )}
 
         {/* About the Fest */}
-        <div ref={aboutRef} id="about" className="mb-10 text-center scroll-mt-24">
+        <div
+          ref={(el) => {
+            aboutRef.current = el
+            aboutReveal.ref.current = el
+          }}
+          id="about"
+          className={`mb-10 text-center scroll-mt-24 reveal ${aboutReveal.visible ? 'reveal-visible' : ''}`}
+        >
           <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-black mb-6">About the Fest</h3>
           <div className="max-w-2xl mx-auto space-y-5 px-2 sm:px-0">
             <p className="text-black text-sm sm:text-base italic leading-loose">
