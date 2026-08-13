@@ -13,7 +13,7 @@ function calcGrade(points) {
 }
 
 const SHEETS_PER_PROGRAMME = 2
-const MAX_SHEETS = 4
+const MAX_SHEETS = 8
 
 // Info-header cell (label + value), used on every sheet.
 const InfoCell = ({ label, value = '' }) => (
@@ -137,7 +137,7 @@ export default function AdminPrint() {
     if (selectedSet.has(id)) {
       setSelectedSet(prev => { const next = new Set(prev); next.delete(id); return next })
     } else if (sheetsUsed() + sheetsPerItem() > MAX_SHEETS) {
-      showToast("You can't select more than 4 sheets at a time.")
+      showToast(`You can't select more than ${MAX_SHEETS} sheets at a time.`)
     } else {
       setSelectedSet(prev => { const next = new Set(prev); next.add(id); return next })
     }
@@ -149,8 +149,13 @@ export default function AdminPrint() {
 
   const buildPreviewItems = (ids, type) => {
     const items = []
-    ids.forEach(id => {
-      if (type === 'programme') {
+    if (type === 'programme') {
+      // Group ALL Sign sheets first, then ALL Valuation sheets. Sign sheets
+      // flow onto the first page(s); the Valuation group starts fresh on the
+      // following page via the `breakBefore` marker on its first sheet.
+      const signItems = []
+      const valuationItems = []
+      ids.forEach(id => {
         const prog = programmes.find(p => p.id === id)
         if (!prog) return
         const resultRec = resultNoMap[prog.id]
@@ -165,8 +170,8 @@ export default function AdminPrint() {
         }
         const participants = students.filter(s => (s.programmeIds || []).includes(prog.id))
 
-        // Sheet 1 — Sign Sheet
-        items.push({
+        // Sign Sheet
+        signItems.push({
           ...info,
           sheet: 'sign',
           type: 'programme',
@@ -178,8 +183,8 @@ export default function AdminPrint() {
           }))
         })
 
-        // Sheet 2 — Valuation Sheet
-        items.push({
+        // Valuation Sheet
+        valuationItems.push({
           ...info,
           sheet: 'valuation',
           type: 'programme',
@@ -187,40 +192,45 @@ export default function AdminPrint() {
             key: `val-${prog.id}-${s.id}`,
           }))
         })
-      } else {
-        const res = allResults.find(r => r.id === id)
-        if (!res) return
-        const prog = programmes.find(p => p.id === res.programmeId)
-        const rows = []
-        const addRow = (placementKey, placement) => {
-          if (!placement) return
-          const student = students.find(s => s.id === placement.studentId)
-          rows.push({
-            key: `res-${res.id}-${placementKey}`,
-            chestNo: student?.chestNo || '',
-            name: placement.name || student?.name || '',
-            team: teamMap[student?.team] || student?.team || '',
-            codeLetter: placement.codeLetter || '',
-            grade: placement.grade || calcGrade(placement.points),
-            prize: placement.prize || '',
-            point: placement.points || 0,
-          })
-        }
-        addRow('first', res.first)
-        addRow('second', res.second)
-        addRow('third', res.third)
-        items.push({
-          type: 'result',
-          sheet: 'result',
-          id: res.id,
-          category: prog?.category || '',
-          eventName: res.name || prog?.name || '',
-          programmeType: prog?.programmeType || prog?.type || '',
-          participationType: prog?.participationType || prog?.participation_type || '',
-          number: res.resultNo || '',
-          rows
+      })
+      if (valuationItems.length > 0) valuationItems[0].breakBefore = true
+      items.push(...signItems, ...valuationItems)
+      return items
+    }
+
+    ids.forEach(id => {
+      const res = allResults.find(r => r.id === id)
+      if (!res) return
+      const prog = programmes.find(p => p.id === res.programmeId)
+      const rows = []
+      const addRow = (placementKey, placement) => {
+        if (!placement) return
+        const student = students.find(s => s.id === placement.studentId)
+        rows.push({
+          key: `res-${res.id}-${placementKey}`,
+          chestNo: student?.chestNo || '',
+          name: placement.name || student?.name || '',
+          team: teamMap[student?.team] || student?.team || '',
+          codeLetter: placement.codeLetter || '',
+          grade: placement.grade || calcGrade(placement.points),
+          prize: placement.prize || '',
+          point: placement.points || 0,
         })
       }
+      addRow('first', res.first)
+      addRow('second', res.second)
+      addRow('third', res.third)
+      items.push({
+        type: 'result',
+        sheet: 'result',
+        id: res.id,
+        category: prog?.category || '',
+        eventName: res.name || prog?.name || '',
+        programmeType: prog?.programmeType || prog?.type || '',
+        participationType: prog?.participationType || prog?.participation_type || '',
+        number: res.resultNo || '',
+        rows
+      })
     })
     return items
   }
@@ -470,7 +480,7 @@ export default function AdminPrint() {
           {/* Preview sheets — each block is one self-contained sheet */}
           <div className="print-page-container">
             {previewItems.map((item, idx) => (
-              <div key={idx} className="preview-sheet">
+              <div key={idx} className={`preview-sheet${item.breakBefore ? ' page-break-before' : ''}`}>
                 {/* Info header table */}
                 <table className="print-table print-info-table">
                   <thead>
@@ -614,6 +624,10 @@ export default function AdminPrint() {
           box-sizing: border-box;
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
+        }
+        .preview-sheet.page-break-before {
+          break-before: page;
+          page-break-before: always;
         }
         .preview-sheet .print-stamp-box {
           border: 2px solid black;
