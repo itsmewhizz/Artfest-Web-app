@@ -1,25 +1,49 @@
 import React from 'react'
 
 export default function HeroAnimation({ spotlightImages = [] }) {
-  console.log("HeroAnimation V2: Dual-Lane Mode Active");
-
   // Use a set of 3 cards per row.
   const row1Images = spotlightImages.length > 0
     ? spotlightImages.slice(0, 3)
-    : Array(3).fill({ imageURL: null }); // Ensure cards always render
+    : Array(3).fill({ imageURL: null })
 
   const row2Images = spotlightImages.length > 3
     ? spotlightImages.slice(3, 6)
     : spotlightImages.length > 0
       ? spotlightImages.slice(0, 3)
-      : Array(3).fill({ imageURL: null });
+      : Array(3).fill({ imageURL: null })
 
   const getCardContent = (img) => (
     img?.imageURL ? (
       <img src={img.imageURL} alt="spotlight" className="hero-card-image" />
     ) : (
-      <div className="hero-card-placeholder">📸</div>
+      <div className="hero-card-placeholder">&#128248;</div>
     )
+  )
+
+  // Each row renders its card set twice back-to-back so the translateX(-50%)
+  // loop restarts seamlessly with no visible gap/jump.
+  const renderRow = (images, direction) => (
+    <div className="card-row">
+      <div className={`marquee-track ${direction}`}>
+        {[0, 1].map((copy) => (
+          <div className="marquee-set" key={copy}>
+            {images.map((img, i) => (
+              <div
+                key={i}
+                className="hero-card swoop-entry"
+                style={{
+                  '--rot': `${(i % 3 - 1) * 6}deg`,
+                  '--swoop-x': `${(i % 3 - 1) * 90}px`,
+                  animationDelay: `${(i % 3) * 0.12}s`,
+                }}
+              >
+                {getCardContent(img)}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 
   return (
@@ -30,9 +54,6 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           inset: 0;
           width: 100%;
           height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
           overflow: hidden;
           z-index: 0;
           pointer-events: none;
@@ -67,54 +88,63 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           height: 100%;
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          gap: 80px;
           z-index: 10;
         }
 
         .card-row {
+          position: relative;
+          height: 50%;
+          width: 100%;
           display: flex;
           align-items: center;
-          justify-content: center;
-          width: 100%;
-          position: relative;
           overflow: hidden;
         }
 
-        .marquee-wrapper {
+        .marquee-track {
           display: flex;
-          gap: 30px;
+          width: max-content;
           will-change: transform;
-          padding: 0 15px;
+        }
+
+        .marquee-set {
+          display: flex;
+          align-items: center;
+          gap: clamp(0.9rem, 2.6vw, 2.25rem);
+          padding-right: clamp(0.9rem, 2.6vw, 2.25rem);
+        }
+
+        .marquee-set:last-child {
+          padding-right: 0;
         }
 
         /*
-           Calculations for 320px cards + 30px gaps:
-           One set width = (3 * 320) + (3 * 30) = 1050px
+          Seamless loop: track holds two identical sets, so -50% of the track
+          width is exactly one set width — shifting by it lands pixel-perfect
+          back on the same card sequence.
         */
-        .drift-right-lane {
-          animation: driftRightLane 35s linear 2s infinite;
+        .drift-right {
+          animation: driftRightLane 55s linear infinite;
         }
 
-        .drift-left-lane {
-          animation: driftLeftLane 35s linear 2s infinite;
+        .drift-left {
+          animation: driftLeftLane 48s linear infinite;
         }
 
         @keyframes driftRightLane {
-          0% { transform: translateX(-1050px); }
-          100% { transform: translateX(0); }
+          from { transform: translateX(-50%); }
+          to   { transform: translateX(0); }
         }
 
         @keyframes driftLeftLane {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-1050px); }
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
         }
 
         .hero-card {
           position: relative;
-          width: 320px;
-          height: 420px;
-          border-radius: 32px;
+          width: clamp(5rem, 15.5vw, 14.5rem);
+          aspect-ratio: 3 / 4;
+          border-radius: 1.4rem;
           overflow: hidden;
           box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
           background: rgba(255, 255, 255, 0.05);
@@ -137,7 +167,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 64px;
+          font-size: clamp(1.5rem, 5vw, 3.5rem);
           background: linear-gradient(135deg, #1F5A80 0%, #16405C 100%);
         }
 
@@ -157,81 +187,26 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .drift-right-lane, .drift-left-lane { animation-duration: 120s; }
-          .swoop-entry { animation: none; opacity: 0.7; }
-        }
-
-        @media (max-width: 1200px) {
-          .hero-card { width: 260px; height: 360px; }
-          /* (3 * 260) + (3 * 30) = 870px */
-          .drift-right-lane, .drift-left-lane { animation-duration: 25s; }
-          @keyframes driftRightLane {
-            0% { transform: translateX(-870px); }
-            100% { transform: translateX(0); }
+          .drift-right,
+          .drift-left {
+            animation: none;
           }
-          @keyframes driftLeftLane {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-870px); }
-          }
-        }
-
-        @media (max-width: 768px) {
-          .hero-card { width: 200px; height: 280px; }
-          /* (3 * 200) + (3 * 30) = 690px */
-          .drift-right-lane, .drift-left-lane { animation-duration: 20s; }
-          @keyframes driftRightLane {
-            0% { transform: translateX(-690px); }
-            100% { transform: translateX(0); }
-          }
-          @keyframes driftLeftLane {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-690px); }
+          .swoop-entry {
+            animation: none;
+            opacity: 0.7;
           }
         }
       `}</style>
 
-      <div className="hero-animation-container">
+      <div className="hero-animation-container" aria-hidden>
         <div className="hero-animation-bg" />
         <div className="hero-animation-glow" />
 
         <div className="hero-rows-container">
           {/* Top Row - Moving Right */}
-          <div className="card-row">
-            <div className="marquee-wrapper drift-right-lane">
-              {[...row1Images, ...row1Images].map((img, i) => (
-                <div
-                  key={i}
-                  className="hero-card swoop-entry"
-                  style={{
-                    '--rot': `${(i % 3 - 1) * 8}deg`,
-                    '--swoop-x': `${(i % 3 - 1) * 120}px`,
-                    animationDelay: `${(i % 3) * 0.15}s`
-                  }}
-                >
-                  {getCardContent(img)}
-                </div>
-              ))}
-            </div>
-          </div>
-
+          {renderRow(row1Images, 'drift-right')}
           {/* Bottom Row - Moving Left */}
-          <div className="card-row">
-            <div className="marquee-wrapper drift-left-lane">
-              {[...row2Images, ...row2Images].map((img, i) => (
-                <div
-                  key={i}
-                  className="hero-card swoop-entry"
-                  style={{
-                    '--rot': `${(i % 3 - 1) * -8}deg`,
-                    '--swoop-x': `${(i % 3 - 1) * -120}px`,
-                    animationDelay: `${(i % 3) * 0.15}s`
-                  }}
-                >
-                  {getCardContent(img)}
-                </div>
-              ))}
-            </div>
-          </div>
+          {renderRow(row2Images, 'drift-left')}
         </div>
       </div>
     </>
