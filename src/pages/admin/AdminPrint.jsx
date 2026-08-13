@@ -12,6 +12,43 @@ function calcGrade(points) {
   return '-'
 }
 
+const SHEETS_PER_PROGRAMME = 2
+const MAX_SHEETS = 4
+
+// Info-header cell (label + value), used on every sheet.
+const InfoCell = ({ label, value = '' }) => (
+  <th className="print-info-cell">
+    <span className="print-info-label">{label}</span>
+    <span className="print-info-value">{value}</span>
+  </th>
+)
+
+// Blank committee-stamp box cell for an info header row.
+const InfoStampCell = ({ stampImage }) => (
+  <th className="print-stamp-cell">
+    <div className="print-stamp-box">
+      {stampImage ? (
+        <img src={stampImage} alt="Committee Stamp" className="stamp-image" />
+      ) : (
+        'COMMITTEE STAMP'
+      )}
+    </div>
+  </th>
+)
+
+// Stamp box cell used as the last column of the Valuation sheet's sub-header.
+const SubStampCell = ({ stampImage }) => (
+  <th className="print-sub-stamp-cell">
+    <div className="print-stamp-box">
+      {stampImage ? (
+        <img src={stampImage} alt="Committee Stamp" className="stamp-image" />
+      ) : (
+        'COMMITTEE STAMP'
+      )}
+    </div>
+  </th>
+)
+
 export default function AdminPrint() {
   const [programmes, setProgrammes] = useState([])
   const [allResults, setAllResults] = useState([])
@@ -91,17 +128,24 @@ export default function AdminPrint() {
     setSelectedSet(new Set())
   }
 
+  // Programmes consume 2 sheets (Sign + Valuation), results consume 1.
+  const sheetsPerItem = () => (activeTab === 'programmes' ? SHEETS_PER_PROGRAMME : 1)
+
+  const sheetsUsed = () => selectedSet.size * sheetsPerItem()
+
   const toggleItem = (id) => {
     if (selectedSet.has(id)) {
       setSelectedSet(prev => { const next = new Set(prev); next.delete(id); return next })
-    } else if (selectedSet.size >= 4) {
-      showToast("You can't select more than 4 at a time.")
+    } else if (sheetsUsed() + sheetsPerItem() > MAX_SHEETS) {
+      showToast("You can't select more than 4 sheets at a time.")
     } else {
       setSelectedSet(prev => { const next = new Set(prev); next.add(id); return next })
     }
   }
 
   // ---- Build preview data ----
+  // Each programme expands into TWO sheet items (Sign + Valuation);
+  // each result is a single sheet item.
 
   const buildPreviewItems = (ids, type) => {
     const items = []
@@ -110,20 +154,37 @@ export default function AdminPrint() {
         const prog = programmes.find(p => p.id === id)
         if (!prog) return
         const resultRec = resultNoMap[prog.id]
-        const participants = students.filter(s => (s.programmeIds || []).includes(prog.id))
-        items.push({
-          type: 'programme',
+        const number = resultRec?.resultNo || ''
+        const info = {
           id: prog.id,
-          category: prog.category,
+          category: prog.category || '',
           eventName: prog.name,
-          number: resultRec?.resultNo || '',
-          rows: participants.map((s, i) => ({
-            key: `prog-${prog.id}-${s.id}`,
-            si: i + 1,
-            studentId: s.id,
-            name: s.chestNo ? `${s.name} (#${s.chestNo})` : s.name,
-            teamId: s.team,
-            team: teamMap[s.team] || s.team || ''
+          programmeType: prog.programmeType || prog.type || '',
+          participationType: prog.participationType || prog.participation_type || '',
+          number,
+        }
+        const participants = students.filter(s => (s.programmeIds || []).includes(prog.id))
+
+        // Sheet 1 — Sign Sheet
+        items.push({
+          ...info,
+          sheet: 'sign',
+          type: 'programme',
+          rows: participants.map(s => ({
+            key: `sign-${prog.id}-${s.id}`,
+            chestNo: s.chestNo || '',
+            name: s.name,
+            team: teamMap[s.team] || s.team || '',
+          }))
+        })
+
+        // Sheet 2 — Valuation Sheet
+        items.push({
+          ...info,
+          sheet: 'valuation',
+          type: 'programme',
+          rows: participants.map(s => ({
+            key: `val-${prog.id}-${s.id}`,
           }))
         })
       } else {
@@ -136,14 +197,13 @@ export default function AdminPrint() {
           const student = students.find(s => s.id === placement.studentId)
           rows.push({
             key: `res-${res.id}-${placementKey}`,
-            si: rows.length + 1,
-            placementKey,
-            studentId: placement.studentId,
-            name: placement.name,
-            teamId: student?.team || '',
+            chestNo: student?.chestNo || '',
+            name: placement.name || student?.name || '',
             team: teamMap[student?.team] || student?.team || '',
+            codeLetter: placement.codeLetter || '',
+            grade: placement.grade || calcGrade(placement.points),
+            prize: placement.prize || '',
             point: placement.points || 0,
-            grade: placement.grade || calcGrade(placement.points)
           })
         }
         addRow('first', res.first)
@@ -151,9 +211,12 @@ export default function AdminPrint() {
         addRow('third', res.third)
         items.push({
           type: 'result',
+          sheet: 'result',
           id: res.id,
           category: prog?.category || '',
           eventName: res.name || prog?.name || '',
+          programmeType: prog?.programmeType || prog?.type || '',
+          participationType: prog?.participationType || prog?.participation_type || '',
           number: res.resultNo || '',
           rows
         })
@@ -192,6 +255,7 @@ export default function AdminPrint() {
   }
 
   const selectedCount = selectedSet.size
+  const selectedSheets = sheetsUsed()
 
   return (
     <div>
@@ -271,7 +335,7 @@ export default function AdminPrint() {
                 onClick={goToPreview}
                 className="flex items-center gap-2 bg-success hover:bg-success/90 text-white px-5 py-2 rounded-xl font-bold transition shadow-lg"
               >
-                <Printer size={18} /> Print Selected ({selectedCount})
+                <Printer size={18} /> Print Selected ({selectedSheets} sheet{selectedSheets === 1 ? '' : 's'})
               </button>
             )}
           </div>
@@ -403,50 +467,116 @@ export default function AdminPrint() {
             <p className="text-mutedText text-xs sm:text-sm mb-6">Print sheets are read-only.</p>
           </div>
 
-          {/* Preview sheets — each block has its own stamp, stacked vertically */}
+          {/* Preview sheets — each block is one self-contained sheet */}
           <div className="print-page-container">
             {previewItems.map((item, idx) => (
               <div key={idx} className="preview-sheet">
-                <table className="print-table">
+                {/* Info header table */}
+                <table className="print-table print-info-table">
                   <thead>
                     <tr>
-                      <th className="print-category-cell">{item.category}</th>
-                      <th className="print-event-cell">{item.eventName}</th>
-                      <th className="print-number-cell">
-                        {item.type === 'result' ? 'RESULT NO:' : 'PROGRAMME NO:'}
-                        {' '}{item.number}
-                      </th>
-                      <th className="print-stamp-cell" colSpan={item.type === 'result' ? 2 : 1}>
-                        <div className="print-stamp-box">
-                          {stampImage ? (
-                            <img src={stampImage} alt="Committee Stamp" className="stamp-image" />
-                          ) : (
-                            'COMMITTEE STAMP'
-                          )}
-                        </div>
-                      </th>
-                    </tr>
-                    <tr>
-                      <th>SI.NO</th>
-                      <th>NAME</th>
-                      <th>TEAM</th>
-                      {item.type === 'result' && <th>POINT</th>}
-                      {item.type === 'result' && <th>GRADE</th>}
-                      {item.type !== 'result' && <th></th>}
+                      {item.sheet === 'valuation' ? (
+                        <>
+                          <InfoCell label="RESULT NO" value={item.number} />
+                          <InfoCell label="CATEGORY" value={item.category} />
+                          <InfoCell label="PROGRAMME NAME" value={item.eventName} />
+                          <InfoCell label="INDIVIDUAL/GROUP" value={item.participationType} />
+                          <InfoCell label="ON/OFF-STAGE" value={item.programmeType} />
+                        </>
+                      ) : (
+                        <>
+                          <InfoCell label="RESULT NO" value={item.number} />
+                          <InfoCell label="CATEGORY" value={item.category} />
+                          <InfoCell label="PROGRAMME NAME" value={item.eventName} />
+                          <InfoCell label="INDIVIDUAL/GROUP" value={item.participationType} />
+                          <InfoCell label="ON/OFF-STAGE" value={item.programmeType} />
+                          <InfoStampCell stampImage={stampImage} />
+                        </>
+                      )}
                     </tr>
                   </thead>
-                  <tbody>
-                    {item.rows.map(row => (
-                      <tr key={row.key}>
-                        <td className="text-center">{row.si}</td>
-                        <td>{row.name ?? ''}</td>
-                        <td>{row.team ?? ''}</td>
-                        {item.type === 'result' && <td className="text-center">{row.point ?? 0}</td>}
-                        {item.type === 'result' && <td className="text-center">{row.grade || '-'}</td>}
-                        {item.type !== 'result' && <td></td>}
-                      </tr>
-                    ))}
-                  </tbody>
+                </table>
+
+                {/* Data table */}
+                <table className="print-table">
+                  {item.sheet === 'sign' && (
+                    <>
+                      <thead>
+                        <tr>
+                          <th>CHEST NO</th>
+                          <th>NAME</th>
+                          <th>TEAM</th>
+                          <th>SIGN</th>
+                          <th>CODE LETTER</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {item.rows.map(row => (
+                          <tr key={row.key}>
+                            <td className="text-center">{row.chestNo}</td>
+                            <td>{row.name}</td>
+                            <td>{row.team}</td>
+                            <td></td>
+                            <td></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </>
+                  )}
+
+                  {item.sheet === 'valuation' && (
+                    <>
+                      <thead>
+                        <tr>
+                          <th>CODE LETTER</th>
+                          <th>POINT</th>
+                          <th>GRADE</th>
+                          <th>PRIZE</th>
+                          <SubStampCell stampImage={stampImage} />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {item.rows.map(row => (
+                          <tr key={row.key}>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </>
+                  )}
+
+                  {item.sheet === 'result' && (
+                    <>
+                      <thead>
+                        <tr>
+                          <th>CHEST NO</th>
+                          <th>NAME</th>
+                          <th>TEAM</th>
+                          <th>CODE LETTER</th>
+                          <th>GRADE</th>
+                          <th>PRIZE</th>
+                          <th>POINT</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {item.rows.map(row => (
+                          <tr key={row.key}>
+                            <td className="text-center">{row.chestNo}</td>
+                            <td>{row.name}</td>
+                            <td>{row.team}</td>
+                            <td className="text-center">{row.codeLetter}</td>
+                            <td className="text-center">{row.grade || '-'}</td>
+                            <td className="text-center">{row.prize}</td>
+                            <td className="text-center">{row.point}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </>
+                  )}
                 </table>
               </div>
             ))}
@@ -522,27 +652,33 @@ export default function AdminPrint() {
         .preview-sheet .print-table td.text-center {
           text-align: center;
         }
-        .preview-sheet .print-category-cell {
-          font-size: 14px;
-          font-weight: bold;
-          text-align: center;
-          width: 0;
-          min-width: 44px;
-          white-space: nowrap;
+        .preview-sheet .print-info-table {
+          margin-bottom: 0;
         }
-        .preview-sheet .print-event-cell {
-          font-size: 18px;
-          font-weight: bold;
+        .preview-sheet .print-info-cell {
           text-align: center;
+          vertical-align: middle;
+          padding: 5px 8px;
         }
-        .preview-sheet .print-number-cell {
+        .preview-sheet .print-info-label {
+          display: block;
+          font-size: 8px;
+          font-weight: normal;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .preview-sheet .print-info-value {
+          display: block;
           font-size: 13px;
           font-weight: bold;
-          text-align: center;
-          white-space: nowrap;
-          width: 0;
+          margin-top: 2px;
         }
         .preview-sheet .print-stamp-cell {
+          text-align: center;
+          vertical-align: middle;
+          width: 0;
+        }
+        .preview-sheet .print-sub-stamp-cell {
           text-align: center;
           vertical-align: middle;
           width: 0;
@@ -584,15 +720,14 @@ export default function AdminPrint() {
           .preview-sheet .print-table td {
             padding: 4px 6px;
           }
-          .preview-sheet .print-category-cell {
+          .preview-sheet .print-info-cell {
+            padding: 3px 5px;
+          }
+          .preview-sheet .print-info-label {
+            font-size: 7px;
+          }
+          .preview-sheet .print-info-value {
             font-size: 11px;
-            min-width: 36px;
-          }
-          .preview-sheet .print-event-cell {
-            font-size: 14px;
-          }
-          .preview-sheet .print-number-cell {
-            font-size: 10px;
           }
           .preview-sheet .print-stamp-box {
             min-width: 72px;
@@ -651,14 +786,11 @@ export default function AdminPrint() {
             flex-shrink: 0;
             box-sizing: border-box;
           }
-          .preview-sheet .print-category-cell {
-            font-size: 10px;
+          .preview-sheet .print-info-label {
+            font-size: 7px;
           }
-          .preview-sheet .print-event-cell {
-            font-size: 13px;
-          }
-          .preview-sheet .print-number-cell {
-            font-size: 9px;
+          .preview-sheet .print-info-value {
+            font-size: 12px;
           }
           .preview-sheet .print-stamp-box {
             border: 2px solid black;

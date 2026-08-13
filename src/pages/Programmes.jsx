@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProgrammes, getAllResults, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../supabase/queries'
+import { getProgrammes, getAllResults, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../supabase/queries'
 import { Search, CheckCircle, XCircle, MicVocal, Brush } from 'lucide-react'
 import FilterDropdown from '../components/FilterDropdown'
 import { CATEGORY_COLORS } from '../components/TeamBar'
@@ -10,6 +10,7 @@ export default function Programmes() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [programmeType, setProgrammeType] = useState('')
+  const [participation, setParticipation] = useState('')
   const [orderedCategories, setOrderedCategories] = useState(PROGRAMME_CATEGORIES)
   const navigate = useNavigate()
 
@@ -26,6 +27,7 @@ export default function Programmes() {
   }, [])
 
   const getProgrammeType = (prog) => prog?.programmeType || prog?.type || prog?.programme_type || ''
+  const getParticipationType = (prog) => prog?.participationType || prog?.participation_type || ''
 
   const categoryOptions = [
     { value: '', label: 'All Categories', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
@@ -45,11 +47,17 @@ export default function Programmes() {
     })),
   ]
 
+  const participationOptions = [
+    { value: '', label: 'All', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...PARTICIPATION_TYPES.map(t => ({ value: t, label: t, icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> })),
+  ]
+
   const filtered = programmes.filter(p => {
     const matchName = p.name?.toLowerCase().includes(search.toLowerCase())
     const matchCat = category ? p.category === category : true
     const matchType = programmeType ? getProgrammeType(p) === programmeType : true
-    return matchName && matchCat && matchType
+    const matchPart = participation ? getParticipationType(p) === participation : true
+    return matchName && matchCat && matchType && matchPart
   })
 
   return (
@@ -66,7 +74,7 @@ export default function Programmes() {
         />
       </div>
 
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3 mb-4 flex-wrap">
         <FilterDropdown
           label="All Categories"
           options={categoryOptions}
@@ -81,6 +89,13 @@ export default function Programmes() {
           onChange={setProgrammeType}
           className="flex-1"
         />
+        <FilterDropdown
+          label="All"
+          options={participationOptions}
+          value={participation}
+          onChange={setParticipation}
+          className="flex-1"
+        />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -93,7 +108,7 @@ export default function Programmes() {
           >
             <div className="min-w-0 flex-1">
               <p className="text-[#0F2A3D] font-medium text-sm sm:text-base truncate">{resultNoMap[prog.id] ? <span className="text-[#0F2A3D] font-bold text-base sm:text-lg mr-2">#{resultNoMap[prog.id]}</span> : null}{prog.name}</p>
-              <p className="text-[#1A4562] text-xs sm:text-sm">{prog.category} · {getProgrammeType(prog) || 'Unspecified'}</p>
+              <p className="text-[#1A4562] text-xs sm:text-sm">{prog.category} · {getProgrammeType(prog) || 'Unspecified'}{getParticipationType(prog) ? ` · ${getParticipationType(prog)}` : ''}</p>
             </div>
             {prog.isFinished
               ? <span className="flex items-center gap-1 text-[#0B6E3B] font-semibold text-xs shrink-0 ml-2"><CheckCircle size={14} /> Finished</span>

@@ -5,6 +5,7 @@ export const DEFAULT_PROGRAMME_CATEGORIES = [...DEFAULT_STUDENT_CATEGORIES, 'Gen
 export const STUDENT_CATEGORIES = DEFAULT_STUDENT_CATEGORIES
 export const PROGRAMME_CATEGORIES = DEFAULT_PROGRAMME_CATEGORIES
 export const PROGRAMME_TYPES = ['On-stage', 'Off-stage']
+export const PARTICIPATION_TYPES = ['Individual', 'Group']
 export const SESSION_EXPIRY_MS = 8 * 60 * 60 * 1000
 
 export const getCategories = async () => {

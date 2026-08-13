@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
-import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES } from '../../supabase/queries'
+import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../../supabase/queries'
 import { Plus, X, Printer, Pencil } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import { useToast } from '../../components/Toast'
@@ -22,13 +22,16 @@ export default function AdminProgrammes() {
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
   const [programmeType, setProgrammeType] = useState('')
+  const [addParticipationType, setAddParticipationType] = useState('')
   const [addResultNo, setAddResultNo] = useState('')
   const [progFilter, setProgFilter] = useState('')
   const [progTypeFilter, setProgTypeFilter] = useState('')
+  const [partFilter, setPartFilter] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editCategory, setEditCategory] = useState('')
   const [editProgrammeType, setEditProgrammeType] = useState('')
+  const [editParticipationType, setEditParticipationType] = useState('')
   const [editResultNo, setEditResultNo] = useState('')
   const [editFinished, setEditFinished] = useState(false)
   const [viewProg, setViewProg] = useState(null)
@@ -45,8 +48,8 @@ export default function AdminProgrammes() {
   useEffect(() => { loadData() }, [])
 
   const handleAdd = async () => {
-    if (!name || !category || !programmeType) return toast('Fill all fields', 'error')
-    const { data: newProg, error: progErr } = await supabase.from('programmes').insert({ name, category, programmeType, isFinished: false }).select('id')
+    if (!name || !category || !programmeType || !addParticipationType) return toast('Fill all fields', 'error')
+    const { data: newProg, error: progErr } = await supabase.from('programmes').insert({ name, category, programmeType, participationType: addParticipationType, isFinished: false }).select('id')
     if (progErr || !newProg || newProg.length === 0) {
       console.error('Programme add failed:', progErr || { message: 'Insert returned no rows (RLS).' })
       return toast('Failed to add programme: ' + (progErr?.message || 'the database rejected the insert (permission denied).'), 'error')
@@ -61,7 +64,7 @@ export default function AdminProgrammes() {
       const rpcMsg = noErr?.message || rpcData?.error
       if (rpcMsg) return toast('Programme added but result number not saved: ' + rpcMsg, 'error')
     }
-    setName(''); setCategory(''); setProgrammeType(''); setAddResultNo(''); setShowAdd(false)
+    setName(''); setCategory(''); setProgrammeType(''); setAddParticipationType(''); setAddResultNo(''); setShowAdd(false)
     toast('Programme added!')
     loadData()
   }
@@ -85,19 +88,20 @@ export default function AdminProgrammes() {
     setEditName(prog.name)
     setEditCategory(prog.category)
     setEditProgrammeType(prog.programmeType || prog.type || '')
+    setEditParticipationType(prog.participationType || prog.participation_type || '')
     setEditFinished(prog.isFinished)
     setEditResultNo(resultNoMap[prog.id] || '')
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setEditName(''); setEditCategory(''); setEditProgrammeType(''); setEditResultNo(''); setEditFinished(false)
+    setEditName(''); setEditCategory(''); setEditProgrammeType(''); setEditParticipationType(''); setEditResultNo(''); setEditFinished(false)
   }
 
   const handleEditSave = async () => {
-    if (!editName || !editCategory || !editProgrammeType) return toast('Fill all fields', 'error')
+    if (!editName || !editCategory || !editProgrammeType || !editParticipationType) return toast('Fill all fields', 'error')
     const { data: updated, error: progErr } = await supabase.from('programmes').update({
-      name: editName, category: editCategory, programmeType: editProgrammeType, isFinished: editFinished,
+      name: editName, category: editCategory, programmeType: editProgrammeType, participationType: editParticipationType, isFinished: editFinished,
     }).eq('id', editingId).select('id')
     if (progErr || !updated || updated.length === 0) {
       console.error('Programme update failed:', progErr || { message: 'Update returned no rows (RLS).' })
@@ -132,7 +136,7 @@ export default function AdminProgrammes() {
               <X size={20} />
             </button>
           </div>
-          <p className="text-mutedText text-sm mb-3">{prog.category} · {prog.programmeType || prog.type || 'Unspecified'} · {students.length} students</p>
+          <p className="text-mutedText text-sm mb-3">{prog.category} · {prog.programmeType || prog.type || 'Unspecified'} · {prog.participationType || prog.participation_type || 'Unspecified'} · {students.length} students</p>
           <div className="space-y-1">
             {(students || []).map(s => {
               const enrolled = enrolledIds.has(s.id)
@@ -200,9 +204,32 @@ export default function AdminProgrammes() {
           </button>
         ))}
       </div>
+      <div className="flex justify-center gap-1.5 sm:gap-2 mb-5 flex-wrap">
+        <button
+          onClick={() => setPartFilter('')}
+          className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
+            !partFilter ? 'bg-primary text-white shadow-lg shadow-black/40' : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
+          }`}
+        >
+          All Participation
+        </button>
+        {PARTICIPATION_TYPES.map(type => (
+          <button
+            key={type}
+            onClick={() => setPartFilter(type)}
+            className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
+              partFilter === type ? 'bg-primary text-white shadow-lg shadow-black/40' : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
+            }`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-col gap-3">
         {programmes
-          .filter(p => (!progFilter || p.category === progFilter) && (!progTypeFilter || (p.programmeType || p.type || '') === progTypeFilter))
+          .filter(p => (!progFilter || p.category === progFilter)
+            && (!progTypeFilter || (p.programmeType || p.type || '') === progTypeFilter)
+            && (!partFilter || (p.participationType || p.participation_type || '') === partFilter))
           .sort((a, b) => (resultNoMap[a.id] || Number.MAX_SAFE_INTEGER) - (resultNoMap[b.id] || Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
           .map(prog => (
           <div key={prog.id} className="bg-card rounded-xl p-4 flex justify-between items-center shadow-sm border border-secondary/30">
@@ -211,7 +238,7 @@ export default function AdminProgrammes() {
                 {resultNoMap[prog.id] ? <span className="text-accent font-bold text-base sm:text-lg mr-2">#{resultNoMap[prog.id]}</span> : null}
                 {prog.name}
               </p>
-              <p className="text-mutedText text-xs sm:text-sm">{prog.category} · {(prog.programmeType || prog.type || 'Unspecified')}</p>
+              <p className="text-mutedText text-xs sm:text-sm">{prog.category} · {(prog.programmeType || prog.type || 'Unspecified')} · {(prog.participationType || prog.participation_type || 'Unspecified')}</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
               <button
@@ -270,6 +297,16 @@ export default function AdminProgrammes() {
             >
               <option value="">Select Type</option>
               {PROGRAMME_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+            </select>
+
+            <label className="text-black text-sm block mb-1">Individual / Group</label>
+            <select
+              className="w-full bg-white text-black rounded-xl p-3 mb-3 outline-none border border-black/20 focus:border-black"
+              value={addParticipationType}
+              onChange={e => setAddParticipationType(e.target.value)}
+            >
+              <option value="">Select</option>
+              {PARTICIPATION_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
             </select>
 
             <label className="text-black text-sm block mb-1">Result Number</label>
@@ -334,6 +371,16 @@ export default function AdminProgrammes() {
             >
               <option value="">Select Type</option>
               {PROGRAMME_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+            </select>
+
+            <label className="text-black text-sm block mb-1">Individual / Group</label>
+            <select
+              className="w-full bg-white text-black rounded-xl p-3 mb-3 outline-none border border-black/20 focus:border-black"
+              value={editParticipationType}
+              onChange={e => setEditParticipationType(e.target.value)}
+            >
+              <option value="">Select</option>
+              {PARTICIPATION_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
             </select>
 
             <label className="text-black text-sm block mb-1">Result Number</label>

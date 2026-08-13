@@ -51,7 +51,7 @@ export default function ProgrammeResult() {
 
       <div className="bg-card rounded-2xl p-5 mb-6 shadow-lg border border-secondary/30">
         <h2 className="text-lg sm:text-xl font-poppins font-bold text-mainText">{programme.name}</h2>
-        <p className="text-mutedText text-sm sm:text-base">{result?.resultNo ? <span className="text-accent font-bold">#{result.resultNo}</span> : null} {programme.category}</p>
+        <p className="text-mutedText text-sm sm:text-base">{result?.resultNo ? <span className="text-accent font-bold">#{result.resultNo}</span> : null} {programme.category} · {(programme.programmeType || programme.type || '')}{(programme.participationType || programme.participation_type) ? ` · ${programme.participationType || programme.participation_type}` : ''}</p>
         <span className={`mt-2 inline-block text-xs px-3 py-1 rounded-full ${programme.isFinished ? 'bg-success/20 text-success' : 'bg-red-500/15 text-red-400'}`}>
           {programme.isFinished ? 'Finished' : 'Pending'}
         </span>
