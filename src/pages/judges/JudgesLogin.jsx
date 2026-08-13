@@ -12,14 +12,39 @@ export default function JudgesLogin() {
   const navigate = useNavigate()
 
   const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      setError('Enter your judge email and password')
+      return
+    }
     setLoading(true)
     setError('')
-    const { error } = await judgeClient.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError('Invalid credentials. Try again.')
+
+    try {
+      await judgeClient.auth.signOut().catch(() => {})
+
+      const { data, error } = await judgeClient.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+
+      if (error) {
+        setError(error.message || 'Invalid credentials. Try again.')
+        return
+      }
+
+      const role = data?.user?.app_metadata?.role
+      if (!data?.user || role !== 'judge') {
+        await judgeClient.auth.signOut().catch(() => {})
+        setError(role ? 'This account is not registered as a judge.' : 'Invalid credentials. Try again.')
+        return
+      }
+
+      navigate('/judges/results', { replace: true })
+    } catch (err) {
+      console.error('Judge login failed:', err)
+      setError('Login failed. Please check your connection and try again.')
+    } finally {
       setLoading(false)
-    } else {
-      navigate('/judges/results')
     }
   }
 
