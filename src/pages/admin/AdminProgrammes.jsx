@@ -4,6 +4,8 @@ import { supabase } from '../../supabase/client'
 import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../../supabase/queries'
 import { Plus, X, Printer, Pencil } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
+import FilterDropdown from '../../components/FilterDropdown'
+import { CATEGORY_COLORS } from '../../components/TeamBar'
 import { useToast } from '../../components/Toast'
 
 export default function AdminProgrammes() {
@@ -136,7 +138,7 @@ export default function AdminProgrammes() {
               <X size={20} />
             </button>
           </div>
-          <p className="text-mutedText text-sm mb-3">{prog.category} · {prog.programmeType || prog.type || 'Unspecified'} · {prog.participationType || prog.participation_type || 'Unspecified'} · {students.length} students</p>
+          <p className="text-mutedText text-sm mb-3">{prog.category} · {prog.programmeType || prog.type || 'Unspecified'} · {prog.participationType || prog.participation_type || 'Unspecified'} · {students.length} participants</p>
           <div className="space-y-1">
             {(students || []).map(s => {
               const enrolled = enrolledIds.has(s.id)
@@ -154,6 +156,25 @@ export default function AdminProgrammes() {
     )
   }
 
+  const catOptions = [
+    { value: '', label: 'All Categories', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...categories.map(c => ({
+      value: c,
+      label: c,
+      icon: <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[c]?.light || '#9CA3AF' }} />,
+    })),
+  ]
+
+  const typeOptions = [
+    { value: '', label: 'All Types', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...PROGRAMME_TYPES.map(t => ({ value: t, label: t, icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> })),
+  ]
+
+  const partOptions = [
+    { value: '', label: 'All Participation', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...PARTICIPATION_TYPES.map(t => ({ value: t, label: t, icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> })),
+  ]
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -168,62 +189,31 @@ export default function AdminProgrammes() {
         </div>
       </div>
 
-      <div className="flex justify-center gap-1.5 sm:gap-2 mb-3 flex-wrap">
-        {['', ...categories].map(cat => (
-          <button
-            key={cat}
-            onClick={() => setProgFilter(cat)}
-            className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
-              progFilter === cat
-                ? 'bg-primary text-white shadow-lg shadow-black/40'
-                : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
-            }`}
-          >
-            {cat || 'All'}
-          </button>
-        ))}
-      </div>
-      <div className="flex justify-center gap-1.5 sm:gap-2 mb-5 flex-wrap">
-        <button
-          onClick={() => setProgTypeFilter('')}
-          className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
-            !progTypeFilter ? 'bg-primary text-white shadow-lg shadow-black/40' : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
-          }`}
-        >
-          All Types
-        </button>
-        {PROGRAMME_TYPES.map(type => (
-          <button
-            key={type}
-            onClick={() => setProgTypeFilter(type)}
-            className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
-              progTypeFilter === type ? 'bg-primary text-white shadow-lg shadow-black/40' : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
-            }`}
-          >
-            {type}
-          </button>
-        ))}
-      </div>
-      <div className="flex justify-center gap-1.5 sm:gap-2 mb-5 flex-wrap">
-        <button
-          onClick={() => setPartFilter('')}
-          className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
-            !partFilter ? 'bg-primary text-white shadow-lg shadow-black/40' : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
-          }`}
-        >
-          All Participation
-        </button>
-        {PARTICIPATION_TYPES.map(type => (
-          <button
-            key={type}
-            onClick={() => setPartFilter(type)}
-            className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
-              partFilter === type ? 'bg-primary text-white shadow-lg shadow-black/40' : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
-            }`}
-          >
-            {type}
-          </button>
-        ))}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <FilterDropdown
+          dark
+          label="All Categories"
+          options={catOptions}
+          value={progFilter}
+          onChange={setProgFilter}
+          className="flex-1"
+        />
+        <FilterDropdown
+          dark
+          label="All Types"
+          options={typeOptions}
+          value={progTypeFilter}
+          onChange={setProgTypeFilter}
+          className="flex-1"
+        />
+        <FilterDropdown
+          dark
+          label="All Participation"
+          options={partOptions}
+          value={partFilter}
+          onChange={setPartFilter}
+          className="flex-1"
+        />
       </div>
       <div className="flex flex-col gap-3">
         {programmes

@@ -84,7 +84,7 @@ export default function AdminCategories() {
   }
 
   const handleDelete = async (cat) => {
-    if (!window.confirm(`Delete category "${cat.name}"? Programmes and students using it keep the name but it will no longer appear in dropdowns.`)) {
+    if (!window.confirm(`Delete category "${cat.name}"? Programmes and participants using it keep the name but it will no longer appear in dropdowns.`)) {
       return
     }
     const { error } = await supabase.from('categories').delete().eq('id', cat.id)
@@ -102,7 +102,7 @@ export default function AdminCategories() {
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Categories</h2>
-            <p className="text-mutedText text-sm">Manage the categories shown in programme, student and judge filters.</p>
+            <p className="text-mutedText text-sm">Manage the categories shown in programme, participant and judge filters.</p>
           </div>
         </div>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">

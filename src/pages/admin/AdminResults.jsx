@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Eye, Search, Trophy } from 'lucide-react'
+import { Eye, Search, Trophy, Image } from 'lucide-react'
 import { getAllResults, getProgrammes, getStudents, getTeams } from '../../supabase/queries'
+import AdminResultPoster from './AdminResultPoster'
 
 export default function AdminResults() {
   const [programmes, setProgrammes] = useState([])
@@ -9,6 +10,7 @@ export default function AdminResults() {
   const [results, setResults] = useState([])
   const [expandedResultId, setExpandedResultId] = useState(null)
   const [search, setSearch] = useState('')
+  const [showPoster, setShowPoster] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -70,15 +72,33 @@ export default function AdminResults() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-card rounded-xl p-3 shadow-sm border border-secondary/30">
-          <Trophy size={22} className="text-accent" />
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-card rounded-xl p-3 shadow-sm border border-secondary/30">
+            <Trophy size={22} className="text-accent" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Results (Read Only)</h2>
+            <p className="text-mutedText text-sm">Admin preview only. Judges remain the only write path for results.</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Results (Read Only)</h2>
-          <p className="text-mutedText text-sm">Admin preview only. Judges remain the only write path for results.</p>
-        </div>
+        <button
+          onClick={() => setShowPoster(s => !s)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base shrink-0 ${
+            showPoster
+              ? 'bg-card border border-secondary/40 text-mainText hover:bg-white/10'
+              : 'bg-primary text-white hover:bg-primary/90'
+          }`}
+        >
+          <Image size={16} className="sm:w-[18px] sm:h-[18px]" /> {showPoster ? 'Hide Poster' : 'Generate Poster'}
+        </button>
       </div>
+
+      {showPoster && (
+        <div className="mb-6">
+          <AdminResultPoster />
+        </div>
+      )}
 
       <div className="space-y-4">
         <div className="bg-card rounded-2xl p-3 sm:p-4 shadow-sm border border-secondary/30">

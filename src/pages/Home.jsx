@@ -323,7 +323,7 @@ export default function Home() {
           <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-black mb-6">About the Fest</h3>
           <div className="max-w-2xl mx-auto space-y-5 px-2 sm:px-0">
             <p className="text-black text-sm sm:text-base italic leading-loose">
-              Campus Art Fest is an annual celebration of creativity and talent, bringing together students from all departments to showcase their skills in dance, music, art, literary arts, and stage performances. Our mission is to Track, Celebrate, and Remember every moment of this vibrant festival.
+              Campus Art Fest is an annual celebration of creativity and talent, bringing together participants from all departments to showcase their skills in dance, music, art, literary arts, and stage performances. Our mission is to Track, Celebrate, and Remember every moment of this vibrant festival.
             </p>
             <p className="text-black text-sm sm:text-base italic leading-loose">
               With real-time score tracking, downloadable result posters, and a spotlight gallery, the Art Fest platform keeps everyone connected — from competitors checking their results to audiences cheering for their favorite teams.

@@ -49,7 +49,7 @@ export default function AdminDashboard() {
   }, [])
 
   const stats = [
-    { label: 'Total Students', value: counts.students, icon: Users },
+    { label: 'Total Participants', value: counts.students, icon: Users },
     { label: 'Total Teams', value: counts.teams, icon: Trophy },
     { label: 'Total Categories', value: counts.categories, icon: Layers },
     { label: 'Total Programmes', value: counts.programmes, icon: BookOpen },

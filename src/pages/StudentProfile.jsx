@@ -8,6 +8,8 @@ import { ArrowLeft, Download } from 'lucide-react'
 import useCountUp from '../hooks/useCountUp'
 import ResultPoster from '../components/ResultPoster'
 import StudentAvatar from '../components/StudentAvatar'
+import FilterDropdown from '../components/FilterDropdown'
+import { CATEGORY_COLORS } from '../components/TeamBar'
 
 function PointsDisplay({ total }) {
   const count = useCountUp(total, 1.5)
@@ -96,6 +98,16 @@ export default function StudentProfile() {
   const total = programmes.length
   const percent = total > 0 ? Math.round((finished.length / total) * 100) : 0
 
+  const PROFILE_CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B']
+  const catOptions = [
+    { value: '', label: 'All Categories', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...PROFILE_CATEGORIES.map(cat => ({
+      value: cat,
+      label: cat,
+      icon: <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat]?.light || '#9CA3AF' }} />,
+    })),
+  ]
+
   return (
     <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-3xl mx-auto">
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-mainText mb-4 hover:opacity-80 transition">
@@ -127,26 +139,13 @@ export default function StudentProfile() {
           <PointsDisplay total={totalPoints} /> points earned
         </div>
         {showCatFilter && (
-          <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mt-3">
-            <button
-              onClick={() => setCatFilter('')}
-              className={`px-3 py-1 text-xs font-semibold rounded-full transition ${
-                !catFilter ? 'bg-primary text-white' : 'bg-secondary/15 text-mutedText hover:bg-secondary/25'
-              }`}
-            >
-              All
-            </button>
-            {['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B'].map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCatFilter(cat)}
-                className={`px-3 py-1 text-xs font-semibold rounded-full transition ${
-                  catFilter === cat ? 'bg-primary text-white' : 'bg-secondary/15 text-mutedText hover:bg-secondary/25'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="w-full max-w-xs mt-3">
+            <FilterDropdown
+              label="All Categories"
+              options={catOptions}
+              value={catFilter}
+              onChange={setCatFilter}
+            />
           </div>
         )}
       </div>

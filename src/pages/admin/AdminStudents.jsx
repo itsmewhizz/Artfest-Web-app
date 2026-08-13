@@ -49,17 +49,17 @@ export default function AdminStudents() {
       const { data: updated, error } = await supabase.from('students').update(updates).eq('id', editingId).select()
       if (error) {
         console.error('Student update failed:', error)
-        toast(`Student update failed: ${error.message}`, 'error')
+        toast(`Participant update failed: ${error.message}`, 'error')
         return
       }
       if (!updated || updated.length === 0) {
         const { data: existing } = await supabase.from('students').select('id').eq('id', editingId).maybeSingle()
         if (existing) {
-          console.error('Student update failed:', { message: 'Row exists but the update was rejected by database permissions (RLS).' })
-          toast('Student update failed: the database rejected the update (permission denied). If the failure persists, log out of Admin and log back in.', 'error')
+          console.error('Participant update failed:', { message: 'Row exists but the update was rejected by database permissions (RLS).' })
+          toast('Participant update failed: the database rejected the update (permission denied). If the failure persists, log out of Admin and log back in.', 'error')
         } else {
-          console.error('Student update failed:', { message: 'No matching student row. The edited student may have been deleted.' })
-          toast('Student update failed: the student no longer exists. Reload the panel and try again.', 'error')
+          console.error('Participant update failed:', { message: 'No matching student row. The edited student may have been deleted.' })
+          toast('Participant update failed: the participant no longer exists. Reload the panel and try again.', 'error')
         }
         return
       }
@@ -68,8 +68,8 @@ export default function AdminStudents() {
         name, chestNo, class: category, team, photoURL, programmeIds: selectedProgs,
       })
       if (error) {
-        console.error('Student add failed:', error)
-        toast(`Student add failed: ${error.message}`, 'error')
+        console.error('Participant add failed:', error)
+        toast(`Participant add failed: ${error.message}`, 'error')
         return
       }
     }
@@ -77,7 +77,7 @@ export default function AdminStudents() {
     const refreshedStudents = await getStudents()
     setStudents(refreshedStudents)
     closeForm()
-    toast(wasEditing ? 'Student updated!' : 'Student added!')
+    toast(wasEditing ? 'Participant updated!' : 'Participant added!')
   }
 
   const openAdd = () => {
@@ -164,9 +164,9 @@ export default function AdminStudents() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Students</h2>
+        <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Participants</h2>
         <button onClick={openAdd} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
-          <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Student
+          <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Participant
         </button>
       </div>
 
@@ -174,7 +174,7 @@ export default function AdminStudents() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-secondary/30">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-mainText font-bold text-lg">{editingId ? 'Edit Student' : 'Add New Student'}</h3>
+              <h3 className="text-mainText font-bold text-lg">{editingId ? 'Edit Participant' : 'Add New Participant'}</h3>
               <button onClick={closeForm} className="text-mutedText hover:text-mainText transition">
                 <X size={20} />
               </button>
@@ -227,7 +227,7 @@ export default function AdminStudents() {
             )}
 
             <button onClick={handleAdd} className="w-full bg-primary text-white rounded-xl p-3 font-semibold flex items-center justify-center gap-2 text-sm sm:text-base hover:bg-primary/90 transition">
-              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> {editingId ? 'Update Student' : 'Add Student'}
+              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> {editingId ? 'Update Participant' : 'Add Participant'}
             </button>
           </div>
         </div>

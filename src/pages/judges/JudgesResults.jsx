@@ -4,6 +4,8 @@ import { judgeClient, verifyJudgeClient } from '../../supabase/client'
 import { getProgrammes, getStudents, getAllResults, getCategories, PROGRAMME_CATEGORIES } from '../../supabase/queries'
 import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../../components/Toast'
+import FilterDropdown from '../../components/FilterDropdown'
+import { CATEGORY_COLORS } from '../../components/TeamBar'
 
 function calcGrade(points) {
   const p = Number(points)
@@ -93,6 +95,15 @@ export default function JudgesResults() {
   }
 
   const resultNoMap = getResultNoMap()
+
+  const catOptions = [
+    { value: '', label: 'All Categories', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...categories.map(c => ({
+      value: c,
+      label: c,
+      icon: <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[c]?.light || '#9CA3AF' }} />,
+    })),
+  ]
   const filteredProgrammes = categoryFilter
     ? programmes.filter(p => categoryFilter === 'General' ? p.category === 'General' : p.category === categoryFilter)
     : programmes
@@ -309,7 +320,7 @@ export default function JudgesResults() {
   const handleSaveEdit = async () => {
     if (!editProg) return
     if (!first) {
-      setEditError('Select the 1st place student')
+      setEditError('Select the 1st place participant')
       return
     }
     if (!captchaId || !vName || !vPassword) {
@@ -391,20 +402,14 @@ export default function JudgesResults() {
         <p className="text-mutedText text-xs sm:text-sm">Submit results per programme. Locked results require judge authentication and captcha verification to edit.</p>
       </div>
 
-      <div className="flex justify-center gap-1.5 sm:gap-2 mb-5 flex-wrap">
-        {['', ...categories].map(cat => (
-          <button
-            key={cat}
-            onClick={() => setCategoryFilter(cat)}
-            className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
-              categoryFilter === cat
-                ? 'bg-primary text-white shadow-lg shadow-black/40'
-                : 'bg-white/10 text-mutedText hover:bg-white/15 hover:text-mainText'
-            }`}
-          >
-            {cat || 'All'}
-          </button>
-        ))}
+      <div className="max-w-xs mx-auto mb-5">
+        <FilterDropdown
+          dark
+          label="All Categories"
+          options={catOptions}
+          value={categoryFilter}
+          onChange={setCategoryFilter}
+        />
       </div>
 
       {/* ── Not Submitted / Pending Programmes ── */}
@@ -605,7 +610,7 @@ export default function JudgesResults() {
                   <label className="text-mutedText text-xs sm:text-sm mb-1 block">{label}</label>
                   <div className="flex gap-2">
                     <select className="flex-1 bg-black/20 text-mainText rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-sm sm:text-base" value={v.student} onChange={e => v.setStudent(e.target.value)}>
-                      <option value="">Select Student</option>
+                      <option value="">Select Participant</option>
                       {editStudentOptions.map(s => (
                         <option key={s.id} value={s.id} label={s.name}>
                           {s.name}{s.chestNo ? ` (#${s.chestNo})` : ''}

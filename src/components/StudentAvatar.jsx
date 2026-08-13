@@ -5,7 +5,7 @@ export default function StudentAvatar({ src, name, className = 'w-12 h-12' }) {
       {src ? (
         <img
           src={src}
-          alt={name || 'Student'}
+          alt={name || 'Participant'}
           className="w-full h-full object-cover"
           onError={(e) => {
             e.target.style.display = 'none'

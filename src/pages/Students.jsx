@@ -56,7 +56,7 @@ export default function Students() {
 
   return (
     <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-poppins font-bold text-black mb-4">Students</h2>
+      <h2 className="text-2xl font-poppins font-bold text-black mb-4">Participants</h2>
 
       <div className="flex items-center bg-oceanTint border border-white/40 rounded-xl px-3 mb-3 shadow-md shadow-black/25">
         <Search size={18} color="#0F2A3D" />
@@ -86,7 +86,7 @@ export default function Students() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {filtered.length === 0 && <p className="text-black text-center mt-8">No students found.</p>}
+        {filtered.length === 0 && <p className="text-black text-center mt-8">No participants found.</p>}
         {filtered.map(student => (
           <div
             key={student.id}

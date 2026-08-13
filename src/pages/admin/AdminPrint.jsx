@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../../supabase/client'
 import { getProgrammes, getStudents, getTeams } from '../../supabase/queries'
 import { ArrowLeft, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react'
+import FilterDropdown from '../../components/FilterDropdown'
 
 function calcGrade(points) {
   const p = Number(points)
@@ -109,6 +110,15 @@ export default function AdminPrint() {
     'General Cat-A': { light: '#D1D5DB', dark: '#9CA3AF' },
     'General Cat-B': { light: '#FFFFFF', dark: '#F5F5F5' },
   }
+
+  const catOptions = [
+    { value: '', label: 'All Categories', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...CATEGORIES.map(cat => ({
+      value: cat,
+      label: cat,
+      icon: <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat]?.light || '#9CA3AF' }} />,
+    })),
+  ]
 
   const teamMap = {}
   teams.forEach(t => { teamMap[t.id] = t.name })
@@ -351,26 +361,14 @@ export default function AdminPrint() {
           </div>
 
           {/* Category filter */}
-          <div className="flex justify-center gap-1.5 flex-wrap mb-4">
-            <button
-              onClick={() => setCatFilter('')}
-              className={`px-3 py-1 text-xs font-semibold rounded-full transition ${!catFilter ? 'bg-primary text-white shadow' : 'bg-secondary/15 text-mutedText'}`}
-            >
-              All
-            </button>
-            {CATEGORIES.map(cat => {
-              const colors = CATEGORY_COLORS[cat]
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setCatFilter(cat)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition ${catFilter === cat ? 'text-white shadow' : 'bg-secondary/15 text-mutedText'}`}
-                  style={catFilter === cat ? { background: `linear-gradient(135deg, ${colors.light}, ${colors.dark})` } : {}}
-                >
-                  {cat}
-                </button>
-              )
-            })}
+          <div className="mb-4 max-w-xs mx-auto">
+            <FilterDropdown
+              dark
+              label="All Categories"
+              options={catOptions}
+              value={catFilter}
+              onChange={setCatFilter}
+            />
           </div>
 
           {/* Programme List */}

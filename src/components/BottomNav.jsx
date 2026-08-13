@@ -4,7 +4,7 @@ import { Home, Trophy, Users, BookOpen } from 'lucide-react'
 const tabs = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/teams', icon: Trophy, label: 'Teams' },
-  { path: '/students', icon: Users, label: 'Students' },
+  { path: '/students', icon: Users, label: 'Participants' },
   { path: '/programmes', icon: BookOpen, label: 'Programmes' },
 ]
 

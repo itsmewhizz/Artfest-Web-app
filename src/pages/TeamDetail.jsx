@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getTeams, getTeamPlacements, getProgrammeById, getStudentsByTeamId, getStudentResults } from '../supabase/queries'
 import { ArrowLeft, Trophy } from 'lucide-react'
+import FilterDropdown from '../components/FilterDropdown'
 
 const CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B']
 const CATEGORY_COLORS = {
@@ -23,7 +24,7 @@ export default function TeamDetail() {
   const [programmeCategories, setProgrammeCategories] = useState({})
   const [students, setStudents] = useState([])
   const [studentResults, setStudentResults] = useState({})
-  const [mainTab, setMainTab] = useState('students')
+  const [mainTab, setMainTab] = useState('participants')
   const [placeTab, setPlaceTab] = useState('first')
   const [catFilter, setCatFilter] = useState('')
 
@@ -74,6 +75,15 @@ export default function TeamDetail() {
 
   if (!team) return <div className="text-mainText text-center mt-20">Loading...</div>
 
+  const catOptions = [
+    { value: '', label: 'All Categories', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
+    ...CATEGORIES.map(cat => ({
+      value: cat,
+      label: cat,
+      icon: <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat]?.light || '#9CA3AF' }} />,
+    })),
+  ]
+
   const currentList = placements[placeTab] || []
 
   return (
@@ -88,7 +98,7 @@ export default function TeamDetail() {
       </div>
 
       <div className="flex border-b border-secondary/30 mb-4">
-        {['students', 'places'].map(key => (
+        {['participants', 'places'].map(key => (
           <button
             key={key}
             onClick={() => setMainTab(key)}
@@ -99,28 +109,15 @@ export default function TeamDetail() {
         ))}
       </div>
 
-      {mainTab === 'students' ? (
+      {mainTab === 'participants' ? (
         <div className="space-y-4">
-          <div className="flex justify-center gap-1.5 flex-wrap">
-            <button
-              onClick={() => setCatFilter('')}
-              className={`px-3 py-1 text-xs font-semibold rounded-full transition ${!catFilter ? 'bg-primary text-white shadow' : 'bg-secondary/15 text-mutedText'}`}
-            >
-              All
-            </button>
-            {CATEGORIES.map(cat => {
-              const colors = CATEGORY_COLORS[cat]
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setCatFilter(cat)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition ${catFilter === cat ? (cat === 'General Cat-B' ? 'text-gray-900 font-bold shadow' : 'text-white shadow') : 'bg-secondary/15 text-mutedText'}`}
-                  style={catFilter === cat ? { background: `linear-gradient(135deg, ${colors.light}, ${colors.dark})` } : {}}
-                >
-                  {cat}
-                </button>
-              )
-            })}
+          <div className="max-w-xs mx-auto">
+            <FilterDropdown
+              label="All Categories"
+              options={catOptions}
+              value={catFilter}
+              onChange={setCatFilter}
+            />
           </div>
           {(() => {
             const filteredStudents = students.filter(student => {
@@ -129,7 +126,7 @@ export default function TeamDetail() {
               return results.some(r => programmeCategories[r.programmeId] === catFilter)
             })
             if (filteredStudents.length === 0) {
-              return <p className="text-mutedText text-center mt-8">No students in this team.</p>
+              return <p className="text-mutedText text-center mt-8">No participants in this team.</p>
             }
             return filteredStudents.map(student => {
               const results = studentResults[student.id] || []

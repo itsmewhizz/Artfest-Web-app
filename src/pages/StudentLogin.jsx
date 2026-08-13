@@ -20,7 +20,7 @@ export default function StudentLogin() {
     setError('')
     const result = await getStudentByCredentials(name, password)
     if (result?.error === 'not_found') {
-      setError('No student found with that name. Check spelling or contact admin.')
+      setError('No participant found with that name. Check spelling or contact admin.')
       setLoading(false)
       return
     }
@@ -55,7 +55,7 @@ export default function StudentLogin() {
   return (
     <div className="min-h-screen bg-mainBackground flex items-center justify-center p-4 sm:p-6">
       <div className="bg-card rounded-2xl p-6 sm:p-8 w-full max-w-sm mx-4 sm:mx-0 shadow-xl border border-secondary/30">
-        <h2 className="text-2xl font-display font-bold text-mainText mb-2 text-center">Student Login</h2>
+        <h2 className="text-2xl font-display font-bold text-mainText mb-2 text-center">Participant Login</h2>
         <p className="text-mutedText text-sm text-center mb-6">Edit your profile and programmes</p>
 
         {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}

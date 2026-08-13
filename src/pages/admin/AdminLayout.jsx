@@ -22,11 +22,10 @@ const navItems = [
   { label: 'Programmes', path: '/admin/programmes', icon: BookOpen },
   { label: 'Categories', path: '/admin/categories', icon: Layers },
   { label: 'Teams', path: '/admin/teams', icon: Trophy },
-  { label: 'Students', path: '/admin/students', icon: Users },
+  { label: 'Participants', path: '/admin/students', icon: Users },
   { label: 'Spotlight / Gallery', path: '/admin/spotlight', icon: GalleryHorizontalEnd },
   { label: 'Results', path: '/admin/results', icon: FileText },
-  { label: 'Result Poster', path: '/admin/result-poster', icon: Printer },
-  { label: 'Print', path: '/admin/print', icon: FileText },
+  { label: 'Print', path: '/admin/print', icon: Printer },
 ]
 
 export default function AdminLayout() {
@@ -51,16 +50,16 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-mainBackground text-mainText">
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-primary/95 backdrop-blur border-b border-white/10">
+        <button onClick={() => setOpen(true)} aria-label="Open navigation" className="p-1.5 text-mainText">
+          <Menu size={24} />
+        </button>
         <div className="flex items-center gap-2.5">
-          <IsraLogo variant="mark" className="w-8 h-8" />
           <div className="leading-none">
             <p className="font-display font-bold text-sm tracking-[0.16em] uppercase">ISRA</p>
             <p className="text-[9px] tracking-[0.28em] text-mutedText uppercase">Festival Admin</p>
           </div>
+          <IsraLogo variant="mark" className="w-8 h-8" />
         </div>
-        <button onClick={() => setOpen(true)} aria-label="Open navigation" className="p-1.5 text-mainText">
-          <Menu size={24} />
-        </button>
       </div>
 
       {/* Mobile drawer backdrop */}

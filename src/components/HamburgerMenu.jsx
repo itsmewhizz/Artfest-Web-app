@@ -5,12 +5,12 @@ import { Menu, X, ChevronDown } from 'lucide-react'
 const pages = [
   { label: 'Home', path: '/' },
   { label: 'Teams', path: '/teams' },
-  { label: 'Students', path: '/students' },
+  { label: 'Participants', path: '/students' },
   { label: 'Programmes', path: '/programmes' },
 ]
 
 const logins = [
-  { label: 'Student', path: '/student/login' },
+  { label: 'Participant', path: '/student/login' },
   { label: 'Judges', path: '/judges/login' },
   { label: 'Admin', path: '/admin/login' },
   { label: 'Lots', path: '/lots' },
