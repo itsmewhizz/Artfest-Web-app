@@ -190,23 +190,50 @@ export default function Home() {
             Team <span className="text-mainText">Standings</span>
           </h2>
 
-          <div className="relative z-10 flex flex-wrap justify-center items-end gap-4 sm:gap-6">
-            {teamData.map((team, i) => {
-              const barHeight = Math.max(70, (team.totalPoints / maxPoints) * maxBarHeight)
-              const isExpanded = expandedTeamId === team.id
-              return (
-                <TeamBar
-                  key={team.id}
-                  team={team}
-                  categories={categories}
-                  displayPoints={team.totalPoints}
-                  barHeight={barHeight}
-                  isExpanded={isExpanded}
-                  index={i}
-                  onToggle={() => setExpandedTeamId(isExpanded ? null : team.id)}
-                />
-              )
-            })}
+          <div className="relative z-10 grid lg:grid-cols-[1fr_320px] gap-8 items-start">
+            {/* Left — team point stats bars */}
+            <div className="flex flex-wrap justify-center items-end gap-4 sm:gap-6">
+              {teamData.map((team, i) => {
+                const barHeight = Math.max(70, (team.totalPoints / maxPoints) * maxBarHeight)
+                const isExpanded = expandedTeamId === team.id
+                return (
+                  <TeamBar
+                    key={team.id}
+                    team={team}
+                    categories={categories}
+                    displayPoints={team.totalPoints}
+                    barHeight={barHeight}
+                    isExpanded={isExpanded}
+                    index={i}
+                    onToggle={() => setExpandedTeamId(isExpanded ? null : team.id)}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Right — Leading Teams ranked card */}
+            <aside className="bg-card rounded-2xl border border-secondary/40 shadow-lg overflow-hidden">
+              <div className="px-5 py-4 border-b border-secondary/30">
+                <h3 className="font-playfair text-xl font-bold text-mainText">Leading Teams</h3>
+              </div>
+              <div className="px-5 py-2">
+                {teamData.slice(0, 5).map((team, i) => (
+                  <div
+                    key={team.id}
+                    className="flex items-center gap-4 py-3 border-b border-secondary/20 last:border-0"
+                  >
+                    <span className={`font-playfair text-lg font-bold w-6 ${i === 0 ? 'text-accent' : 'text-mutedText'}`}>
+                      {i + 1}
+                    </span>
+                    <span className="text-sm font-semibold text-mainText truncate">{team.name}</span>
+                    <span className="ml-auto font-playfair font-bold text-accent">{team.totalPoints} pts</span>
+                  </div>
+                ))}
+                {teamData.length === 0 && (
+                  <p className="py-6 text-center text-mutedText text-sm">Loading standings…</p>
+                )}
+              </div>
+            </aside>
           </div>
         </div>
 

@@ -71,11 +71,10 @@ export default function TeamBar({ team, categories, displayPoints, barHeight, is
       >
         <div className="flex flex-col items-center">
           <div className="text-center mb-2">
-            <span className="text-base sm:text-lg font-bold text-mainText font-poppins">
+            <span className="text-xl sm:text-2xl font-bold text-accent font-poppins drop-shadow leading-none">
               {count}
             </span>
             <span className="text-xs text-mutedText ml-1 font-poppins">points</span>
-
           </div>
 
           <div className="hp-bar-wrapper sm:w-[80px] w-[60px]" style={{ height: barHeight }}>
