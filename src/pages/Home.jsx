@@ -146,7 +146,7 @@ export default function Home() {
 
       {/* ── Full-Viewport Hero ── */}
       <section className="relative h-screen w-full overflow-hidden">
-        <HeroAnimation spotlightImages={allImages} />
+        <HeroAnimation spotlightImages={featured.length > 0 ? featured : allImages} />
 
         <div className="aurora-layer">
           <div className="aurora-blob aurora-a" />
