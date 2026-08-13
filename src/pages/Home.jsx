@@ -1,31 +1,55 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
-import { ChevronDown, Download, ArrowRight } from 'lucide-react'
-import { useToast } from '../components/Toast'
-import TeamBar from '../components/TeamBar'
+import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers } from 'lucide-react'
 import HeroAnimation from '../components/HeroAnimation'
 import useScrollReveal from '../hooks/useScrollReveal'
+
+const CATEGORY_BARS = {
+  Minor: '#6366F1',
+  HS: '#7BEAFE',
+  Premier: '#FFDA63',
+  'Sub Junior': '#A78BFA',
+  Junior: '#34D399',
+  'General Cat-A': '#94A3B8',
+  'General Cat-B': '#E2E8F0',
+}
+
+const categoryLabel = cat =>
+  cat === 'General Cat-A' ? 'Gen Cat-A' :
+  cat === 'General Cat-B' ? 'Gen Cat-B' : cat
+
+const stats = [
+  { value: '3', label: 'Teams', icon: Users },
+  { value: '3', label: 'Days', icon: CalendarDays },
+  { value: '120+', label: 'Participants', icon: UserCheck },
+  { value: '150+', label: 'Programmes', icon: Layers },
+]
+
+const teamMembers = [
+  { name: 'Farhan Musthafa', role: 'Festival Director', initials: 'FM', tint: 'from-[#6366F1] to-[#7BEAFE]' },
+  { name: 'Aysha Rameez', role: 'Programme Coordinator', initials: 'AR', tint: 'from-[#7BEAFE] to-[#FFDA63]' },
+  { name: 'Mohammed Suhail', role: 'Results & Data', initials: 'MS', tint: 'from-[#FFDA63] to-[#6366F1]' },
+  { name: 'Fathima Rinaz', role: 'Stage & Events', initials: 'FR', tint: 'from-[#6366F1] to-[#A78BFA]' },
+  { name: 'Niyas K', role: 'Media & Gallery', initials: 'NK', tint: 'from-[#A78BFA] to-[#7BEAFE]' },
+  { name: 'Safna Noushad', role: 'Volunteer Lead', initials: 'SN', tint: 'from-[#7BEAFE] to-[#94A3B8]' },
+  { name: 'Ibrahim Ashkar', role: 'Logistics', initials: 'IA', tint: 'from-[#FFDA63] to-[#A78BFA]' },
+]
 
 export default function Home() {
   const [featured, setFeatured] = useState([])
   const [allImages, setAllImages] = useState([])
   const [teamData, setTeamData] = useState([])
   const [categories, setCategories] = useState([])
-  const [current, setCurrent] = useState(0)
-  const [expandedTeamId, setExpandedTeamId] = useState(null)
-  const [posters, setPosters] = useState({})
-  const [expandedPoster, setExpandedPoster] = useState(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const intervalRef = useRef(null)
-  const toast = useToast()
   const teamsRef = useRef(null)
   const aboutRef = useRef(null)
   const teamsReveal = useScrollReveal()
-  const downloadReveal = useScrollReveal()
+  const statsReveal = useScrollReveal()
   const galleryReveal = useScrollReveal()
   const aboutReveal = useScrollReveal()
+  const teamReveal = useScrollReveal()
 
   const sparkles = useMemo(
     () =>
@@ -59,21 +83,6 @@ export default function Home() {
       setTeamData(sorted)
       setCategories(cats)
     })
-
-  }, [])
-
-  useEffect(() => {
-    const loadPosters = () => {
-      try {
-        const raw = localStorage.getItem('result_posters')
-        setPosters(raw ? JSON.parse(raw) : {})
-      } catch {
-        setPosters({})
-      }
-    }
-    loadPosters()
-    window.addEventListener('storage', loadPosters)
-    return () => window.removeEventListener('storage', loadPosters)
   }, [])
 
   useEffect(() => {
@@ -82,34 +91,10 @@ export default function Home() {
     }
   }, [location.state])
 
-  useEffect(() => {
-    if (featured.length === 0) return
-    intervalRef.current = setInterval(() => {
-      setCurrent(prev => (prev + 1) % featured.length)
-    }, 5000)
-    return () => clearInterval(intervalRef.current)
-  }, [featured])
-
-  const maxPoints = Math.max(...teamData.map(t => t.totalPoints || 0), 1)
-  const maxBarHeight = 300
-
-  const handleDownloadPoster = (count) => {
-    const poster = posters[count]
-    if (!poster?.imageUrl) {
-      toast('No poster is available for this total yet.', 'error')
-      return
-    }
-
-    const a = document.createElement('a')
-    a.href = poster.imageUrl
-    a.download = `total_result_${count}.png`
-    a.click()
-  }
-
-  const publishedCounts = Object.entries(posters)
-    .filter(([, poster]) => poster?.published && poster?.imageUrl)
-    .map(([count]) => count)
-    .sort((a, b) => Number(a) - Number(b))
+  const maxCat = Math.max(
+    ...teamData.flatMap(t => categories.map(c => t.catPoints?.[c] || 0)),
+    1
+  )
 
   const scrollTo = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -171,7 +156,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="rounded-full bg-white/10 backdrop-blur-xl border border-white/20 p-1.5 shadow-lg">
               <button
-                onClick={() => scrollTo(teamsRef)}
+                onClick={() => navigate('/programmes')}
                 className="px-7 py-2.5 bg-[#CBDDE9] text-[#0F2A3D] rounded-full font-semibold font-inter hover:opacity-90 transition"
               >
                 View Results
@@ -185,7 +170,6 @@ export default function Home() {
             </button>
           </div>
         </div>
-
       </section>
 
       {/* ── Content Below Hero ── */}
@@ -197,7 +181,9 @@ export default function Home() {
             teamsRef.current = el
             teamsReveal.ref(el)
           }}
-          className={`hp-wrapper-gloss p-4 md:p-6 w-full mb-8 scroll-mt-24 reveal ${teamsReveal.visible ? 'reveal-visible' : ''}`}
+          className={`hp-wrapper-gloss p-4 md:p-8 w-full mb-12 scroll-mt-24 reveal ${
+            teamsReveal.visible ? 'reveal-visible' : ''
+          }`}
         >
           <div className="ember-field">
             {embers.map(e => (
@@ -214,70 +200,115 @@ export default function Home() {
               />
             ))}
           </div>
-          <h2 className="relative z-10 text-2xl md:text-3xl font-display font-bold text-mainText mb-6 text-center">
-            Team <span className="text-mainText">Standings</span>
+          <h2 className="relative z-10 text-2xl md:text-3xl font-playfair font-bold text-mainText mb-8 text-center">
+            Team <span className="text-accent">Standings</span>
           </h2>
-          <div className="relative z-10 flex flex-wrap justify-center items-end gap-4 sm:gap-6">
-          {teamData.map((team, i) => {
-            const barHeight = Math.max(70, (team.totalPoints / maxPoints) * maxBarHeight)
-            const isExpanded = expandedTeamId === team.id
 
-            return (
-              <TeamBar
-                key={team.id}
-                team={team}
-                categories={categories}
-                displayPoints={team.totalPoints}
-                barHeight={barHeight}
-                isExpanded={isExpanded}
-                index={i}
-                onToggle={() => setExpandedTeamId(isExpanded ? null : team.id)}
-              />
-            )
-          })}
-        </div>
-        </div>
-
-        {/* Download Total result */}
-        <div
-          ref={downloadReveal.ref}
-          className={`mb-8 reveal ${downloadReveal.visible ? 'reveal-visible' : ''}`}
-        >
-          <h3 className="text-xl md:text-2xl font-display text-black mb-4">Download Total result</h3>
-          {publishedCounts.length === 0 ? (
-            <p className="text-black text-sm">No result posters have been published yet.</p>
-          ) : (
-            <div className="flex flex-col gap-2 max-w-md">
-              {publishedCounts.map(count => (
-                <div key={count} className="bg-card rounded-xl p-3 border border-secondary/30">
+          <div className="relative z-10 grid lg:grid-cols-[1fr_340px] gap-8 items-start">
+            {/* Left — grouped category bars per team */}
+            <div>
+              <div className="flex flex-wrap justify-center items-end gap-x-4 sm:gap-x-8 gap-y-10">
+                {teamData.map(team => (
                   <button
-                    onClick={() => setExpandedPoster(expandedPoster === count ? null : count)}
-                    className="w-full flex items-center justify-between text-left"
+                    key={team.id}
+                    onClick={() => navigate(`/teams/${team.id}`)}
+                    className="group flex flex-col items-center cursor-pointer"
                   >
-                    <span className="text-black font-semibold">Through programme {count}</span>
-                    <ChevronDown size={16} className={`text-black transition-transform ${expandedPoster === count ? 'rotate-180' : ''}`} />
-                  </button>
-                  {expandedPoster === count && (
-                    <div className="mt-3 pt-3 border-t border-secondary/30">
-                      <button
-                        onClick={() => handleDownloadPoster(count)}
-                        className="flex items-center gap-2 bg-success hover:bg-success/90 text-white px-4 py-2 rounded-lg text-sm font-semibold"
-                      >
-                        <Download size={14} /> Download
-                      </button>
+                    <span className="font-playfair text-2xl font-bold text-mainText">
+                      {team.totalPoints}
+                    </span>
+                    <div className="flex items-end gap-1 sm:gap-1.5 h-[180px] mt-2">
+                      {categories.map(cat => {
+                        const pts = team.catPoints?.[cat] || 0
+                        const h = Math.max(6, Math.round((pts / maxCat) * 176))
+                        return (
+                          <div
+                            key={cat}
+                            title={`${categoryLabel(cat)}: ${pts} pts`}
+                            className="w-3.5 sm:w-5 rounded-t-md transition-all duration-300 group-hover:opacity-90"
+                            style={{ height: h, background: CATEGORY_BARS[cat] || '#94A3B8' }}
+                          />
+                        )
+                      })}
                     </div>
-                  )}
-                </div>
-              ))}
+                    <span className="mt-3 text-xs sm:text-sm font-semibold text-mutedText truncate max-w-[90px] sm:max-w-[130px]">
+                      {team.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-8">
+                {categories.map(cat => (
+                  <span
+                    key={cat}
+                    className="flex items-center gap-1.5 text-[10px] sm:text-xs text-mutedText uppercase tracking-wider"
+                  >
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: CATEGORY_BARS[cat] }} />
+                    {categoryLabel(cat)}
+                  </span>
+                ))}
+              </div>
             </div>
-          )}
+
+            {/* Right — Leading Teams card */}
+            <aside className="bg-card rounded-2xl border border-secondary/40 shadow-lg overflow-hidden">
+              <div className="px-5 py-4 border-b border-secondary/30 flex items-center justify-between">
+                <h3 className="font-playfair text-xl font-bold text-mainText">Leading Teams</h3>
+                <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">Rank</span>
+              </div>
+              <div className="px-5 py-2">
+                {teamData.slice(0, 5).map((team, i) => (
+                  <div
+                    key={team.id}
+                    className="flex items-center gap-4 py-3 border-b border-secondary/20 last:border-0"
+                  >
+                    <span className={`font-playfair text-lg font-bold w-6 ${i === 0 ? 'text-accent' : 'text-mutedText'}`}>
+                      {i + 1}
+                    </span>
+                    <span className="text-sm font-semibold text-mainText truncate">{team.name}</span>
+                    <span className="ml-auto font-playfair font-bold text-accent">{team.totalPoints} pts</span>
+                  </div>
+                ))}
+                {teamData.length === 0 && (
+                  <p className="py-6 text-center text-mutedText text-sm">Loading standings…</p>
+                )}
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        {/* Stats Blocks */}
+        <div
+          ref={statsReveal.ref}
+          className={`mb-12 reveal ${statsReveal.visible ? 'reveal-visible' : ''}`}
+        >
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {stats.map(stat => {
+              const Icon = stat.icon
+              return (
+                <div
+                  key={stat.label}
+                  className="bg-card rounded-2xl border border-secondary/40 p-6 text-center cursor-pointer hover:-translate-y-1.5 hover:shadow-xl hover:border-primary/40 transition-all duration-300"
+                >
+                  <Icon size={22} className="mx-auto mb-3 text-accent" />
+                  <div className="font-playfair font-bold text-4xl md:text-5xl text-primary leading-none">
+                    {stat.value}
+                  </div>
+                  <div className="mt-2 text-xs md:text-sm uppercase tracking-[0.18em] text-mutedText font-semibold">
+                    {stat.label}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         {/* Gallery */}
         {allImages.length > 0 && (
           <div
             ref={galleryReveal.ref}
-            className={`mb-8 reveal ${galleryReveal.visible ? 'reveal-visible' : ''}`}
+            className={`mb-12 reveal ${galleryReveal.visible ? 'reveal-visible' : ''}`}
           >
             <div className="flex items-start justify-between gap-4 mb-6">
               <div>
@@ -287,7 +318,7 @@ export default function Home() {
                 <h3 className="text-4xl md:text-5xl font-playfair font-bold text-mainText leading-tight">
                   Gallery
                 </h3>
-                <p className="mt-2 text-sm md:text-base text-mainText/70 font-display italic max-w-md">
+                <p className="mt-2 text-sm md:text-base text-mutedText font-display italic max-w-md">
                   Scenes from ISRA life Festival 2026 as it unfolds.
                 </p>
               </div>
@@ -320,21 +351,70 @@ export default function Home() {
             aboutReveal.ref(el)
           }}
           id="about"
-          className={`mb-10 text-center scroll-mt-24 reveal ${aboutReveal.visible ? 'reveal-visible' : ''}`}
+          className={`mb-12 text-center scroll-mt-24 reveal ${aboutReveal.visible ? 'reveal-visible' : ''}`}
         >
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-display text-black mb-6">About the Fest</h3>
+          <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5">
+            About Fest
+          </span>
+          <h3 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-mainText mb-6">
+            26 Years of Legacy &amp; Vibe
+          </h3>
           <div className="max-w-2xl mx-auto space-y-5 px-2 sm:px-0">
-            <p className="text-black text-sm sm:text-base italic leading-loose">
-              Campus Art Fest is an annual celebration of creativity and talent, bringing together participants from all departments to showcase their skills in dance, music, art, literary arts, and stage performances. Our mission is to Track, Celebrate, and Remember every moment of this vibrant festival.
+            <p className="text-mutedText text-sm sm:text-base italic leading-loose">
+              Campus Art Fest is an annual celebration of creativity and talent, bringing together
+              participants from all departments to showcase their skills in dance, music, art,
+              literary arts, and stage performances. Our mission is to Track, Celebrate, and
+              Remember every moment of this vibrant festival.
             </p>
-            <p className="text-black text-sm sm:text-base italic leading-loose">
-              With real-time score tracking, downloadable result posters, and a spotlight gallery, the Art Fest platform keeps everyone connected — from competitors checking their results to audiences cheering for their favorite teams.
+            <p className="text-mutedText text-sm sm:text-base italic leading-loose">
+              With real-time score tracking, downloadable result posters, and a spotlight gallery,
+              the Art Fest platform keeps everyone connected — from competitors checking their
+              results to audiences cheering for their favorite teams.
             </p>
+          </div>
+          <a
+            href="https://www.youtube.com/@isra_media"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-8 inline-flex items-center gap-2 bg-primary hover:opacity-90 text-white px-8 py-3 rounded-full font-semibold font-inter transition"
+          >
+            Explore <ExternalLink size={16} />
+          </a>
+        </div>
+
+        {/* Our Team */}
+        <div
+          ref={teamReveal.ref}
+          className={`mb-12 text-center reveal ${teamReveal.visible ? 'reveal-visible' : ''}`}
+        >
+          <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5">
+            Our Team
+          </span>
+          <h3 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-mainText mb-4">
+            The Team Behind the Fest
+          </h3>
+          <p className="max-w-2xl mx-auto text-mutedText text-sm sm:text-base italic leading-loose mb-12 px-2">
+            A passionate crew of organizers, coordinators, and volunteers who bring the festival
+            to life — from stage lights to score sheets.
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-x-10 gap-y-10">
+            {teamMembers.map(member => (
+              <div key={member.name} className="w-[150px] text-center">
+                <div
+                  className={`mx-auto mb-3 h-20 w-20 rounded-full bg-gradient-to-br ${member.tint} flex items-center justify-center font-playfair text-2xl font-bold text-white shadow-lg`}
+                >
+                  {member.initials}
+                </div>
+                <p className="font-semibold text-sm text-mainText">{member.name}</p>
+                <p className="text-xs text-accent mt-1">{member.role}</p>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-10 mb-6 text-center text-black text-xs sm:text-sm font-inter">
+        <div className="mt-10 mb-6 text-center text-mutedText text-xs sm:text-sm font-inter">
           © 2026 Campus Art Fest
           <br />
           <i>-Farhan Musthafa-</i>

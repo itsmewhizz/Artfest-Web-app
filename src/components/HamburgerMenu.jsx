@@ -78,7 +78,7 @@ export default function HamburgerMenu() {
         <ChevronDown
           size={18}
           className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-          color={isOpen ? '#E8845C' : '#5C93AA'}
+          color={isOpen ? '#FFDA63' : '#7BEAFE'}
         />
       </button>
       {isOpen && (

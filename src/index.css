@@ -16,18 +16,37 @@ body {
   color: rgb(var(--main-text));
   font-family: 'Sora', sans-serif;
   min-height: 100vh;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+html {
+  background-color: rgb(var(--main-background));
 }
 
 :root {
-  --main-background: 40 114 161; /* Ocean Blue #2872A1 */
-  --primary: 31 90 128; /* Deep Navy #1F5A80 */
-  --secondary: 92 147 170; /* Slate Teal #5C93AA */
-  --accent: 232 132 92; /* Sunset Coral #E8845C */
-  --main-text: 234 244 250; /* #EAF4FA light text for dark bg */
-  --muted-text: 169 199 214; /* #A9C7D6 muted light */
+  --main-background: 248 250 252; /* #f8fafc */
+  --primary: 99 102 241; /* Indigo #6366f1 */
+  --secondary: 123 234 254; /* Cyan #7beafe */
+  --accent: 255 218 99; /* Gold #ffda63 */
+  --main-text: 110 198 217; /* #6EC6D9 */
+  --muted-text: 157 223 232; /* #9DDFE8 */
   --success: 76 187 130; /* Sea Green #4CBB82 */
-  --card: 22 64 92; /* Deep Navy card #16405C */
-  --ocean-tint: 132 186 225; /* Ocean Blue light tint #84BAE1 */
+  --card: 252 253 255; /* near-white card */
+  --ocean-tint: 186 219 255; /* light indigo tint */
+}
+
+[data-theme='dark'] {
+  --main-background: 15 23 42; /* deep indigo-navy #0F172A */
+  --primary: 129 140 248; /* Indigo #818cf8 */
+  --secondary: 123 234 254; /* Cyan #7beafe */
+  --accent: 255 218 99; /* Gold #ffda63 */
+  --main-text: 224 242 254; /* #E0F2FE */
+  --muted-text: 148 163 184; /* #94A3B8 */
+  --success: 52 211 153; /* #34D399 */
+  --card: 22 31 55; /* deep navy card */
+  --ocean-tint: 125 211 252; /* #7DC3FC */
 }
 
 @media (min-width: 768px) {
@@ -76,9 +95,9 @@ body {
 .hp-wrapper-gloss {
   position: relative;
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(31, 90, 128, 0.55) 0%, rgba(22, 64, 92, 0.68) 100%);
-  box-shadow: 0 8px 32px rgba(2, 12, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.28) 0%, rgba(15, 23, 42, 0.82) 100%);
+  box-shadow: 0 8px 32px rgba(2, 6, 23, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(123, 234, 254, 0.25);
 }
 .hp-wrapper-gloss::before {
   content: '';
