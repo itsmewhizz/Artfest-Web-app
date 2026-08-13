@@ -479,7 +479,14 @@ export default function AdminPrint() {
 
           {/* Preview sheets — each block is one self-contained sheet */}
           <div className="print-page-container">
-            {previewItems.map((item, idx) => (
+            {previewItems.map((item, idx) => {
+              // For Valuation sheets, size each blank writable row to fill the
+              // fixed 67mm print slot without overflowing it, so the judge has
+              // comfortable handwriting room for Point / Grade / Prize etc.
+              const valuationRowH = item.sheet === 'valuation' && item.rows.length > 0
+                ? Math.max(8, Math.min(30, Math.floor(180 / item.rows.length)))
+                : null
+              return (
               <div key={idx} className={`preview-sheet${item.breakBefore ? ' page-break-before' : ''}`}>
                 {/* Info header table */}
                 <table className="print-table print-info-table">
@@ -548,11 +555,11 @@ export default function AdminPrint() {
                       <tbody>
                         {item.rows.map(row => (
                           <tr key={row.key}>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
+                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
+                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
+                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
+                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
                           </tr>
                         ))}
                       </tbody>
@@ -589,7 +596,8 @@ export default function AdminPrint() {
                   )}
                 </table>
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
