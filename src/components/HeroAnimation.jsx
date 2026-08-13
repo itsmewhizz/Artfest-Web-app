@@ -22,8 +22,8 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         .hero-animation-bg {
           position: absolute;
           inset: 0;
-          /* Deep violet-purple tone consistent with the site's palette */
-          background: radial-gradient(circle at center, #3B2A5E 0%, #2D1B4E 100%);
+          /* Ocean blue tone consistent with the site's palette */
+          background: radial-gradient(circle at center, #2872A1 0%, #1F5A80 100%);
           backdrop-filter: blur(40px);
           -webkit-backdrop-filter: blur(40px);
           opacity: 0.9;
@@ -32,7 +32,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         .hero-animation-glow {
           position: absolute;
           inset: -20%;
-          background: radial-gradient(ellipse at center, rgba(138, 43, 226, 0.15) 0%, transparent 70%);
+          background: radial-gradient(ellipse at center, rgba(132, 186, 225, 0.15) 0%, transparent 70%);
           filter: blur(80px);
           pointer-events: none;
           animation: heroGlowPulse 8s ease-in-out infinite;
@@ -66,6 +66,8 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           border: 1px solid rgba(255, 255, 255, 0.15);
           transform-origin: center;
           will-change: transform, opacity;
+          /* Faded, semi-transparent look */
+          opacity: 0.7;
         }
 
         .hero-card-image {
@@ -82,7 +84,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           align-items: center;
           justify-content: center;
           font-size: 64px;
-          background: linear-gradient(135deg, #2D1B4E 0%, #1F1531 100%);
+          background: linear-gradient(135deg, #1F5A80 0%, #16405C 100%);
         }
 
         /*
