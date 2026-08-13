@@ -195,7 +195,7 @@ export default function Home() {
         <div
           ref={(el) => {
             teamsRef.current = el
-            teamsReveal.ref.current = el
+            teamsReveal.ref(el)
           }}
           className={`hp-wrapper-gloss p-4 md:p-6 w-full mb-8 scroll-mt-24 reveal ${teamsReveal.visible ? 'reveal-visible' : ''}`}
         >
@@ -317,7 +317,7 @@ export default function Home() {
         <div
           ref={(el) => {
             aboutRef.current = el
-            aboutReveal.ref.current = el
+            aboutReveal.ref(el)
           }}
           id="about"
           className={`mb-10 text-center scroll-mt-24 reveal ${aboutReveal.visible ? 'reveal-visible' : ''}`}

@@ -1,37 +1,50 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 export default function useScrollReveal(threshold = 0.2) {
-  const ref = useRef(null)
   const [visible, setVisible] = useState(false)
+  const visibleRef = useRef(false)
+  const observerRef = useRef(null)
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
+  const reveal = useCallback(() => {
+    if (visibleRef.current) return
+    visibleRef.current = true
+    observerRef.current?.disconnect()
+    observerRef.current = null
+    setVisible(true)
+  }, [])
 
-    const prefersReduced =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const ref = useCallback(
+    (node) => {
+      if (!node) {
+        observerRef.current?.disconnect()
+        observerRef.current = null
+        return
+      }
+      if (visibleRef.current) return
 
-    if (prefersReduced || typeof IntersectionObserver === 'undefined') {
-      setVisible(true)
-      return
-    }
+      const prefersReduced =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setVisible(true)
-            observer.unobserve(entry.target)
-          }
-        })
-      },
-      { threshold }
-    )
+      if (prefersReduced || typeof IntersectionObserver === 'undefined') {
+        reveal()
+        return
+      }
 
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [threshold])
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) reveal()
+          })
+        },
+        { threshold }
+      )
+
+      observerRef.current = observer
+      observer.observe(node)
+    },
+    [threshold, reveal]
+  )
 
   return { ref, visible }
 }
