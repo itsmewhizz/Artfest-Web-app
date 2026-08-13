@@ -357,7 +357,7 @@ export default function Home() {
             to life — from stage lights to score sheets.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-x-10 gap-y-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-10 place-items-center max-w-6xl mx-auto px-4">
             {teamMembers.map(member => (
               <div key={member.name} className="w-[150px] text-center">
                 {member.photo ? (
