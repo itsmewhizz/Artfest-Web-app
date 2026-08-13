@@ -108,11 +108,11 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           pixel-perfect on the same card sequence.
         */
         .drift-right {
-          animation: driftRightLane 55s linear infinite;
+          animation: driftRightLane 54s linear infinite;
         }
 
         .drift-left {
-          animation: driftLeftLane 55s linear infinite;
+          animation: driftLeftLane 54s linear infinite;
         }
 
         @keyframes driftRightLane {
