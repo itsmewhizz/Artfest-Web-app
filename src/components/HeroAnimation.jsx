@@ -78,7 +78,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
 
         .card-row {
           position: relative;
-          height: 50%;
+          height: 44%;
           width: 100%;
           display: flex;
           align-items: center;
@@ -127,7 +127,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
 
         .hero-card {
           position: relative;
-          width: clamp(5.5rem, 14vw, 12.5rem);
+          width: clamp(7rem, 18vw, 16rem);
           aspect-ratio: 1 / 1;
           border-radius: 1.35rem;
           overflow: hidden;
