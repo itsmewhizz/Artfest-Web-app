@@ -4,6 +4,7 @@ import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../su
 import { ChevronDown, Download, ArrowRight } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import TeamBar from '../components/TeamBar'
+import FloatingCards from '../components/FloatingCards'
 
 export default function Home() {
   const [featured, setFeatured] = useState([])
@@ -157,6 +158,8 @@ export default function Home() {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-secondary via-primary to-mainBackground bg-animated" />
         )}
+
+        <FloatingCards images={allImages} />
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-mainBackground backdrop-blur-[2px]" />
 
