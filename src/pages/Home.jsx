@@ -4,7 +4,7 @@ import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../su
 import { ChevronDown, Download, ArrowRight } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import TeamBar from '../components/TeamBar'
-import FloatingCards from '../components/FloatingCards'
+import HeroAnimation from '../components/HeroAnimation'
 
 export default function Home() {
   const [featured, setFeatured] = useState([])
@@ -146,22 +146,7 @@ export default function Home() {
 
       {/* ── Full-Viewport Hero ── */}
       <section className="relative h-screen w-full overflow-hidden">
-        {featured.length > 0 ? (
-          featured.map((img, i) => (
-            <img
-              key={img.id}
-              src={img.imageURL}
-              alt=""
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${i === current ? 'opacity-100' : 'opacity-0'}`}
-            />
-          ))
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-secondary via-primary to-mainBackground bg-animated" />
-        )}
-
-        <FloatingCards images={allImages} />
-
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-mainBackground backdrop-blur-[2px]" />
+        <HeroAnimation spotlightImages={allImages} />
 
         <div className="aurora-layer">
           <div className="aurora-blob aurora-a" />
@@ -210,11 +195,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2">
-          {featured.map((_, i) => (
-            <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === current ? 'bg-mainText' : 'bg-mainText/40'}`} />
-          ))}
-        </div>
       </section>
 
       {/* ── Content Below Hero ── */}
