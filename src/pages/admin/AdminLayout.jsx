@@ -69,16 +69,16 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col bg-gradient-to-b from-primary to-[#1B1927] border-r border-white/10 shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col admin-sidebar shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand */}
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 dark:border-black/10">
           <IsraLogo variant="mark" className="w-10 h-10" />
           <div className="min-w-0 leading-none">
-            <p className="font-display font-bold text-lg tracking-[0.16em] uppercase text-mainText">ISRA</p>
-            <p className="mt-1 text-[10px] tracking-[0.3em] text-mutedText uppercase">Festival Admin</p>
+            <p className="font-display font-bold text-lg tracking-[0.16em] uppercase text-inherit">ISRA</p>
+            <p className="mt-1 text-[10px] tracking-[0.3em] text-mutedText uppercase opacity-70">Festival Admin</p>
           </div>
           <button onClick={closeDrawer} aria-label="Close navigation" className="lg:hidden ml-auto p-1 text-mutedText hover:text-mainText">
             <X size={22} />
@@ -97,7 +97,7 @@ export default function AdminLayout() {
                 `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-white/10 text-mainText border border-white/15 shadow-inner'
-                    : 'text-mutedText hover:bg-white/5 hover:text-mainText border border-transparent'
+                    : 'text-inherit opacity-70 hover:opacity-100 border border-transparent'
                 }`
               }
             >
@@ -113,13 +113,13 @@ export default function AdminLayout() {
         </nav>
 
         {/* Admin user */}
-        <div className="border-t border-white/10 p-4">
+        <div className="border-t border-white/10 dark:border-black/10 p-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-accent/25 text-accent flex items-center justify-center font-bold text-sm shrink-0">
               {(adminEmail || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-mainText truncate">{adminEmail || 'Admin'}</p>
+              <p className="text-sm font-semibold text-inherit truncate">{adminEmail || 'Admin'}</p>
             </div>
             <button onClick={handleLogout} aria-label="Logout" title="Logout" className="p-2 rounded-lg text-mutedText hover:text-red-400 hover:bg-white/10 transition">
               <LogOut size={18} />

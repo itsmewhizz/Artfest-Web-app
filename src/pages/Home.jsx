@@ -1,9 +1,11 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
-import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers } from 'lucide-react'
+import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers, Instagram, Youtube } from 'lucide-react'
 import HeroAnimation from '../components/HeroAnimation'
 import useScrollReveal from '../hooks/useScrollReveal'
+import ThemeToggle from '../components/ThemeToggle'
+import LoginControl from '../components/LoginControl'
 
 const stats = [
   { value: '3', label: 'Teams', icon: Users },
@@ -99,14 +101,18 @@ export default function Home() {
             </span>
           </button>
 
-          <nav className="hidden sm:flex items-center gap-1">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="nav-link active">
-              Home
-            </button>
-            <button onClick={() => navigate('/results')} className="nav-link">
-              Results
-            </button>
-          </nav>
+          <div className="flex items-center gap-3">
+            <nav className="hidden sm:flex items-center gap-1 mr-3">
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="nav-link active">
+                Home
+              </button>
+              <button onClick={() => navigate('/results')} className="nav-link">
+                Results
+              </button>
+            </nav>
+            <LoginControl />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -166,7 +172,7 @@ export default function Home() {
         {/* Team Standings — ranked list only */}
         <div
           ref={teamsReveal.ref}
-          className={`bento-dark-card p-6 md:p-10 w-full mb-12 scroll-mt-24 reveal ${
+          className={`bento-standings-card p-6 md:p-10 w-full mb-12 scroll-mt-24 reveal ${
             teamsReveal.visible ? 'reveal-visible' : ''
           }`}
         >
@@ -185,8 +191,8 @@ export default function Home() {
               />
             ))}
           </div>
-          <h2 className="relative z-10 text-2xl md:text-4xl font-display font-extrabold text-white mb-10 text-center tracking-tight">
-            Team Standings
+          <h2 className="relative z-10 text-2xl md:text-4xl font-brand font-black text-white mb-10 text-center tracking-tight uppercase">
+            Corvion
           </h2>
 
           <div className="relative z-10 max-w-2xl mx-auto flex flex-col gap-4">
@@ -340,11 +346,11 @@ export default function Home() {
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="mx-auto mb-3 h-20 w-20 rounded-full object-cover shadow-lg"
+                    className="mx-auto mb-3 h-20 w-20 rounded-2xl object-cover shadow-lg"
                   />
                 ) : (
                   <div
-                    className={`mx-auto mb-3 h-20 w-20 rounded-full bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
+                    className={`mx-auto mb-3 h-20 w-20 rounded-2xl bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
                   >
                     {member.initials}
                   </div>
@@ -357,11 +363,30 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <div className="mt-10 mb-6 text-center text-mutedText text-xs sm:text-sm font-inter">
-          © 2026 Campus Art Fest
-          <br />
-          <i>-Farhan Musthafa-</i>
-        </div>
+        <footer className="mt-20 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-mutedText text-xs sm:text-sm font-inter">
+          <div className="text-center sm:text-left">
+            <p className="font-bold text-mainText">Rendezvous '26</p>
+            <p className="italic opacity-70">-Farhan Musthafa-</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://www.instagram.com/isralifefestival_26?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-purple transition"
+            >
+              <Instagram size={20} />
+            </a>
+            <a
+              href="https://www.youtube.com/@isra_media"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-purple transition"
+            >
+              <Youtube size={20} />
+            </a>
+          </div>
+        </footer>
       </div>
     </div>
   )

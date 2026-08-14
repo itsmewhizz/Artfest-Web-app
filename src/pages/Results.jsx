@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getProgrammes, getCategories, getAllResults, PROGRAMME_CATEGORIES } from '../supabase/queries'
 import { CheckCircle2, Hourglass, Eye, ArrowLeft } from 'lucide-react'
+import ThemeToggle from '../components/ThemeToggle'
+import LoginControl from '../components/LoginControl'
 
 function gradeFrom(points) {
   const p = Number(points)
@@ -62,23 +64,29 @@ export default function Results() {
     <div className="min-h-screen bg-page">
       {/* Transparent Top Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-8 lg:px-16 py-4 lg:py-5">
-        <Link
-          to="/"
-          className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none"
-        >
-          <span className="font-brand font-black text-[1.05rem] sm:text-[1.2rem] tracking-[0.14em] text-purple uppercase">
-            ISRA
-          </span>
-          <span className="font-brand text-[0.48rem] sm:text-[0.56rem] tracking-[0.3em] text-textMute uppercase">
-            Festival
-          </span>
-        </Link>
-        <Link
-          to="/"
-          className="flex items-center gap-1 px-4 py-2 rounded-full bg-card border border-subtle text-mainText text-xs sm:text-sm font-semibold hover:bg-lavender transition"
-        >
-          <ArrowLeft size={16} /> Home
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/"
+            className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none"
+          >
+            <span className="font-brand font-black text-[1.05rem] sm:text-[1.2rem] tracking-[0.14em] text-purple uppercase">
+              ISRA
+            </span>
+            <span className="font-brand text-[0.48rem] sm:text-[0.56rem] tracking-[0.3em] text-textMute uppercase">
+              Festival
+            </span>
+          </Link>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="flex items-center gap-1 px-4 py-2 rounded-full bg-card border border-subtle text-mainText text-xs sm:text-sm font-semibold hover:bg-lavender transition"
+          >
+            <ArrowLeft size={16} /> Home
+          </Link>
+          <LoginControl />
+          <ThemeToggle />
+        </div>
       </nav>
 
       <div className="bg-page p-4 md:p-8 lg:p-12 max-w-6xl mx-auto relative z-20 pt-24 sm:pt-28">

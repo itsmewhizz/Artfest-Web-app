@@ -7,13 +7,6 @@ const pages = [
   { label: 'Results', path: '/results' },
 ]
 
-const logins = [
-  { label: 'Participant', path: '/student/login' },
-  { label: 'Judges', path: '/judges/login' },
-  { label: 'Admin', path: '/admin/login' },
-  { label: 'Lots', path: '/lots' },
-]
-
 export default function HamburgerMenu() {
   const [open, setOpen] = useState(false)
   const [pagesOpen, setPagesOpen] = useState(false)
@@ -113,7 +106,6 @@ export default function HamburgerMenu() {
         <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-card/95 border border-secondary/30 shadow-2xl overflow-hidden backdrop-blur">
           <div className="py-1">
             {renderSection('Pages', pages, pagesOpen, () => setPagesOpen(!pagesOpen))}
-            {renderSection('Logins', logins, loginsOpen, () => setLoginsOpen(!loginsOpen))}
             <button
               onClick={goAbout}
               className="w-full px-4 py-3 text-left text-mainText font-medium font-inter text-sm sm:text-base hover:bg-secondary/10 transition"

@@ -88,7 +88,6 @@ function App() {
         </div>
         <BottomNav />
         <HamburgerMenu />
-        <ThemeToggle />
       </div>
     </BrowserRouter>
   )
