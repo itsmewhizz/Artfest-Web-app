@@ -5,7 +5,7 @@ import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PRO
 import { Plus, X, Printer, Pencil } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import FilterDropdown from '../../components/FilterDropdown'
-import { CATEGORY_COLORS } from '../../components/TeamBar'
+import { CATEGORY_COLORS } from '../../components/TeamBreakdown'
 import { useToast } from '../../components/Toast'
 
 export default function AdminProgrammes() {

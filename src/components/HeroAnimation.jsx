@@ -58,13 +58,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         .hero-animation-bg {
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            180deg,
-            rgba(18, 58, 96, 0.55) 0%,
-            rgba(31, 90, 128, 0.4) 50%,
-            rgba(15, 42, 61, 0.55) 100%
-          );
-          opacity: 0.8;
+          background: var(--hero-glow);
         }
 
         .hero-rows-container {
@@ -149,7 +143,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         .hero-card-placeholder {
           width: 100%;
           height: 100%;
-          background: linear-gradient(135deg, #1F5A80 0%, #16405C 100%);
+          background: linear-gradient(135deg, #7C4DFF 0%, #5E35B1 100%);
         }
 
         .swoop-entry {
@@ -181,6 +175,8 @@ export default function HeroAnimation({ spotlightImages = [] }) {
 
       <div className="hero-animation-container" aria-hidden>
         <div className="hero-animation-bg" />
+
+        <div className="hero-glass-reflection" />
 
         <div className="hero-rows-container">
           {/* Top Row - Moving Left → Right */}

@@ -4,9 +4,7 @@ import { Menu, X, ChevronDown } from 'lucide-react'
 
 const pages = [
   { label: 'Home', path: '/' },
-  { label: 'Teams', path: '/teams' },
-  { label: 'Participants', path: '/students' },
-  { label: 'Programmes', path: '/programmes' },
+  { label: 'Results', path: '/results' },
 ]
 
 const logins = [
@@ -78,7 +76,7 @@ export default function HamburgerMenu() {
         <ChevronDown
           size={18}
           className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-          color={isOpen ? '#E8845C' : '#5C93AA'}
+          color={isOpen ? '#7C4DFF' : '#676375'}
         />
       </button>
       {isOpen && (

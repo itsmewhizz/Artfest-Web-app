@@ -51,10 +51,12 @@ function calcGrade(points) {
   return '-'
 }
 
+const themeNames = ['classic', 'vibrant', 'minimal']
+const themeLabels = ['Classic', 'Vibrant', 'Minimal']
+
 export default function ResultPoster({ programme, result, studentPhotos = {}, onClose }) {
-  const [theme, setTheme] = useState('classic')
-  const posterRef = useRef(null)
-  const t = themes[theme]
+  const captureRefs = useRef({})
+  const [downloading, setDownloading] = useState('')
 
   const getPhoto = (data) => studentPhotos[data?.studentId] || data?.photoURL
 
@@ -64,60 +66,105 @@ export default function ResultPoster({ programme, result, studentPhotos = {}, on
     { label: '3rd Place', data: result?.third },
   ]
 
-  const handleDownload = async () => {
-    const canvas = await html2canvas(posterRef.current, { scale: 2, useCORS: true })
-    canvas.toBlob((blob) => {
-      saveAs(blob, `${programme.name.replace(/\s+/g, '_')}_poster.png`)
-    })
+  const handleDownload = async (tName) => {
+    if (downloading) return
+    setDownloading(tName)
+    try {
+      const el = captureRefs.current[tName]
+      if (!el) return
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true })
+      canvas.toBlob((blob) => {
+        if (blob) saveAs(blob, `${programme.name.replace(/\s+/g, '_')}_${tName}_poster.png`)
+        setDownloading('')
+      })
+    } catch {
+      setDownloading('')
+    }
   }
 
-  const themeNames = ['classic', 'vibrant', 'minimal']
-  const themeLabels = ['Classic', 'Vibrant', 'Minimal']
+  const renderPoster = (tName) => {
+    const t = themes[tName]
+    return (
+      <div className={t.container}>
+        <div className={t.border}>
+          <div className={t.title}>{programme.name}</div>
+          <div className={t.subtitle}>{result?.resultNo ? <span className="font-bold mr-1">#{result.resultNo}</span> : null}{programme.category}</div>
+
+          <div className="space-y-3">
+            {placements.map((p, i) => p.data ? (
+              <div key={i} className={`flex items-center gap-3 ${t.bg} rounded-xl p-3`}>
+                <StudentAvatar src={getPhoto(p.data)} name={p.data.name} className="w-12 h-12 flex-shrink-0" />
+                <div className="flex-1 text-left">
+                  <div className={t.rank(i)}>{ranks[i]}</div>
+                  <div className={t.name}>{p.data.name}</div>
+                  <div className={t.points}>{p.data.points || 0} points • Grade: {p.data.grade || calcGrade(p.data.points)}</div>
+                </div>
+              </div>
+            ) : null)}
+          </div>
+
+          <div className="mt-6 text-xs opacity-50">Campus Art Fest</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div ref={posterRef} className={t.container}>
-          <div className={t.border}>
-            <div className={t.title}>{programme.name}</div>
-            <div className={t.subtitle}>{result?.resultNo ? <span className="font-bold mr-1">#{result.resultNo}</span> : null}{programme.category}</div>
-
-            <div className="space-y-3">
-              {placements.map((p, i) => p.data ? (
-                <div key={i} className={`flex items-center gap-3 ${t.bg} rounded-xl p-3`}>
-                  <StudentAvatar src={getPhoto(p.data)} name={p.data.name} className="w-12 h-12 flex-shrink-0" />
-                  <div className="flex-1 text-left">
-                    <div className={t.rank(i)}>{ranks[i]}</div>
-                    <div className={t.name}>{p.data.name}</div>
-                    <div className={t.points}>{p.data.points || 0} points • Grade: {p.data.grade || calcGrade(p.data.points)}</div>
-                  </div>
-                </div>
-              ) : null)}
-            </div>
-
-            <div className="mt-6 text-xs opacity-50">Campus Art Fest</div>
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+      {/* Offscreen full-size copies used only for html2canvas capture */}
+      <div style={{ position: 'fixed', left: -9999, top: 0, pointerEvents: 'none' }} aria-hidden="true">
+        {themeNames.map(tName => (
+          <div key={tName} ref={el => { captureRefs.current[tName] = el }} style={{ width: 460, marginBottom: 12 }}>
+            {renderPoster(tName)}
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="flex gap-2 mt-4 justify-center">
-          {themeNames.map((tName, i) => (
-            <button
-              key={tName}
-              onClick={() => setTheme(tName)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition ${theme === tName ? 'bg-primary text-white' : 'bg-white/15 text-mutedText'}`}
-            >
-              {themeLabels[i]}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-3 mt-3">
-          <button onClick={handleDownload} className="flex-1 bg-primary text-white rounded-xl p-3 font-semibold flex items-center justify-center gap-2">
-            <Download size={18} /> Download Poster
-          </button>
-          <button onClick={onClose} className="px-4 bg-white/15 text-mainText rounded-xl p-3">
+      <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-white font-display font-bold text-xl">Download Poster</h3>
+            <p className="text-white/60 text-sm mt-0.5">
+              Pick a style — each card downloads its own design.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-3.5 py-2 bg-white/10 text-mainText text-sm font-semibold rounded-full hover:bg-white/20 transition shrink-0"
+          >
             Close
           </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {themeNames.map((tName, i) => (
+            <div key={tName} className="postergen-card p-3 flex flex-col">
+              <div className="flex items-center gap-2 px-1 mb-2.5">
+                <span className="w-6 h-6 rounded-full bg-card-dark text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {i + 1}
+                </span>
+                <span className="font-display font-bold text-sm text-mainText">{themeLabels[i]}</span>
+              </div>
+
+              <div
+                className="preview-box rounded-xl overflow-hidden mb-3 flex items-start justify-center"
+                style={{ height: 210 }}
+              >
+                <div style={{ width: 340, transform: 'scale(0.5)', transformOrigin: 'top center' }}>
+                  {renderPoster(tName)}
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleDownload(tName)}
+                disabled={Boolean(downloading)}
+                className="btn-result w-full mt-auto"
+              >
+                <Download size={15} />
+                {downloading === tName ? 'Downloading…' : 'Download Poster'}
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>

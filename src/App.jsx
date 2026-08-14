@@ -1,14 +1,10 @@
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { supabase } from './supabase/client'
 import BottomNav from './components/BottomNav'
 import Home from './pages/Home'
-import Teams from './pages/Teams'
-import TeamDetail from './pages/TeamDetail'
-import Students from './pages/Students'
-import StudentProfile from './pages/StudentProfile'
-import Programmes from './pages/Programmes'
-import ProgrammeResult from './pages/ProgrammeResult'
+import Results from './pages/Results'
+import ResultDetail from './pages/ResultDetail'
 import StudentLogin from './pages/StudentLogin'
 import StudentDashboard from './pages/StudentDashboard'
 import Gallery from './pages/Gallery'
@@ -32,6 +28,7 @@ import JudgesRoute from './components/JudgesRoute'
 import Starfield from './components/Starfield'
 import HamburgerMenu from './components/HamburgerMenu'
 import ThemeToggle from './components/ThemeToggle'
+import CursorGlow from './components/CursorGlow'
 
 // Guarantees the admin login page is unreachable while a session is active —
 // no matter how the browser history got there (back/back-back, stale entries,
@@ -59,34 +56,34 @@ function App() {
       <AdminSessionRedirect />
       <div className="min-h-screen bg-mainBackground pb-20 text-mainText">
         <Starfield />
+        <CursorGlow />
         <div className="relative z-10">
           <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/teams" element={<Teams />} />
-          <Route path="/teams/:id" element={<TeamDetail />} />
-          <Route path="/students" element={<Students />} />
-          <Route path="/students/:id" element={<StudentProfile />} />
-          <Route path="/programmes" element={<Programmes />} />
-          <Route path="/programmes/:id" element={<ProgrammeResult />} />
-          <Route path="/student/login" element={<StudentLogin />} />
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="programmes" element={<AdminProgrammes />} />
-            <Route path="teams" element={<AdminTeams />} />
-            <Route path="spotlight" element={<AdminSpotlight />} />
-            <Route path="students" element={<AdminStudents />} />
-            <Route path="print" element={<AdminPrint />} />
-            <Route path="results" element={<AdminResults />} />
-            <Route path="result-poster" element={<AdminResultPoster />} />
-            <Route path="categories" element={<AdminCategories />} />
-          </Route>
-          <Route path="/lots" element={<LotsAccess />} />
-          <Route path="/lots/draw" element={<LotsDraw />} />
-          <Route path="/judges/login" element={<JudgesLogin />} />
-          <Route path="/judges/results" element={<JudgesRoute><JudgesResults /></JudgesRoute>} />
+            <Route path="/" element={<Home />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/results/:id" element={<ResultDetail />} />
+            <Route path="/programmes" element={<Navigate to="/results" replace />} />
+            <Route path="/programmes/:id" element={<Navigate to="/results/:id" replace />} />
+            <Route path="/student/login" element={<StudentLogin />} />
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="programmes" element={<AdminProgrammes />} />
+              <Route path="teams" element={<AdminTeams />} />
+              <Route path="spotlight" element={<AdminSpotlight />} />
+              <Route path="students" element={<AdminStudents />} />
+              <Route path="print" element={<AdminPrint />} />
+              <Route path="results" element={<AdminResults />} />
+              <Route path="result-poster" element={<AdminResultPoster />} />
+              <Route path="categories" element={<AdminCategories />} />
+            </Route>
+            <Route path="/lots" element={<LotsAccess />} />
+            <Route path="/lots/draw" element={<LotsDraw />} />
+            <Route path="/judges/login" element={<JudgesLogin />} />
+            <Route path="/judges/results" element={<JudgesRoute><JudgesResults /></JudgesRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
         <BottomNav />

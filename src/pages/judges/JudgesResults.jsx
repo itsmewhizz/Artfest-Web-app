@@ -5,7 +5,7 @@ import { getProgrammes, getStudents, getAllResults, getCategories, PROGRAMME_CAT
 import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 import FilterDropdown from '../../components/FilterDropdown'
-import { CATEGORY_COLORS } from '../../components/TeamBar'
+import { CATEGORY_COLORS } from '../../components/TeamBreakdown'
 
 function calcGrade(points) {
   const p = Number(points)

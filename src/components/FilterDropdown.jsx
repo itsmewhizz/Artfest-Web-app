@@ -64,16 +64,16 @@ export default function FilterDropdown({ label, options, value, onChange, classN
     <div className={`relative ${className}`} ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 w-full bg-white hover:bg-gray-50 rounded-xl px-4 py-2.5 text-sm text-black border border-black transition"
+        className="flex items-center gap-2 w-full bg-white hover:bg-gray-50 rounded-xl px-4 py-2.5 text-sm text-[#1D192B] border border-[#E6E0F0] transition"
       >
         {selected?.icon && (
           <span className="shrink-0 flex items-center">{selected.icon}</span>
         )}
         <span className="flex-1 text-left truncate">{displayLabel}</span>
-        <ChevronDown size={16} className={`text-black/50 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`text-[#676375] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute top-full mt-2 left-0 right-0 bg-[#CBDDE9] border border-black rounded-2xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute top-full mt-2 left-0 right-0 bg-lavender border border-[#E6E0F0] rounded-2xl shadow-2xl z-50 overflow-hidden">
           <div className="max-h-60 overflow-y-auto py-1">
             {options.map(option => (
               <button
@@ -84,8 +84,8 @@ export default function FilterDropdown({ label, options, value, onChange, classN
                 }}
                 className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition ${
                   value === option.value
-                    ? 'text-black bg-black/10'
-                    : 'text-black/70 hover:text-black hover:bg-black/10'
+                    ? 'text-[#1D192B] bg-black/10'
+                    : 'text-[#676375] hover:text-[#1D192B] hover:bg-black/10'
                 }`}
               >
                 {option.icon && (

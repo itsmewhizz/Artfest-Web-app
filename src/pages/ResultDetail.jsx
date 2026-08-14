@@ -6,7 +6,13 @@ import { ArrowLeft, Trophy, Download } from 'lucide-react'
 import ResultPoster from '../components/ResultPoster'
 import StudentAvatar from '../components/StudentAvatar'
 
-export default function ProgrammeResult() {
+const MEDALS = [
+  { label: '1st Place', color: '#E57F17', medal: '🥇' },
+  { label: '2nd Place', color: '#9E9E9E', medal: '🥈' },
+  { label: '3rd Place', color: '#8D6E63', medal: '🥉' },
+]
+
+export default function ResultDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [programme, setProgramme] = useState(null)
@@ -38,36 +44,46 @@ export default function ProgrammeResult() {
   const getPhoto = (data) => studentPhotos[data?.studentId] || data?.photoURL
 
   const placements = [
-    { label: '1st Place', data: result?.first, color: '#E8845C', medal: '🥇' },
-    { label: '2nd Place', data: result?.second, color: '#A9C7D6', medal: '🥈' },
-    { label: '3rd Place', data: result?.third, color: '#D97706', medal: '🥉' },
+    { ...MEDALS[0], data: result?.first },
+    { ...MEDALS[1], data: result?.second },
+    { ...MEDALS[2], data: result?.third },
   ]
 
   return (
-    <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-3xl mx-auto">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-mainText mb-4 hover:opacity-80 transition">
-        <ArrowLeft size={18} /> Back
+    <div className="min-h-screen bg-page p-4 md:p-6 lg:p-8 max-w-3xl mx-auto pt-24 sm:pt-28">
+      <button onClick={() => navigate('/results')} className="flex items-center gap-2 text-mainText mb-4 hover:opacity-80 transition">
+        <ArrowLeft size={18} /> Back to Results
       </button>
 
-      <div className="bg-card rounded-2xl p-5 mb-6 shadow-lg border border-secondary/30">
-        <h2 className="text-lg sm:text-xl font-poppins font-bold text-mainText">{programme.name}</h2>
-        <p className="text-mutedText text-sm sm:text-base">{result?.resultNo ? <span className="text-accent font-bold">#{result.resultNo}</span> : null} {programme.category} · {(programme.programmeType || programme.type || '')}{(programme.participationType || programme.participation_type) ? ` · ${programme.participationType || programme.participation_type}` : ''}</p>
-        <span className={`mt-2 inline-block text-xs px-3 py-1 rounded-full ${programme.isFinished ? 'bg-success/20 text-success' : 'bg-red-500/15 text-red-400'}`}>
-          {programme.isFinished ? 'Finished' : 'Pending'}
-        </span>
+      <div className="postergen-card p-5 mb-6">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-display font-bold text-mainText">
+              {result?.resultNo ? <span className="text-accent font-bold text-base sm:text-lg mr-2">#{result.resultNo}</span> : null}
+              {programme.name}
+            </h2>
+            <p className="text-textMute text-sm sm:text-base mt-1">
+              {programme.category} · {(programme.programmeType || programme.type || 'Unspecified')}
+              {(programme.participationType || programme.participation_type) ? ` · ${programme.participationType || programme.participation_type}` : ''}
+            </p>
+          </div>
+          <span className={`mt-1 inline-block text-xs px-3 py-1 rounded-full ${programme.isFinished ? 'bg-[#EDE7F6] text-[#5E35B1]' : 'bg-[#E8DCF4] text-[#676375]'}`}>
+            {programme.isFinished ? 'Finished' : 'Pending'}
+          </span>
+        </div>
       </div>
 
       {!programme.isFinished && (
-        <p className="text-mutedText text-center">Results will be available after the programme is conducted.</p>
+        <p className="text-textMute text-center">Results will be available after the programme is conducted.</p>
       )}
 
       {programme.isFinished && result && (
         <div className="flex flex-col gap-4">
-          <h3 className="text-base sm:text-lg font-poppins font-bold text-mainText flex items-center gap-2">
-            <Trophy size={18} className="sm:w-5 sm:h-5" color="#E8845C" /> Results
+          <h3 className="text-base sm:text-lg font-display font-bold text-mainText flex items-center gap-2">
+            <Trophy size={18} color="#7C4DFF" /> Results
           </h3>
           {placements.filter(p => p.data).map(({ label, data, color, medal }) => (
-            <div key={label} className="bg-card rounded-xl p-4 flex items-center gap-3 sm:gap-4 shadow-lg border border-secondary/30">
+            <div key={label} className="postergen-card p-4 flex items-center gap-3 sm:gap-4">
               <span className="text-xl sm:text-2xl">{medal}</span>
               <StudentAvatar src={getPhoto(data)} name={data.name} className="w-10 h-10 sm:w-12 sm:h-12" />
               <div className="flex-1 min-w-0">
@@ -80,7 +96,7 @@ export default function ProgrammeResult() {
 
           <button
             onClick={() => setShowPoster(true)}
-            className="w-full bg-primary text-white rounded-xl p-3 font-semibold flex items-center justify-center gap-2 mt-2 hover:bg-primary/90 transition"
+            className="btn-result w-full mt-2 p-3.5 text-base"
           >
             <Download size={18} /> Download Poster
           </button>

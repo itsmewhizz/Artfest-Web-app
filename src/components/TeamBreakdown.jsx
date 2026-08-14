@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getTeamPlacements } from '../supabase/queries'
 
 const CATEGORIES = ['Minor', 'HS', 'Premier', 'Sub Junior', 'Junior', 'General Cat-A', 'General Cat-B']
-const CATEGORY_COLORS = {
+export const CATEGORY_COLORS = {
   Minor:          { light: '#55EFC4', dark: '#00B894' },
   HS:             { light: '#FF7675', dark: '#D63031' },
   Premier:        { light: '#74B9FF', dark: '#0984E3' },
