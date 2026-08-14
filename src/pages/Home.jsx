@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
-import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers, Instagram, Youtube } from 'lucide-react'
+import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers, Instagram, Play } from 'lucide-react'
 import HeroAnimation from '../components/HeroAnimation'
 import useScrollReveal from '../hooks/useScrollReveal'
 import ThemeToggle from '../components/ThemeToggle'
@@ -383,7 +383,7 @@ export default function Home() {
               rel="noreferrer"
               className="hover:text-purple transition"
             >
-              <Youtube size={20} />
+              <Play size={20} />
             </a>
           </div>
         </footer>
