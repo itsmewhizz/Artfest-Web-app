@@ -21,6 +21,7 @@ const teamMembers = [
   { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#A78BFA] to-[#7BEAFE]', photo: '/team/moidu.jpg' },
   { name: 'Afsal Sharafudheen', role: 'Joint Convenor', initials: 'AS', tint: 'from-[#7BEAFE] to-[#94A3B8]', photo: '/team/Afsal.jpg' },
   { name: 'Vahid', role: 'Joint Convenor', initials: 'v', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/vahid.jpg' },
+  { name: 'Farhan Musthafa', role: 'Software Handling', initials: 'FM', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/Farhan Musthafa.jpg' }
 ]
 
 export default function Home() {
