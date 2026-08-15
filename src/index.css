@@ -9,20 +9,11 @@
   box-sizing: border-box;
 }
 
-/* Local branding display font — drop the file into /public/fonts to activate.
-   Falls back to Sora until the font is present. */
-@font-face {
-  font-family: 'CSGENERAL-REGULAR_DEMO';
-  src: url('/assets/fonts/CSGENERAL-REGULAR_DEMO.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
+/* Use the existing web-safe brand stack and avoid a 404 from a missing local font file. */
 .font-brand,
 .brand-logo-text,
 .corvion-name {
-  font-family: 'CSGENERAL-REGULAR_DEMO', sans-serif;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
   font-weight: 400;
 }
 
@@ -436,7 +427,7 @@ body {
 .cursor-glow-layer {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   overflow: hidden;
 }

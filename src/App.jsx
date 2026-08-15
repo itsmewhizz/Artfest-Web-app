@@ -52,7 +52,7 @@ function App() {
   return (
     <BrowserRouter>
       <AdminSessionRedirect />
-      <div className="min-h-screen bg-mainBackground pb-20 text-mainText">
+      <div className="relative isolate min-h-screen bg-mainBackground pb-20 text-mainText">
         <Starfield />
         <CursorGlow />
         <div className="relative z-10">

@@ -1,23 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Download, LogOut, Trophy } from 'lucide-react'
 import { supabase } from '../supabase/client'
-import { getStudentById, getProgrammes, updateStudentProfile, getCategories, STUDENT_CATEGORIES, getStudentSessionState, clearStudentSession } from '../supabase/queries'
-import { useToast } from '../components/Toast'
+import { getStudentById, getProgrammes, getCategories, getStudentSessionState, clearStudentSession, getAllResults } from '../supabase/queries'
 import StudentAvatar from '../components/StudentAvatar'
+import ResultPoster from '../components/ResultPoster'
+
+const ringRadius = 52
+const ringCircumference = 2 * Math.PI * ringRadius
 
 export default function StudentDashboard() {
   const [student, setStudent] = useState(null)
   const [programmes, setProgrammes] = useState([])
-  const [name, setName] = useState('')
-  const [chestNo, setChestNo] = useState('')
-  const [category, setCategory] = useState('')
-  const [photo, setPhoto] = useState(null)
-  const [selectedProgs, setSelectedProgs] = useState([])
-  const [categories, setCategories] = useState(STUDENT_CATEGORIES)
-  const [saving, setSaving] = useState(false)
-  const [loggedOut, setLoggedOut] = useState(false)
+  const [allResults, setAllResults] = useState([])
+  const [studentPhotos, setStudentPhotos] = useState({})
+  const [selectedPoster, setSelectedPoster] = useState(null)
+  const [showPosterPicker, setShowPosterPicker] = useState(false)
   const navigate = useNavigate()
-  const toast = useToast()
 
   const studentId = localStorage.getItem('student_id')
 
@@ -27,7 +26,7 @@ export default function StudentDashboard() {
       return
     }
 
-    const loadStudent = async () => {
+    const loadDashboard = async () => {
       const sessionState = await getStudentSessionState(studentId)
       if (!sessionState.active) {
         localStorage.removeItem('student_id')
@@ -35,182 +34,234 @@ export default function StudentDashboard() {
         return
       }
 
-      const s = await getStudentById(studentId)
-      if (!s) {
+      const [studentData, programmeData, resultData, categoriesData] = await Promise.all([
+        getStudentById(studentId),
+        getProgrammes(),
+        getAllResults(),
+        getCategories().then(({ student }) => student),
+      ])
+
+      if (!studentData) {
         navigate('/student/login')
         return
       }
-      setStudent(s)
-      setName(s.name)
-      setChestNo(s.chestNo || '')
-      setCategory(s.class || '')
-      setSelectedProgs(s.programmeIds || [])
-    }
 
-    loadStudent()
-    getProgrammes().then(setProgrammes)
-    getCategories().then(({ student }) => setCategories(student))
-  }, [navigate, studentId])
+      setStudent(studentData)
+      setProgrammes(programmeData)
+      setAllResults(resultData)
 
-  const toggleProg = (progId) => {
-    setSelectedProgs(prev =>
-      prev.includes(progId)
-        ? prev.filter(id => id !== progId)
-        : [...prev, progId]
-    )
-  }
+      const resultStudentIds = [...new Set((resultData || []).flatMap(r => [r.first?.studentId, r.second?.studentId, r.third?.studentId]).filter(Boolean))]
+      if (resultStudentIds.length > 0) {
+        const { data } = await supabase.from('students').select('id, photoURL').in('id', resultStudentIds)
+        const map = {}
+        ;(data || []).forEach(item => { map[item.id] = item.photoURL })
+        setStudentPhotos(map)
+      }
 
-  const handleSave = async () => {
-    if (!name.trim()) return toast('Name cannot be empty', 'error')
-    setSaving(true)
-
-    let photoURL = student.photoURL || ''
-    if (photo) {
-      const ext = photo.name.split('.').pop()
-      const path = `students/${studentId}_${Date.now()}.${ext}`
-      const { data } = await supabase.storage.from('photos').upload(path, photo)
-      if (data) {
-        const { data: urlData } = supabase.storage.from('photos').getPublicUrl(data.path)
-        photoURL = urlData.publicUrl
+      if (studentData.photoURL) {
+        setStudentPhotos(prev => ({ ...prev, [studentData.id]: studentData.photoURL }))
+      }
+      if (categoriesData?.length) {
+        // kept for future display hooks; page does not edit student category data
       }
     }
 
-    const ok = await updateStudentProfile(studentId, {
-      name: name.trim(),
-      chestNo: chestNo.trim(),
-      photoURL,
-      class: category,
-      programmeIds: selectedProgs,
-      createdAt: new Date().toISOString(),
-    })
+    loadDashboard()
+  }, [navigate, studentId])
 
-    if (ok) {
-      toast('Profile updated!')
-      setStudent(prev => ({ ...prev, name: name.trim(), chestNo: chestNo.trim(), photoURL, programmeIds: selectedProgs }))
-      setPhoto(null)
-    } else {
-      toast('Failed to save', 'error')
+  const programmeIds = useMemo(() => student?.programmeIds || [], [student])
+
+  const completedProgrammes = useMemo(() => {
+    const resultMap = new Map()
+    for (const result of allResults) {
+      if (!result?.programmeId) continue
+      const hasStudentPlacement = [result.first, result.second, result.third].some(place => place?.studentId === studentId)
+      if (hasStudentPlacement) resultMap.set(result.programmeId, result)
     }
-    setSaving(false)
-  }
+
+    return programmes
+      .filter(prog => programmeIds.includes(prog.id) && resultMap.has(prog.id))
+      .map(prog => ({ programme: prog, result: resultMap.get(prog.id) }))
+  }, [allResults, programmeIds, programmes, studentId])
+
+  const pendingProgrammes = useMemo(() => {
+    const completedIds = new Set(completedProgrammes.map(item => item.programme.id))
+    return programmes.filter(prog => programmeIds.includes(prog.id) && !completedIds.has(prog.id))
+  }, [completedProgrammes, programmeIds, programmes])
+
+  const completedCount = completedProgrammes.length
+  const totalCount = programmeIds.length || 0
+  const progress = totalCount ? completedCount / totalCount : 0
+  const progressText = `${completedCount}/${totalCount}`
+  const strokeOffset = ringCircumference * (1 - progress)
 
   const handleLogout = async () => {
     await clearStudentSession(studentId)
     localStorage.removeItem('student_id')
-    setLoggedOut(true)
     navigate('/student/login')
   }
 
   if (!student) return <div className="text-mainText text-center mt-20">Loading...</div>
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-mainBackground p-4 sm:p-6 lg:p-8">
+      <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-display font-bold text-mainText">My Profile</h2>
-          <button onClick={handleLogout} className="text-mainText text-sm hover:text-secondary transition">
-            Logout
+          <h2 className="text-2xl font-display font-bold text-mainText">Participant Profile</h2>
+          <button onClick={handleLogout} className="flex items-center gap-2 rounded-full border border-subtle bg-card px-3 py-2 text-sm font-semibold text-mainText shadow-sm hover:bg-lavender transition">
+            <LogOut size={16} /> Logout
           </button>
         </div>
 
-        {/* Student info card */}
-        <div className="bg-card rounded-2xl p-6 mb-6 shadow-sm border border-secondary/30">
-          <div className="flex items-center gap-4 mb-6">
-            <StudentAvatar src={student.photoURL} name={student.name} className="w-16 h-16 text-xl" />
-            <div>
-              <p className="text-mainText font-semibold text-lg">{student.name}</p>
-              <p className="text-mutedText text-sm">{student.chestNo ? `Chest No: ${student.chestNo} · ` : ''}{student.class} · {student.team}</p>
+        <div className="bg-card rounded-[28px] p-5 sm:p-7 border border-subtle shadow-xl">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4 min-w-0">
+              <StudentAvatar src={student.photoURL} name={student.name} className="h-20 w-20 text-2xl sm:h-24 sm:w-24" />
+              <div className="min-w-0">
+                <p className="text-lg font-display font-bold text-mainText sm:text-xl">{student.name}</p>
+                <div className="mt-2 flex flex-wrap gap-2 text-sm text-mutedText">
+                  <span className="rounded-full bg-secondary/20 px-2.5 py-1">Chest No: {student.chestNo || '—'}</span>
+                  <span className="rounded-full bg-secondary/20 px-2.5 py-1">{student.class || 'Unassigned Category'}</span>
+                  <span className="rounded-full bg-secondary/20 px-2.5 py-1">{student.team || 'No Team'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <div className="relative h-28 w-28">
+                <svg viewBox="0 0 140 140" className="h-28 w-28 -rotate-90">
+                  <circle cx="70" cy="70" r={ringRadius} fill="none" stroke="rgba(148,163,184,0.2)" strokeWidth="12" />
+                  <circle
+                    cx="70"
+                    cy="70"
+                    r={ringRadius}
+                    fill="none"
+                    stroke="url(#ring-gradient)"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    strokeDasharray={ringCircumference}
+                    strokeDashoffset={strokeOffset}
+                  />
+                  <defs>
+                    <linearGradient id="ring-gradient" x1="0%" x2="100%" y1="0%" y2="100%">
+                      <stop offset="0%" stopColor="#7C4DFF" />
+                      <stop offset="100%" stopColor="#22C55E" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xl font-display font-black text-mainText">{progressText}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Edit form */}
-        <div className="bg-card rounded-2xl p-6 mb-6 shadow-sm border border-secondary/30">
-          <h3 className="text-mainText font-semibold mb-4">Edit Details</h3>
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="bg-card rounded-[24px] border border-subtle p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-2 text-mainText">
+              <Trophy size={18} className="text-accent" />
+              <h3 className="text-lg font-display font-bold">Completed</h3>
+            </div>
 
-          <label className="text-mutedText text-sm block mb-1">Full Name</label>
-          <input
-            className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-4 outline-none border border-secondary/40 focus:border-mainText"
-            value={name}
-            onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))}
-          />
+            {completedProgrammes.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-secondary/50 bg-black/5 p-4 text-sm text-mutedText">
+                No completed programmes yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {completedProgrammes.map(({ programme, result }) => (
+                  <div key={programme.id} className="rounded-2xl border border-secondary/30 bg-secondary/10 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-mainText">{programme.name}</p>
+                        <p className="text-xs text-mutedText">{programme.category || 'Programme'} · #{result?.resultNo || '—'}</p>
+                      </div>
+                      <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-600">
+                        Done
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          <label className="text-mutedText text-sm block mb-1">Chest No</label>
-          <input
-            className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-4 outline-none border border-secondary/40 focus:border-mainText"
-            placeholder="Chest No (e.g. 101)"
-            value={chestNo}
-            onChange={e => setChestNo(e.target.value)}
-          />
+          <div className="bg-card rounded-[24px] border border-subtle p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-2 text-mainText">
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
+              <h3 className="text-lg font-display font-bold">Pending</h3>
+            </div>
 
-          <label className="text-mutedText text-sm block mb-1">Category</label>
-          <select
-            className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-4 outline-none border border-secondary/40 focus:border-mainText"
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-          >
-            <option value="">Select Category</option>
-            {categories.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-
-          <label className="text-mutedText text-sm block mb-1">Profile Photo</label>
-          <input
-            type="file"
-            accept="image/*"
-            className="w-full text-mutedText mb-4"
-            onChange={e => setPhoto(e.target.files[0])}
-          />
+            {pendingProgrammes.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-secondary/50 bg-black/5 p-4 text-sm text-mutedText">
+                No pending programmes.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {pendingProgrammes.map(prog => (
+                  <div key={prog.id} className="rounded-2xl border border-secondary/30 bg-black/5 p-3">
+                    <p className="font-semibold text-mainText">{prog.name}</p>
+                    <p className="text-xs text-mutedText">{prog.category || 'Programme'} · Pending</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Programme selection */}
-        <div className="bg-card rounded-2xl p-6 mb-6 shadow-sm border border-secondary/30">
-          <h3 className="text-mainText font-semibold mb-4">My Programmes</h3>
-          <p className="text-mutedText text-xs mb-3">Select the programmes you are participating in</p>
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={() => setShowPosterPicker(true)}
+            disabled={completedProgrammes.length === 0}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download size={18} /> Download Poster
+          </button>
+        </div>
+      </div>
 
-          {programmes.length === 0 ? (
-            <p className="text-mainText text-sm">No programmes available yet.</p>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {programmes.map(prog => (
-                <label
-                  key={prog.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition ${
-                    selectedProgs.includes(prog.id) ? 'bg-secondary/25 border border-secondary' : 'bg-black/10 hover:bg-white/10'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedProgs.includes(prog.id)}
-                    onChange={() => toggleProg(prog.id)}
-                    className="accent-secondary w-4 h-4"
-                  />
+      {showPosterPicker && completedProgrammes.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-2xl rounded-[28px] bg-card p-5 shadow-2xl border border-subtle">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h3 className="text-xl font-display font-bold text-mainText">My Results</h3>
+              <button onClick={() => setShowPosterPicker(false)} className="rounded-full border border-subtle px-3 py-1.5 text-sm font-medium text-mainText hover:bg-lavender transition">
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {completedProgrammes.map(({ programme, result }) => (
+                <div key={programme.id} className="flex items-center justify-between gap-3 rounded-2xl border border-subtle bg-black/5 p-3">
                   <div>
-                    <span className="text-mainText text-sm font-medium">{prog.name}</span>
-                    <span className="text-mutedText text-xs ml-2">({prog.category})</span>
+                    <p className="font-semibold text-mainText">{programme.name}</p>
+                    <p className="text-xs text-mutedText">#{result?.resultNo || '—'} · {programme.category || 'Programme'}</p>
                   </div>
-                </label>
+                  <button
+                    onClick={() => {
+                      setSelectedPoster({ programme, result })
+                      setShowPosterPicker(false)
+                    }}
+                    className="rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+                  >
+                    Download Poster
+                  </button>
+                </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
+      )}
 
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full bg-primary text-white rounded-xl p-3 font-semibold hover:opacity-90 transition mb-4"
-        >
-          {saving ? 'Saving...' : 'Save Changes'}
-        </button>
-
-        <button
-          onClick={() => navigate('/')}
-          className="w-full text-mainText text-sm hover:opacity-80 transition"
-        >
-          Back to Home
-        </button>
-      </div>
+      {selectedPoster && (
+        <ResultPoster
+          programme={selectedPoster.programme}
+          result={selectedPoster.result}
+          studentPhotos={studentPhotos}
+          onClose={() => setSelectedPoster(null)}
+        />
+      )}
     </div>
   )
 }
