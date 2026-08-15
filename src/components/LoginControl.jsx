@@ -13,6 +13,19 @@ export default function LoginControl() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const wrapRef = useRef(null)
+  const closeTimer = useRef(null)
+
+  const clearCloseTimer = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }
+
+  const scheduleClose = () => {
+    clearCloseTimer()
+    closeTimer.current = setTimeout(() => setOpen(false), 120)
+  }
 
   useEffect(() => {
     if (!open) return
@@ -25,6 +38,7 @@ export default function LoginControl() {
     document.addEventListener('mousedown', onMouseDown)
     document.addEventListener('keydown', onKey)
     return () => {
+      clearCloseTimer()
       document.removeEventListener('mousedown', onMouseDown)
       document.removeEventListener('keydown', onKey)
     }
@@ -34,13 +48,18 @@ export default function LoginControl() {
     <div
       ref={wrapRef}
       className="relative inline-block text-left"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={() => {
+        clearCloseTimer()
+        setOpen(true)
+      }}
+      onMouseLeave={scheduleClose}
     >
       <button
         aria-expanded={open}
         onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        onBlur={(e) => {
+          if (!wrapRef.current?.contains(e.relatedTarget)) setOpen(false)
+        }}
         onClick={() => setOpen(v => !v)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-subtle text-mainText text-xs font-semibold hover:bg-lavender transition shadow-sm"
       >
@@ -49,6 +68,8 @@ export default function LoginControl() {
       </button>
 
       <div
+        onMouseEnter={clearCloseTimer}
+        onMouseLeave={scheduleClose}
         className={`absolute right-0 mt-2 w-48 rounded-2xl bg-card border border-subtle shadow-xl overflow-hidden z-50 backdrop-blur-sm origin-top-right transition-all duration-200 ease-out ${
           open ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-1 scale-95 pointer-events-none'
         }`}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
 import { getStudents, getTeams, getProgrammes, getCategories, STUDENT_CATEGORIES } from '../../supabase/queries'
-import { Plus, X, Pencil } from 'lucide-react'
+import { Plus, X, Pencil, Trash2 } from 'lucide-react'
 import StudentAvatar from '../../components/StudentAvatar'
 import FilterDropdown from '../../components/FilterDropdown'
 import KebabMenu from '../../components/KebabMenu'
@@ -95,6 +95,21 @@ export default function AdminStudents() {
     setSelectedProgs(student.programmeIds || [])
     setPhoto(null)
     setFormOpen(true)
+  }
+
+  const handleDelete = async (student) => {
+    const confirmed = window.confirm(`Delete participant "${student.name}"? This cannot be undone.`)
+    if (!confirmed) return
+
+    const { error } = await supabase.from('students').delete().eq('id', student.id)
+    if (error) {
+      console.error('Student delete failed:', error)
+      toast(`Participant delete failed: ${error.message}`, 'error')
+      return
+    }
+
+    setStudents(prev => prev.filter(item => item.id !== student.id))
+    toast('Participant deleted!')
   }
 
   const closeForm = () => {
@@ -269,7 +284,10 @@ export default function AdminStudents() {
               <p className="text-mutedText text-xs sm:text-sm">{s.chestNo ? `Chest No: ${s.chestNo} · ` : ''}{teamMap[s.team] || s.team} · {s.class}</p>
             </div>
             <KebabMenu
-              items={[{ label: 'Edit', icon: <Pencil size={15} />, onClick: () => handleEdit(s) }]}
+              items={[
+                { label: 'Edit', icon: <Pencil size={15} />, onClick: () => handleEdit(s) },
+                { label: 'Delete', icon: <Trash2 size={15} />, danger: true, onClick: () => handleDelete(s) },
+              ]}
               className="mt-2"
             />
           </div>

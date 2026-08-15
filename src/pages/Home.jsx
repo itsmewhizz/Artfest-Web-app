@@ -193,7 +193,7 @@ export default function Home() {
               />
             ))}
           </div>
-          <h2 className="relative z-10 text-2xl md:text-4xl font-brand font-black text-white mb-10 text-center tracking-tight uppercase">
+          <h2 className="relative z-10 text-2xl md:text-4xl font-brand font-black text-mainText mb-10 text-center tracking-tight uppercase">
             Team Standings
           </h2>
 
@@ -333,7 +333,7 @@ export default function Home() {
           <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5">
             Our Team
           </span>
-          <h3 className="font-brand font-black text-3xl sm:text-4xl md:text-5xl tracking-tight text-[#1D192B] dark:text-[#EAF4FA] mb-4 uppercase">
+          <h3 className="corvion-name text-3xl sm:text-4xl md:text-5xl mb-4 uppercase">
             Corvion
           </h3>
           <p className="max-w-2xl mx-auto text-mutedText text-sm sm:text-base italic leading-loose mb-12 px-2">
@@ -341,24 +341,46 @@ export default function Home() {
             to life — from stage lights to score sheets.
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-10 place-items-center max-w-6xl mx-auto px-4">
-            {teamMembers.map(member => (
-              <div key={member.name} className="w-[150px] text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-10 place-items-center max-w-6xl mx-auto px-4 mb-8">
+            {teamMembers.slice(0, 3).map(member => (
+              <div key={member.name} className="w-full max-w-[301px] text-center">
                 {member.photo ? (
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="mx-auto mb-3 h-20 w-20 rounded-2xl object-cover shadow-lg"
+                    className="mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] object-cover object-top shadow-lg"
                   />
                 ) : (
                   <div
-                    className={`mx-auto mb-3 h-20 w-20 rounded-2xl bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
+                    className={`mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
                   >
                     {member.initials}
                   </div>
                 )}
-                <p className="font-semibold text-sm text-mainText">{member.name}</p>
-                <p className="text-xs text-accent mt-1">{member.role}</p>
+                <p className="team-profile-name text-center">{member.name}</p>
+                <p className="team-profile-role text-center">{member.role}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-8 place-items-center max-w-6xl mx-auto px-4">
+            {teamMembers.slice(3).map(member => (
+              <div key={member.name} className="w-full max-w-[301px] text-center">
+                {member.photo ? (
+                  <img
+                    src={member.photo}
+                    alt={member.name}
+                    className="mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] object-cover object-top shadow-lg"
+                  />
+                ) : (
+                  <div
+                    className={`mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
+                  >
+                    {member.initials}
+                  </div>
+                )}
+                <p className="team-profile-name text-center">{member.name}</p>
+                <p className="team-profile-role text-center">{member.role}</p>
               </div>
             ))}
           </div>
@@ -393,24 +415,6 @@ export default function Home() {
               className="hover:text-purple transition"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
-            </a>
-            <a
-              href="https://www.instagram.com/isralifefestival_26?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
-              target="_blank"
-              rel="noreferrer"
-              aria-label="ISRA Rendezvous"
-              className="hover:opacity-80 transition"
-            >
-              <IsraLogo variant="mark" className="h-6 w-6" />
-            </a>
-            <a
-              href="https://www.linkedin.com"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="LinkedIn"
-              className="hover:text-purple transition"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V9h4v1.5A6 6 0 0 1 16 8z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
             </a>
           </div>
         </footer>

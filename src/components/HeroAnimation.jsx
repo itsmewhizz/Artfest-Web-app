@@ -133,6 +133,12 @@ export default function HeroAnimation({ spotlightImages = [] }) {
           flex-shrink: 0;
         }
 
+        @media (max-width: 767px) {
+          .hero-card {
+            width: clamp(9.25rem, 29vw, 12rem);
+          }
+        }
+
         .hero-card-image {
           width: 100%;
           height: 100%;
@@ -177,6 +183,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         <div className="hero-animation-bg" />
 
         <div className="hero-glass-reflection" />
+        <div className="hero-glass-reflection hero-glass-reflection-light" />
 
         <div className="hero-rows-container">
           {/* Top Row - Moving Left → Right */}
