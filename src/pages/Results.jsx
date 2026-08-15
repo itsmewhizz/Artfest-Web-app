@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getProgrammes, getCategories, getAllResults, PROGRAMME_CATEGORIES } from '../supabase/queries'
 import { CheckCircle2, Hourglass, Eye, ArrowLeft } from 'lucide-react'
 import ThemeToggle from '../components/ThemeToggle'
-import LoginControl from '../components/LoginControl'
 
 function gradeFrom(points) {
   const p = Number(points)
@@ -84,7 +83,6 @@ export default function Results() {
           >
             <ArrowLeft size={16} /> Home
           </Link>
-          <LoginControl />
           <ThemeToggle />
         </div>
       </nav>

@@ -5,6 +5,7 @@ import { getProgrammes, getStudents, getAllResults, getCategories, PROGRAMME_CAT
 import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 import FilterDropdown from '../../components/FilterDropdown'
+import ThemeToggle from '../../components/ThemeToggle'
 import { CATEGORY_COLORS } from '../../components/TeamBreakdown'
 
 function calcGrade(points) {
@@ -433,9 +434,12 @@ export default function JudgesResults() {
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-mainText hover:opacity-80 transition">
           <ArrowLeft size={18} /> Home
         </button>
-        <button onClick={handleLogout} className="flex items-center gap-2 bg-white/10 hover:bg-white/15 text-mainText px-3 py-1.5 rounded-xl font-semibold transition text-xs sm:text-sm">
-          <LogOut size={16} /> Logout
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button onClick={handleLogout} className="flex items-center gap-2 bg-white/10 hover:bg-white/15 text-mainText px-3 py-1.5 rounded-xl font-semibold transition text-xs sm:text-sm">
+            <LogOut size={16} /> Logout
+          </button>
+        </div>
       </div>
 
       <div className="bg-card rounded-2xl p-5 mb-6 shadow-sm border border-secondary/30">

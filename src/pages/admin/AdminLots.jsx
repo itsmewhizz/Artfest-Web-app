@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Shuffle, RefreshCw, Hash, Type } from 'lucide-react'
+import { Shuffle, RefreshCw, Hash, Type, Dice5 } from 'lucide-react'
 import { useToast } from '../../components/Toast'
+import ThemeToggle from '../../components/ThemeToggle'
 
 const MAX_CARDS = 60
 const MAX_CODE_LETTERS = 26
@@ -86,7 +87,10 @@ export default function AdminLots() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-1">Lot Draw</h2>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Lot Draw</h2>
+        <ThemeToggle />
+      </div>
       <p className="text-mutedText text-sm mb-6">
         Draw the stage-entry order for a programme&apos;s candidates. Each card hides a unique value, randomly placed.
       </p>
@@ -168,7 +172,7 @@ export default function AdminLots() {
                     <span className="lot-card-number">{card.value}</span>
                   </div>
                   <div className="lot-card-face lot-card-back">
-                    <Shuffle size={26} className="lot-card-icon" />
+                    <Dice5 size={26} className="lot-card-icon" />
                     <span className="lot-card-label">LOT</span>
                   </div>
                 </div>

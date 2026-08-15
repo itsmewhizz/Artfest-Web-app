@@ -44,7 +44,7 @@ export default function ThemeToggle() {
       title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
       className="flex h-10 w-10 items-center justify-center rounded-full border border-subtle bg-white/85 text-mainText shadow-sm backdrop-blur transition hover:scale-105 hover:bg-white"
     >
-      {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      {isDark ? <Sun size={18} className="text-black" /> : <Moon size={18} />}
     </button>
   )
 }
