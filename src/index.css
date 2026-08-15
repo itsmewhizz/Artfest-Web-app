@@ -217,7 +217,7 @@ body {
 }
 
 .bento-standings-card {
-  background: var(--bg-section-1);
+  background: var(--card-lavender);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   box-shadow: 0 12px 32px rgba(29, 25, 43, 0.04);
@@ -380,8 +380,16 @@ body {
 }
 
 /* Mouse-following ambient glow */
-.cursor-glow {
+.cursor-glow-layer {
   position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cursor-glow {
+  position: absolute;
   top: 0;
   left: 0;
   width: 560px;
@@ -391,7 +399,6 @@ body {
   pointer-events: none;
   transform: translate(-50%, -50%);
   opacity: 0;
-  z-index: 1;
   transition: opacity 0.5s ease;
 }
 
@@ -402,7 +409,7 @@ body {
 }
 
 @media (max-width: 1023px) {
-  .cursor-glow {
+  .cursor-glow-layer {
     display: none;
   }
 }

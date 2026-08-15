@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
-import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers, Play } from 'lucide-react'
+import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers } from 'lucide-react'
 import HeroAnimation from '../components/HeroAnimation'
 import useScrollReveal from '../hooks/useScrollReveal'
 import ThemeToggle from '../components/ThemeToggle'
 import LoginControl from '../components/LoginControl'
+import IsraLogo from '../components/IsraLogo'
 
 const stats = [
   { value: '3', label: 'Teams', icon: Users },
@@ -86,12 +87,12 @@ export default function Home() {
 
       {/* ── Floating Top Nav ── */}
       <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 sm:px-8 pt-4">
-        <div className="floating-nav flex items-center justify-between w-full max-w-3xl px-4 py-2 sm:px-5">
+        <div className="floating-nav grid grid-cols-[1fr_auto_1fr] items-center w-full max-w-3xl px-4 py-2 sm:px-5">
           <button
             type="button"
             aria-label="Go to the festival home"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none"
+            className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none justify-self-start"
           >
             <span className="font-brand font-black text-[1.05rem] sm:text-[1.2rem] tracking-[0.14em] text-purple uppercase">
               ISRA
@@ -101,15 +102,16 @@ export default function Home() {
             </span>
           </button>
 
-          <div className="flex items-center gap-3">
-            <nav className="hidden sm:flex items-center gap-1 mr-3">
-              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="nav-link active">
-                Home
-              </button>
-              <button onClick={() => navigate('/results')} className="nav-link">
-                Results
-              </button>
-            </nav>
+          <nav className="hidden sm:flex items-center gap-1">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="nav-link active">
+              Home
+            </button>
+            <button onClick={() => navigate('/results')} className="nav-link">
+              Results
+            </button>
+          </nav>
+
+          <div className="flex items-center gap-3 justify-self-end">
             <LoginControl />
             <ThemeToggle />
           </div>
@@ -167,7 +169,7 @@ export default function Home() {
       </section>
 
       {/* ── Content Below Hero ── */}
-      <div className="bg-mainBackground p-4 md:p-8 lg:p-12 max-w-7xl mx-auto relative z-20">
+      <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto relative z-20">
 
         {/* Team Standings — ranked list only */}
         <div
@@ -192,7 +194,7 @@ export default function Home() {
             ))}
           </div>
           <h2 className="relative z-10 text-2xl md:text-4xl font-brand font-black text-white mb-10 text-center tracking-tight uppercase">
-            Corvion
+            Team Standings
           </h2>
 
           <div className="relative z-10 max-w-2xl mx-auto flex flex-col gap-4">
@@ -331,8 +333,8 @@ export default function Home() {
           <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5">
             Our Team
           </span>
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-mainText mb-4">
-            The Team Behind the Fest
+          <h3 className="font-brand font-black text-3xl sm:text-4xl md:text-5xl tracking-tight text-[#1D192B] dark:text-[#EAF4FA] mb-4 uppercase">
+            Corvion
           </h3>
           <p className="max-w-2xl mx-auto text-mutedText text-sm sm:text-base italic leading-loose mb-12 px-2">
             A passionate crew of organizers, coordinators, and volunteers who bring the festival
@@ -363,16 +365,22 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-20 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-mutedText text-xs sm:text-sm font-inter">
-          <div className="text-center sm:text-left">
-            <p className="font-bold text-mainText">Rendezvous '26</p>
-            <p className="italic opacity-70">-Farhan Musthafa-</p>
-          </div>
-          <div className="flex items-center gap-4">
+        <footer className="mt-20 mb-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-mutedText text-xs sm:text-sm font-inter">
+          <p className="font-bold text-mainText shrink-0">Rendezvous '26</p>
+          <p className="text-center">© ISRA Vatanappally • Corvion • Festival Collective. All rights reserved.</p>
+          <button
+            type="button"
+            onClick={() => scrollTo(aboutRef)}
+            className="shrink-0 hover:text-purple transition cursor-pointer bg-transparent border-0 p-0 text-inherit font-inherit"
+          >
+            About
+          </button>
+          <div className="flex items-center gap-4 shrink-0">
             <a
               href="https://www.instagram.com/isralifefestival_26?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
               target="_blank"
               rel="noreferrer"
+              aria-label="Instagram"
               className="hover:text-purple transition"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
@@ -381,9 +389,28 @@ export default function Home() {
               href="https://www.youtube.com/@isra_media"
               target="_blank"
               rel="noreferrer"
+              aria-label="YouTube"
               className="hover:text-purple transition"
             >
-              <Play size={20} />
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+            </a>
+            <a
+              href="https://www.instagram.com/isralifefestival_26?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+              target="_blank"
+              rel="noreferrer"
+              aria-label="ISRA Rendezvous"
+              className="hover:opacity-80 transition"
+            >
+              <IsraLogo variant="mark" className="h-6 w-6" />
+            </a>
+            <a
+              href="https://www.linkedin.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="LinkedIn"
+              className="hover:text-purple transition"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V9h4v1.5A6 6 0 0 1 16 8z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
             </a>
           </div>
         </footer>

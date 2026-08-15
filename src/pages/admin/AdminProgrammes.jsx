@@ -126,9 +126,7 @@ export default function AdminProgrammes() {
   }
 
   const participantsModal = (prog) => {
-    const enrolledIds = new Set(
-      (students || []).filter(s => (s.programmeIds || []).includes(prog.id)).map(s => s.id)
-    )
+    const participantStudents = (students || []).filter(s => (s.programmeIds || []).includes(prog.id))
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setViewProg(null)}>
         <div className="bg-card rounded-2xl p-6 w-full max-w-sm max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -138,18 +136,17 @@ export default function AdminProgrammes() {
               <X size={20} />
             </button>
           </div>
-          <p className="text-mutedText text-sm mb-3">{prog.category} · {prog.programmeType || prog.type || 'Unspecified'} · {prog.participationType || prog.participation_type || 'Unspecified'} · {students.length} participants</p>
+          <p className="text-mutedText text-sm mb-3">{prog.category} · {prog.programmeType || prog.type || 'Unspecified'} · {prog.participationType || prog.participation_type || 'Unspecified'} · {participantStudents.length} participants</p>
+          {participantStudents.length === 0 && (
+            <p className="text-mutedText text-sm italic py-3">No participants enrolled in this programme yet.</p>
+          )}
           <div className="space-y-1">
-            {(students || []).map(s => {
-              const enrolled = enrolledIds.has(s.id)
-              return (
-                <div key={s.id} className={`rounded-xl p-3 flex items-center gap-2 ${enrolled ? 'bg-secondary/25 border border-secondary' : 'bg-black/10'}`}>
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${enrolled ? 'bg-secondary' : 'bg-white/20'}`} />
-                  <span className="text-mainText text-sm flex-1">{s.name}</span>
-                  {enrolled && <span className="text-mainText text-xs font-semibold">Participating</span>}
-                </div>
-              )
-            })}
+            {participantStudents.map(s => (
+              <div key={s.id} className="rounded-xl p-3 flex items-center gap-2 bg-secondary/25 border border-secondary">
+                <div className="w-2 h-2 rounded-full shrink-0 bg-secondary" />
+                <span className="text-mainText text-sm flex-1">{s.name}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

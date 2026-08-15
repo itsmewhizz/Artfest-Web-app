@@ -26,6 +26,7 @@ export default function JudgesResults() {
 
   // Edit flow state
   const [editProg, setEditProg] = useState(null)
+  const [isFirstTime, setIsFirstTime] = useState(false)
   const [promptOpen, setPromptOpen] = useState(false)
   const [verifyOpen, setVerifyOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -132,8 +133,22 @@ export default function JudgesResults() {
   }
 
   const openEditFlow = (prog) => {
+    setIsFirstTime(false)
     setEditProg(prog)
     setPromptOpen(true)
+  }
+
+  const openNewEntry = (prog) => {
+    setIsFirstTime(true)
+    setEditProg(prog)
+    setEditError('')
+    setEditOpen(true)
+    setFirst('')
+    setFirstPoints('')
+    setSecond('')
+    setSecondPoints('')
+    setThird('')
+    setThirdPoints('')
   }
 
   const closePrompt = () => {
@@ -323,12 +338,6 @@ export default function JudgesResults() {
       setEditError('Select the 1st place participant')
       return
     }
-    if (!captchaId || !vName || !vPassword) {
-      setEditError('Re-verification is required before editing. Please go back and verify again.')
-      return
-    }
-    setSaving(true)
-    setEditError('')
 
     const payload = {
       programmeId: editProg.id,
@@ -339,6 +348,38 @@ export default function JudgesResults() {
       updatedAt: new Date().toISOString(),
       locked: true,
     }
+
+    // First-time submission — the judge's normal session is enough, no
+    // re-verification / captcha step. Insert a new locked result row.
+    if (isFirstTime) {
+      setSaving(true)
+      setEditError('')
+
+      const { error } = await judgeClient.from('results').insert({
+        ...payload,
+        ...(resultNoMap[editProg.id] ? { resultNo: resultNoMap[editProg.id] } : {}),
+      })
+
+      if (error) {
+        console.error('Result submit failed:', error)
+        setEditError(error?.message || 'Failed to submit the result. Please try again.')
+        setSaving(false)
+        return
+      }
+
+      setSaving(false)
+      closeEdit()
+      toast('Result saved and locked!')
+      loadResults()
+      return
+    }
+
+    if (!captchaId || !vName || !vPassword) {
+      setEditError('Re-verification is required before editing. Please go back and verify again.')
+      return
+    }
+    setSaving(true)
+    setEditError('')
 
     const { data: rpcData, error: rpcError } = await judgeClient.rpc('judge_reverify_edit', {
       p_challenge_id: captchaId,
@@ -382,9 +423,9 @@ export default function JudgesResults() {
     { student: third, setStudent: setThird, points: thirdPoints, setPoints: setThirdPoints },
   ]
 
-  const editStudentOptions = editProg && editProg.category && !editProg.category.startsWith('General')
-    ? students.filter(s => s.class === editProg.category)
-    : students
+  const editStudentOptions = editProg
+    ? students.filter(s => (s.programmeIds || []).includes(editProg.id))
+    : []
 
   return (
     <div className="min-h-screen bg-mainBackground p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
@@ -426,7 +467,7 @@ export default function JudgesResults() {
               <p className="text-mutedText text-xs sm:text-sm">{prog.category}{getProgrammeType(prog) ? ` · ${getProgrammeType(prog)}` : ''}</p>
             </div >
             <button
-              onClick={() => openEditFlow(prog)}
+              onClick={() => openNewEntry(prog)}
               className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0"
             >
               <Pencil size={14} /> Enter Result

@@ -26,8 +26,6 @@ import JudgesResults from './pages/judges/JudgesResults'
 import ProtectedRoute from './components/ProtectedRoute'
 import JudgesRoute from './components/JudgesRoute'
 import Starfield from './components/Starfield'
-import HamburgerMenu from './components/HamburgerMenu'
-import ThemeToggle from './components/ThemeToggle'
 import CursorGlow from './components/CursorGlow'
 
 // Guarantees the admin login page is unreachable while a session is active —
@@ -87,7 +85,6 @@ function App() {
           </Routes>
         </div>
         <BottomNav />
-        <HamburgerMenu />
       </div>
     </BrowserRouter>
   )

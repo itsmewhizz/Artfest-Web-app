@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
 import { getTeamCategoryPoints, PROGRAMME_CATEGORIES } from '../../supabase/queries'
 import { Users, Trophy, Layers, BookOpen, RefreshCw, Sparkles } from 'lucide-react'
+import ThemeToggle from '../../components/ThemeToggle'
 
 const countRows = async (table) => {
   const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true })
@@ -62,6 +63,7 @@ export default function AdminDashboard() {
           <h1 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Dashboard</h1>
           <p className="text-mutedText text-sm mt-0.5">Overview of the festival site</p>
         </div>
+        <ThemeToggle />
       </div>
 
       {/* Stat cards */}

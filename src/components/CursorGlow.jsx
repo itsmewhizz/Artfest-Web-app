@@ -22,5 +22,9 @@ export default function CursorGlow() {
     }
   }, [])
 
-  return <div ref={ref} className="cursor-glow" aria-hidden="true" />
+  return (
+    <div className="cursor-glow-layer z-0 pointer-events-none" aria-hidden="true">
+      <div ref={ref} className="cursor-glow" />
+    </div>
+  )
 }
