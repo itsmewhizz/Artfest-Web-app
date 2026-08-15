@@ -259,6 +259,8 @@ export const clearStudentSession = async (studentId, token) => {
   }
 }
 
+const COMMON_STUDENT_PASSWORD = 'israfest2026'
+
 export const getStudentByCredentials = async (name, password) => {
   const trimmed = name.trim()
   let { data: students } = await supabase
@@ -278,29 +280,32 @@ export const getStudentByCredentials = async (name, password) => {
     console.warn('No student found with name:', trimmed)
     return { error: 'not_found' }
   }
+
   const student = students[0]
   const { data: cred, error: credErr } = await supabase
     .from('student_credentials')
     .select('*')
     .eq('student_id', student.id)
-    .eq('password', password)
     .maybeSingle()
+
   if (credErr) {
     console.warn('Credential lookup error for', student.name, credErr)
     return { error: 'server_error' }
   }
-  if (!cred) {
-    const { data: anyCred } = await supabase
-      .from('student_credentials')
-      .select('id')
-      .eq('student_id', student.id)
-      .maybeSingle()
-    if (!anyCred) {
+
+  const validPassword = cred ? cred.password === password || cred.password === COMMON_STUDENT_PASSWORD : password === COMMON_STUDENT_PASSWORD
+
+  if (!validPassword) {
+    if (!cred) {
       console.warn('No credentials record exists for', student.name)
       return { error: 'no_credentials', student }
     }
     console.warn('Wrong password for', student.name)
     return { error: 'wrong_password' }
+  }
+
+  if (!cred) {
+    await supabase.from('student_credentials').insert({ student_id: student.id, password: COMMON_STUDENT_PASSWORD })
   }
 
   const sessionState = await getStudentSessionState(student.id)
