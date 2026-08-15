@@ -5,6 +5,7 @@ import { supabase } from '../supabase/client'
 import { getStudentById, getProgrammes, getCategories, getStudentSessionState, clearStudentSession, getAllResults } from '../supabase/queries'
 import StudentAvatar from '../components/StudentAvatar'
 import ResultPoster from '../components/ResultPoster'
+import ThemeToggle from '../components/ThemeToggle'
 
 const ringRadius = 52
 const ringCircumference = 2 * Math.PI * ringRadius
@@ -106,11 +107,14 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-mainBackground p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3">
           <h2 className="text-2xl font-display font-bold text-mainText">Participant Profile</h2>
-          <button onClick={handleLogout} className="flex items-center gap-2 rounded-full border border-subtle bg-card px-3 py-2 text-sm font-semibold text-mainText shadow-sm hover:bg-lavender transition">
-            <LogOut size={16} /> Logout
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button onClick={handleLogout} className="flex items-center gap-2 rounded-full border border-subtle bg-card px-3 py-2 text-sm font-semibold text-mainText shadow-sm hover:bg-lavender transition">
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
         </div>
 
         <div className="bg-card rounded-[28px] p-5 sm:p-7 border border-subtle shadow-xl">
