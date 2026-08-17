@@ -265,7 +265,7 @@ export default function AdminPrint() {
             {COL_HEADERS[item.sheet].map((label, i) => <th key={i}>{label}</th>)}
           </tr>
           {item.sheet === 'valuation' && item.participants.map(p => (
-            <tr key={p.key}><td></td><td></td><td></td></tr>
+            <tr key={p.key} className="entry-row"><td></td><td></td><td></td></tr>
           ))}
           {item.sheet === 'sign' && item.participants.map(p => (
             <tr key={p.key}><td className="text-center">{p.chestNo}</td><td>{p.name}</td><td></td><td></td></tr>
@@ -580,6 +580,13 @@ export default function AdminPrint() {
         }
         .print-table td.text-center {
           text-align: center;
+        }
+
+        /* Blank Valuation rows get extra height for hand-written entry. */
+        .print-table .entry-row td {
+          height: 12mm;
+          padding-top: 2px;
+          padding-bottom: 2px;
         }
 
         .print-meta-row td {
