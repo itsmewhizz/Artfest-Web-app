@@ -246,12 +246,14 @@ export default function AdminPrint() {
 
   // ---- Render helpers ----
 
-  const renderSheetBlock = (item, blockKey) => (
+  const renderSheetBlock = (item, blockKey, showHeader) => (
     <div className="print-sheet-block" key={blockKey}>
-      <div className="print-header">
-        <div className="print-title">Rendezvous'26 - ISRA Vatanappally</div>
-        <div className="print-subtitle">{SHEET_SUBTITLES[item.sheet]}</div>
-      </div>
+      {showHeader && (
+        <div className="print-header">
+          <div className="print-title">Rendezvous'26 - ISRA Vatanappally</div>
+          <div className="print-subtitle">{SHEET_SUBTITLES[item.sheet]}</div>
+        </div>
+      )}
       <table className="print-table">
         <tbody>
           <tr className="print-meta-row">
@@ -273,12 +275,6 @@ export default function AdminPrint() {
           ))}
         </tbody>
       </table>
-      {item.sheet === 'valuation' && (
-        <div className="print-sign">
-          <span className="print-sign-label">Signature of Judge</span>
-          <span className="print-sign-line" />
-        </div>
-      )}
     </div>
   )
 
@@ -464,14 +460,30 @@ export default function AdminPrint() {
 
           {/* Preview pages — each physical A4 page holds 2 valuation/sign or 4 result blocks */}
           <div className="print-page-container">
-            {pages.map((page, pi) => (
-              <div
-                className={`print-sheet-page ${page.length < PER_PAGE[page[0].sheet] ? 'print-sheet-page--partial' : ''}`}
-                key={pi}
-              >
-                {page.map((item, bi) => renderSheetBlock(item, `${pi}-${bi}`))}
-              </div>
-            ))}
+            {pages.map((page, pi) => {
+              // Programme sheets always stretch to fill their page; result pages
+              // only fill when they hold the full 4-block capacity.
+              const isFilled = page[0].sheet === 'result'
+                ? page.length >= PER_PAGE.result
+                : true
+              return (
+                <div
+                  className={`print-sheet-page ${isFilled ? 'print-sheet-page--filled' : 'print-sheet-page--partial'}`}
+                  key={pi}
+                >
+                  {/* Results print: header appears once per page, at the top */}
+                  {page[0].sheet === 'result' && (
+                    <div className="print-header print-page-header">
+                      <div className="print-title">Rendezvous'26 - ISRA Vatanappally</div>
+                      <div className="print-subtitle">Result</div>
+                    </div>
+                  )}
+                  {page.map((item, bi) => renderSheetBlock(item, `${pi}-${bi}`, item.sheet !== 'result'))}
+                  {/* Footer appears once per page, below all boxes */}
+                  <div className="print-page-footer">ISRA Vatanappally • Corvion • Festival Collective</div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -488,17 +500,38 @@ export default function AdminPrint() {
 
         .print-sheet-page {
           width: 210mm;
-          min-height: 248mm;
           background: #fff;
           padding: 6mm;
           box-sizing: border-box;
           box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+          display: flex;
+          flex-direction: column;
+          gap: 5mm;
         }
 
-        /* Pages holding fewer blocks than their template capacity drop the
-           leftover A4 space entirely — no empty template slots are shown. */
+        /* Filled pages split into even box rows that stretch to fill the page:
+           programme sheets occupy the top/bottom halves (2 per page) and full
+           result pages occupy quarters (4 per page). */
+        .print-sheet-page--filled {
+          height: 285mm;
+        }
+        .print-sheet-page--filled .print-sheet-block {
+          flex: 1 1 0%;
+        }
+
+        /* Partial pages drop the leftover A4 space entirely — no empty
+           template slots are shown. */
         .print-sheet-page--partial {
-          min-height: 0;
+          height: auto;
+        }
+
+        .print-page-footer {
+          margin-top: auto;
+          text-align: center;
+          font-size: 10px;
+          font-weight: 600;
+          color: #000;
+          letter-spacing: 0.05em;
         }
 
         .print-sheet-block {
@@ -506,9 +539,6 @@ export default function AdminPrint() {
           color: #000;
           background: #fff;
           box-sizing: border-box;
-        }
-        .print-sheet-block + .print-sheet-block {
-          margin-top: 5mm;
         }
 
         .print-header {
@@ -530,6 +560,7 @@ export default function AdminPrint() {
 
         .print-table {
           width: 100%;
+          table-layout: fixed;
           border-collapse: collapse;
           font-family: 'Sora', 'Segoe UI', system-ui, sans-serif;
           font-size: 12px;
@@ -568,24 +599,6 @@ export default function AdminPrint() {
           margin-top: 1px;
         }
 
-        .print-sign {
-          margin-top: 4mm;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 5mm;
-        }
-        .print-sign-label {
-          font-size: 12px;
-          font-weight: 600;
-          color: #000;
-        }
-        .print-sign-line {
-          width: 38mm;
-          height: 7mm;
-          border-bottom: 1px solid #000;
-        }
-
         @media screen and (max-width: 767px) {
           .print-page-container {
             align-items: stretch;
@@ -594,6 +607,10 @@ export default function AdminPrint() {
             width: 100%;
             min-height: 0;
             padding: 4mm;
+            gap: 4mm;
+          }
+          .print-sheet-page--filled {
+            height: 248mm;
           }
           .print-table {
             font-size: 11px;
@@ -645,6 +662,7 @@ export default function AdminPrint() {
             width: auto;
             max-width: none;
             min-height: 0;
+            height: auto;
             padding: 0;
             margin: 0;
             box-shadow: none;
@@ -653,6 +671,12 @@ export default function AdminPrint() {
             gap: 4mm;
             page-break-after: always;
             break-after: page;
+          }
+          .print-sheet-page--filled {
+            height: 285mm;
+          }
+          .print-sheet-page--filled .print-sheet-block {
+            flex: 1 1 0%;
           }
           .print-sheet-page:last-child {
             page-break-after: auto;

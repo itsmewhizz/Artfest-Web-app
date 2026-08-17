@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
-import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../../supabase/queries'
+import { getProgrammes, getResultNoMap, getCategories, getTeams, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../../supabase/queries'
 import { Plus, X, Printer, Pencil, Trash2 } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import FilterDropdown from '../../components/FilterDropdown'
@@ -20,6 +20,7 @@ export default function AdminProgrammes() {
   const [resultNoMap, setResultNoMap] = useState({})
   const [categories, setCategories] = useState(PROGRAMME_CATEGORIES)
   const [students, setStudents] = useState([])
+  const [teams, setTeams] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
@@ -44,7 +45,8 @@ export default function AdminProgrammes() {
     getProgrammes().then(setProgrammes)
     getResultNoMap().then(setResultNoMap)
     getCategories().then(({ programme }) => setCategories(programme))
-    supabase.from('students').select('id, name, programmeIds').then(({ data }) => setStudents(data || []))
+    getTeams().then(setTeams)
+    supabase.from('students').select('id, name, team, programmeIds').then(({ data }) => setStudents(data || []))
   }
 
   useEffect(() => { loadData() }, [])
@@ -138,6 +140,8 @@ export default function AdminProgrammes() {
 
   const participantsModal = (prog) => {
     const participantStudents = (students || []).filter(s => (s.programmeIds || []).includes(prog.id))
+    const teamMap = {}
+    teams.forEach(t => { teamMap[t.id] = t.name })
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setViewProg(null)}>
         <div className="bg-card rounded-2xl p-6 w-full max-w-sm max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -155,7 +159,10 @@ export default function AdminProgrammes() {
             {participantStudents.map(s => (
               <div key={s.id} className="rounded-xl p-3 flex items-center gap-2 bg-secondary/25 border border-secondary">
                 <div className="w-2 h-2 rounded-full shrink-0 bg-secondary" />
-                <span className="text-mainText text-sm flex-1">{s.name}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-mainText text-sm truncate">{s.name}</p>
+                  <p className="text-mutedText text-xs truncate">{teamMap[s.team] || s.team || ''}</p>
+                </div>
               </div>
             ))}
           </div>
