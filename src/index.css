@@ -3,6 +3,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'CSGENERAL-REGULAR_DEMO';
+  src: url('assets/CSGENERAL-REGULAR_DEMO.OTF') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -16,8 +23,9 @@
   font-family: 'Sora', 'Segoe UI', sans-serif;
 }
 
+.font-corvion,
 .corvion-name {
-  font-family: 'CSGENERAL-REGULAR_DEMO';
+  font-family: 'CSGENERAL-REGULAR_DEMO', sans-serif !important;
   font-weight: 400;
 }
 

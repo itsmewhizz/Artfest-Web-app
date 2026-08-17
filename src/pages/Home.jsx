@@ -407,7 +407,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="mt-20 mb-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-mutedText text-xs sm:text-sm font-inter">
           <p className="font-bold text-mainText shrink-0">Rendezvous '26</p>
-          <p className="text-center">© ISRA Vatanappally • Corvion • Festival Collective. All rights reserved.</p>
+          <p className="text-center">© ISRA Vatanappally • <span className="font-corvion">Corvion</span> • Festival Collective. All rights reserved.</p>
           <div className="flex items-center gap-4 shrink-0">
             <a
               href="https://www.instagram.com/isralifefestival_26?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
