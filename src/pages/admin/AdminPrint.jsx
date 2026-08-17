@@ -15,6 +15,14 @@ const COL_HEADERS = {
   result: ['Chest No', 'Name', 'Team', 'code', 'Grade', 'Price', 'Point'],
 }
 
+// Meta label row spans per sheet type, aligning Programme/Category/Type with
+// the column headers in the row directly below (reference layout).
+const META_SPANS = {
+  sign: [2, 1, 1],
+  valuation: [1, 1, 1],
+  result: [3, 2, 2],
+}
+
 function calcGrade(points) {
   const p = Number(points)
   if (p === 10) return 'A+'
@@ -205,36 +213,20 @@ export default function AdminPrint() {
   }
 
   // ---- Pagination ----
-  // Programmes: each selected programme = 2 A4 pages (Sign, then Valuation).
-  // Every page holds 2 blocks (the programme's sheet + a blank spare template),
-  // except when the whole job is exactly 1 programme, in which case the spare is dropped.
-  // Results: blocks fill sequentially at 4 per A4 page; the last page keeps only
-  // the filled blocks and never renders empty template slots.
-
-  const makeSpareBlock = (item) => ({
-    sheet: item.sheet,
-    eventName: '',
-    category: '',
-    participationType: '',
-    participants: item.participants
-      ? item.participants.map(p => ({ ...p, chestNo: '', name: '', team: '' }))
-      : [],
-    rows: [],
-  })
+  // Programmes: each selected programme produces one Sign box and one
+  // Valuation box, each fully auto-filled with its own Programme/Category/Type
+  // and participant data. Boxes fill page slots sequentially (2 per page for
+  // Sign/Valuation, 4 per page for Result). Partial last pages drop the
+  // leftover space entirely — no blank spare boxes are ever rendered.
 
   const pages = []
   if (previewItems.length && previewItems[0].sheet !== 'result') {
-    const totalProgrammes = previewItems.length / 2
-    for (let i = 0; i < previewItems.length; i += 2) {
-      const signItem = previewItems[i]
-      const valItem = previewItems[i + 1]
-      const signPage = [signItem]
-      const valPage = [valItem]
-      if (totalProgrammes > 1) {
-        signPage.push(makeSpareBlock(signItem))
-        valPage.push(makeSpareBlock(valItem))
+    const signItems = previewItems.filter(item => item.sheet === 'sign')
+    const valItems = previewItems.filter(item => item.sheet === 'valuation')
+    for (const group of [signItems, valItems]) {
+      for (let i = 0; i < group.length; i += PER_PAGE.sign) {
+        pages.push(group.slice(i, i + PER_PAGE.sign))
       }
-      pages.push(signPage, valPage)
     }
   } else {
     for (let i = 0; i < previewItems.length; i += PER_PAGE.result) {
@@ -257,9 +249,16 @@ export default function AdminPrint() {
       <table className="print-table">
         <tbody>
           <tr className="print-meta-row">
-            <td><span className="print-meta-label">Programme</span><span className="print-meta-value">{item.eventName}</span></td>
-            <td><span className="print-meta-label">Category</span><span className="print-meta-value">{item.category}</span></td>
-            <td><span className="print-meta-label">Type</span><span className="print-meta-value">{item.participationType}</span></td>
+            {[
+              ['Programme', item.eventName],
+              ['Category', item.category],
+              ['Type', item.participationType],
+            ].map(([label, value], i) => (
+              <td key={label} colSpan={META_SPANS[item.sheet][i]}>
+                <span className="print-meta-label">{label}</span>
+                <span className="print-meta-value">{value}</span>
+              </td>
+            ))}
           </tr>
           <tr className="print-col-head">
             {COL_HEADERS[item.sheet].map((label, i) => <th key={i}>{label}</th>)}
@@ -275,6 +274,9 @@ export default function AdminPrint() {
           ))}
         </tbody>
       </table>
+      {item.sheet === 'valuation' && (
+        <div className="print-sign-row">Signature of Judge</div>
+      )}
     </div>
   )
 
@@ -604,6 +606,15 @@ export default function AdminPrint() {
           font-size: 12px;
           font-weight: 700;
           margin-top: 1px;
+        }
+
+        /* Signature line on each Valuation block, right-aligned under the table. */
+        .print-sign-row {
+          margin-top: 4mm;
+          text-align: right;
+          font-size: 12px;
+          font-weight: 600;
+          color: #000;
         }
 
         @media screen and (max-width: 767px) {
