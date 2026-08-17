@@ -59,6 +59,7 @@ export default function AdminResults() {
         key: `${result.id}-${key}`,
         label: key === 'first' ? '1st' : key === 'second' ? '2nd' : '3rd',
         name: placement.name,
+        chestNo: student?.chestNo || '',
         team: teamMap[student?.team] || student?.team || '',
         points: placement.points || 0,
         grade: placement.grade || '-',
@@ -148,7 +149,7 @@ export default function AdminResults() {
                               <span className="text-accent font-bold">{row.label}</span>
                               <span className="text-mutedText">{row.points} pts • Grade {row.grade}</span>
                             </div>
-                            <p className="text-mainText font-semibold mt-1">{row.name}</p>
+                            <p className="text-mainText font-semibold mt-1">{row.chestNo ? <span className="text-accent font-bold mr-1.5">#{row.chestNo}</span> : null}{row.name}</p>
                             <p className="text-mutedText text-xs">{row.team}</p>
                           </div>
                         ))}

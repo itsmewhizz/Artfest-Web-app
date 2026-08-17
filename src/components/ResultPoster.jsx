@@ -60,7 +60,7 @@ const themeLabels = ['Classic', 'Vibrant', 'Minimal']
 const PREVIEW_WIDTH = 340
 const PREVIEW_SCALE = 0.5
 
-export default function ResultPoster({ programme, result, studentPhotos = {}, onClose }) {
+export default function ResultPoster({ programme, result, studentPhotos = {}, chestNos = {}, onClose }) {
   const captureRefs = useRef({})
   const sizeRefs = useRef({})
   const [downloading, setDownloading] = useState('')
@@ -78,6 +78,7 @@ export default function ResultPoster({ programme, result, studentPhotos = {}, on
   }, [programme, result])
 
   const getPhoto = (data) => studentPhotos[data?.studentId] || data?.photoURL
+  const getChest = (data) => chestNos[data?.studentId] || data?.chestNo || ''
 
   const placements = [
     { label: '1st Place', data: result?.first },
@@ -110,16 +111,19 @@ export default function ResultPoster({ programme, result, studentPhotos = {}, on
           <div className={t.subtitle}>{result?.resultNo ? <span className="font-bold mr-1">#{result.resultNo}</span> : null}{programme.category}</div>
 
           <div className="space-y-3">
-            {placements.map((p, i) => p.data ? (
+            {placements.map((p, i) => {
+            const chest = getChest(p.data)
+            return p.data ? (
               <div key={i} className={`flex items-center gap-3 ${t.bg} rounded-xl p-3`}>
                 <StudentAvatar src={getPhoto(p.data)} name={p.data.name} className="w-12 h-12 flex-shrink-0" />
                 <div className="flex-1 text-left">
                   <div className={t.rank(i)}>{ranks[i]}</div>
                   <div className={t.name}>{p.data.name}</div>
-                  <div className={t.points}>{p.data.points || 0} points • Grade: {p.data.grade || calcGrade(p.data.points)}</div>
+                  <div className={t.points}>{chest ? `Chest No ${chest} · ` : ''}{p.data.points || 0} points • Grade: {p.data.grade || calcGrade(p.data.points)}</div>
                 </div>
               </div>
-            ) : null)}
+            ) : null
+          })}
           </div>
 
           <div className="mt-6 text-xs opacity-50">Campus Art Fest</div>

@@ -22,6 +22,8 @@ export default function AdminStudents() {
   const [photo, setPhoto] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [selectedProgs, setSelectedProgs] = useState([])
+  const [viewStudent, setViewStudent] = useState(null)
+  const [genFilter, setGenFilter] = useState('')
   const toast = useToast()
 
   useEffect(() => {
@@ -83,6 +85,7 @@ export default function AdminStudents() {
   const openAdd = () => {
     setEditingId(null)
     setName(''); setChestNo(''); setCategory(''); setTeam(''); setPhoto(null); setSelectedProgs([])
+    setGenFilter('')
     setFormOpen(true)
   }
 
@@ -94,6 +97,7 @@ export default function AdminStudents() {
     setTeam(student.team)
     setSelectedProgs(student.programmeIds || [])
     setPhoto(null)
+    setGenFilter('')
     setFormOpen(true)
   }
 
@@ -116,11 +120,43 @@ export default function AdminStudents() {
     setFormOpen(false)
     setEditingId(null)
     setName(''); setChestNo(''); setCategory(''); setTeam(''); setPhoto(null); setSelectedProgs([])
+    setGenFilter('')
   }
 
   const toggleProg = (progId) => {
     setSelectedProgs(prev =>
       prev.includes(progId) ? prev.filter(id => id !== progId) : [...prev, progId]
+    )
+  }
+
+  const programmesModal = (student) => {
+    const enrolled = (programmes || []).filter(p => (student.programmeIds || []).includes(p.id))
+    return (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setViewStudent(null)}>
+        <div className="bg-card rounded-2xl p-6 w-full max-w-sm max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-mainText font-bold text-lg">{student.name}</h3>
+            <button onClick={() => setViewStudent(null)} className="text-mutedText hover:text-mainText transition">
+              <X size={20} />
+            </button>
+          </div>
+          <p className="text-mutedText text-sm mb-3">
+            {student.chestNo ? `Chest No: ${student.chestNo} · ` : ''}{teamMap[student.team] || student.team} · {student.class} · {enrolled.length} programme{enrolled.length === 1 ? '' : 's'}
+          </p>
+          {enrolled.length === 0 && (
+            <p className="text-mutedText text-sm italic py-3">No programmes enrolled for this participant yet.</p>
+          )}
+          <div className="space-y-1">
+            {enrolled.map(p => (
+              <div key={p.id} className="rounded-xl p-3 flex items-center gap-2 bg-secondary/25 border border-secondary">
+                <div className="w-2 h-2 rounded-full shrink-0 bg-secondary" />
+                <span className="text-mainText text-sm flex-1">{p.name}</span>
+                <span className="text-mutedText text-xs">{p.category}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -145,6 +181,9 @@ export default function AdminStudents() {
     ? programmes.filter(p => p.category === category)
     : programmes.filter(p => !p.category?.startsWith('General'))
   const generalProgrammes = programmes.filter(p => p.category?.startsWith('General'))
+  const shownGeneralProgrammes = genFilter
+    ? generalProgrammes.filter(p => p.category === (genFilter === 'Gen Cat-A' ? 'General Cat-A' : 'General Cat-B'))
+    : generalProgrammes
 
   let progList
   if (programmes.length === 0) {
@@ -219,8 +258,27 @@ export default function AdminStudents() {
             {generalProgrammes.length > 0 && (
               <div className="mb-3">
                 <label className="text-mutedText text-sm block mb-2 font-semibold">General Programmes</label>
+                <div className="flex items-center gap-2 mb-2">
+                  {['Gen Cat-A', 'Gen Cat-B'].map(label => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setGenFilter(prev => prev === label ? '' : label)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                        genFilter === label
+                          ? 'bg-secondary/25 border-secondary text-mainText'
+                          : 'bg-black/20 border-secondary/40 text-mutedText hover:bg-black/30'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <div className="max-h-40 overflow-y-auto space-y-1 bg-black/20 rounded-xl p-2">
-                  {generalProgrammes.map(prog => (
+                  {shownGeneralProgrammes.length === 0 && (
+                    <p className="text-mutedText text-sm p-2">No programmes in this category.</p>
+                  )}
+                  {shownGeneralProgrammes.map(prog => (
                     <label
                       key={prog.id}
                       className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
@@ -279,7 +337,7 @@ export default function AdminStudents() {
               {s.chestNo ? `#${s.chestNo}` : '—'}
             </span>
             <StudentAvatar src={s.photoURL} name={s.name} className="w-10 h-10" />
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setViewStudent(s)} title="View programmes">
               <p className="text-mainText font-medium text-sm sm:text-base truncate">{s.name}</p>
               <p className="text-mutedText text-xs sm:text-sm">{s.chestNo ? `Chest No: ${s.chestNo} · ` : ''}{teamMap[s.team] || s.team} · {s.class}</p>
             </div>
@@ -293,6 +351,8 @@ export default function AdminStudents() {
           </div>
         ))}
       </div>
+
+      {viewStudent && programmesModal(viewStudent)}
     </div>
   )
 }

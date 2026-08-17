@@ -18,6 +18,7 @@ export default function ResultDetail() {
   const [programme, setProgramme] = useState(null)
   const [result, setResult] = useState(null)
   const [studentPhotos, setStudentPhotos] = useState({})
+  const [chestNos, setChestNos] = useState({})
   const [showPoster, setShowPoster] = useState(false)
 
   useEffect(() => {
@@ -28,10 +29,15 @@ export default function ResultDetail() {
         if (r) {
           const ids = [r.first?.studentId, r.second?.studentId, r.third?.studentId].filter(Boolean)
           if (ids.length > 0) {
-            const { data: students } = await supabase.from('students').select('id, photoURL').in('id', ids)
-            const map = {}
-            students?.forEach(s => { map[s.id] = s.photoURL })
-            setStudentPhotos(map)
+            const { data: students } = await supabase.from('students').select('id, photoURL, chestNo').in('id', ids)
+            const photoMap = {}
+            const chestMap = {}
+            students?.forEach(s => {
+              photoMap[s.id] = s.photoURL
+              chestMap[s.id] = s.chestNo || ''
+            })
+            setStudentPhotos(photoMap)
+            setChestNos(chestMap)
           }
         }
         setResult(r)
@@ -42,6 +48,7 @@ export default function ResultDetail() {
   if (!programme) return <div className="text-mainText text-center mt-20">Loading...</div>
 
   const getPhoto = (data) => studentPhotos[data?.studentId] || data?.photoURL
+  const getChest = (data) => chestNos[data?.studentId] || data?.chestNo || ''
 
   const placements = [
     { ...MEDALS[0], data: result?.first },
@@ -88,7 +95,10 @@ export default function ResultDetail() {
               <StudentAvatar src={getPhoto(data)} name={data.name} className="w-10 h-10 sm:w-12 sm:h-12" />
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] sm:text-xs font-bold" style={{ color }}>{label}</p>
-                <p className="text-mainText font-medium text-sm sm:text-base truncate">{data.name}</p>
+                <p className="text-mainText font-medium text-sm sm:text-base truncate">
+                  {getChest(data) ? <span className="text-accent font-bold mr-1.5">#{getChest(data)}</span> : null}
+                  {data.name}
+                </p>
               </div>
               <span className="text-accent font-bold text-sm sm:text-base shrink-0 ml-1">{data.points || 0} points</span>
             </div>
@@ -108,6 +118,7 @@ export default function ResultDetail() {
           programme={programme}
           result={result}
           studentPhotos={studentPhotos}
+          chestNos={chestNos}
           onClose={() => setShowPoster(false)}
         />
       )}

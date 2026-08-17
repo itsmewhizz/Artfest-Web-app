@@ -15,6 +15,15 @@ const COL_HEADERS = {
   result: ['Chest No', 'Name', 'Team', 'code', 'Grade', 'Price', 'Point'],
 }
 
+function calcGrade(points) {
+  const p = Number(points)
+  if (p === 10) return 'A+'
+  if (p >= 8 && p <= 9) return 'A'
+  if (p >= 6 && p <= 7) return 'B'
+  if (p >= 4 && p <= 5) return 'C'
+  return '-'
+}
+
 const SHEETS_PER_PROGRAMME = 2
 const MAX_SHEETS = 8
 
@@ -29,9 +38,6 @@ export default function AdminPrint() {
   const [screenMode, setScreenMode] = useState('list') // 'list' | 'preview'
   const [catFilter, setCatFilter] = useState('')
   const [previewItems, setPreviewItems] = useState([])
-  const [valuationCopies, setValuationCopies] = useState(2)
-  const [signCopies, setSignCopies] = useState(2)
-  const [resultCopies, setResultCopies] = useState(4)
   const [toastMsg, setToastMsg] = useState(null)
 
   const loadData = useCallback(() => {
@@ -105,8 +111,8 @@ export default function AdminPrint() {
   }
 
   // ---- Build preview data ----
-  // Each programme expands into TWO base sheet items (Valuation + Sign);
-  // each result is a single base sheet item. Copy counts are applied at render.
+  // Each programme expands into TWO base sheet items (Sign then Valuation);
+  // each result is a single base sheet item.
 
   const buildPreviewItems = (ids, type) => {
     const items = []
@@ -129,8 +135,9 @@ export default function AdminPrint() {
             team: teamMap[s.team] || s.team || '',
           }))
 
-        items.push({ ...info, sheet: 'valuation', participants })
+        // Page 1: Sign Sheet, Page 2: Valuation Sheet (order matters for pagination).
         items.push({ ...info, sheet: 'sign', participants })
+        items.push({ ...info, sheet: 'valuation', participants })
       })
       return items
     }
@@ -139,21 +146,30 @@ export default function AdminPrint() {
       const res = allResults.find(r => r.id === id)
       if (!res) return
       const prog = programmes.find(p => p.id === res.programmeId)
-      const participants = students
-        .filter(s => (s.programmeIds || []).includes(prog?.id))
-        .map(s => ({
-          key: `r-${res.id}-${s.id}`,
-          chestNo: s.chestNo || '',
-          name: s.name,
-          team: teamMap[s.team] || s.team || '',
-        }))
+      const rows = []
+      const addRow = (placement) => {
+        if (!placement) return
+        const student = students.find(s => s.id === placement.studentId)
+        rows.push({
+          key: `res-${res.id}-${placement.studentId || rows.length}`,
+          chestNo: student?.chestNo || '',
+          name: placement.name || student?.name || '',
+          team: teamMap[student?.team] || student?.team || '',
+          grade: placement.grade || calcGrade(placement.points),
+          price: placement.prize || '',
+          point: placement.points ?? '',
+        })
+      }
+      addRow(res.first)
+      addRow(res.second)
+      addRow(res.third)
       items.push({
         sheet: 'result',
         id: res.id,
         category: prog?.category || '',
         eventName: res.name || prog?.name || '',
         participationType: prog?.participationType || prog?.participation_type || '',
-        participants,
+        rows,
       })
     })
     return items
@@ -188,27 +204,45 @@ export default function AdminPrint() {
     window.print()
   }
 
-  // ---- Expand copies + group into physical pages ----
+  // ---- Pagination ----
+  // Programmes: each selected programme = 2 A4 pages (Sign, then Valuation).
+  // Every page holds 2 blocks (the programme's sheet + a blank spare template),
+  // except when the whole job is exactly 1 programme, in which case the spare is dropped.
+  // Results: blocks fill sequentially at 4 per A4 page; the last page keeps only
+  // the filled blocks and never renders empty template slots.
 
-  const blocks = []
-  previewItems.forEach(item => {
-    const copies = item.sheet === 'valuation' ? valuationCopies : item.sheet === 'sign' ? signCopies : resultCopies
-    for (let i = 0; i < copies; i += 1) blocks.push(item)
+  const makeSpareBlock = (item) => ({
+    sheet: item.sheet,
+    eventName: '',
+    category: '',
+    participationType: '',
+    participants: item.participants
+      ? item.participants.map(p => ({ ...p, chestNo: '', name: '', team: '' }))
+      : [],
+    rows: [],
   })
 
   const pages = []
-  let currentPage = []
-  let currentSheet = null
-  const flushPage = () => {
-    if (currentPage.length) { pages.push(currentPage); currentPage = [] }
+  if (previewItems.length && previewItems[0].sheet !== 'result') {
+    const totalProgrammes = previewItems.length / 2
+    for (let i = 0; i < previewItems.length; i += 2) {
+      const signItem = previewItems[i]
+      const valItem = previewItems[i + 1]
+      const signPage = [signItem]
+      const valPage = [valItem]
+      if (totalProgrammes > 1) {
+        signPage.push(makeSpareBlock(signItem))
+        valPage.push(makeSpareBlock(valItem))
+      }
+      pages.push(signPage, valPage)
+    }
+  } else {
+    for (let i = 0; i < previewItems.length; i += PER_PAGE.result) {
+      pages.push(previewItems.slice(i, i + PER_PAGE.result))
+    }
   }
-  blocks.forEach(block => {
-    if (currentSheet && block.sheet !== currentSheet) flushPage()
-    if (currentPage.length >= PER_PAGE[block.sheet]) flushPage()
-    currentSheet = block.sheet
-    currentPage.push(block)
-  })
-  flushPage()
+
+  const totalPages = pages.length
 
   // ---- Render helpers ----
 
@@ -234,8 +268,8 @@ export default function AdminPrint() {
           {item.sheet === 'sign' && item.participants.map(p => (
             <tr key={p.key}><td className="text-center">{p.chestNo}</td><td>{p.name}</td><td></td><td></td></tr>
           ))}
-          {item.sheet === 'result' && item.participants.map(p => (
-            <tr key={p.key}><td className="text-center">{p.chestNo}</td><td>{p.name}</td><td>{p.team}</td><td></td><td></td><td></td><td></td></tr>
+          {item.sheet === 'result' && item.rows.map(row => (
+            <tr key={row.key}><td className="text-center">{row.chestNo}</td><td>{row.name}</td><td>{row.team}</td><td></td><td className="text-center">{row.grade}</td><td className="text-center">{row.price}</td><td className="text-center">{row.point}</td></tr>
           ))}
         </tbody>
       </table>
@@ -416,7 +450,7 @@ export default function AdminPrint() {
             </button>
             <div className="flex items-center justify-between mb-4 gap-4">
               <h2 className="text-lg sm:text-2xl font-poppins font-bold text-mainText">
-                {blocks.length > 1 ? `Print Preview (${blocks.length} sheets)` : 'Print Preview'}
+                {totalPages > 1 ? `Print Preview (${totalPages} pages)` : 'Print Preview'}
               </h2>
               <button
                 onClick={handlePrint}
@@ -425,48 +459,16 @@ export default function AdminPrint() {
                 <Printer size={18} className="sm:w-[22px] sm:h-[22px]" /> Print
               </button>
             </div>
-            <p className="text-mutedText text-xs sm:text-sm mb-2">Print sheets are read-only.</p>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-6">
-              <label className="flex items-center gap-2 text-mutedText text-sm font-semibold">
-                Valuation copies
-                <input
-                  type="number"
-                  min="1"
-                  max="12"
-                  value={valuationCopies}
-                  onChange={e => setValuationCopies(Math.max(1, Number(e.target.value) || 1))}
-                  className="w-20 bg-card border border-secondary/40 rounded-lg px-3 py-1.5 text-mainText font-semibold"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-mutedText text-sm font-semibold">
-                Sign copies
-                <input
-                  type="number"
-                  min="1"
-                  max="12"
-                  value={signCopies}
-                  onChange={e => setSignCopies(Math.max(1, Number(e.target.value) || 1))}
-                  className="w-20 bg-card border border-secondary/40 rounded-lg px-3 py-1.5 text-mainText font-semibold"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-mutedText text-sm font-semibold">
-                Result copies
-                <input
-                  type="number"
-                  min="1"
-                  max="12"
-                  value={resultCopies}
-                  onChange={e => setResultCopies(Math.max(1, Number(e.target.value) || 1))}
-                  className="w-20 bg-card border border-secondary/40 rounded-lg px-3 py-1.5 text-mainText font-semibold"
-                />
-              </label>
-            </div>
+            <p className="text-mutedText text-xs sm:text-sm mb-6">Print sheets are read-only.</p>
           </div>
 
           {/* Preview pages — each physical A4 page holds 2 valuation/sign or 4 result blocks */}
           <div className="print-page-container">
             {pages.map((page, pi) => (
-              <div className="print-sheet-page" key={pi}>
+              <div
+                className={`print-sheet-page ${page.length < PER_PAGE[page[0].sheet] ? 'print-sheet-page--partial' : ''}`}
+                key={pi}
+              >
                 {page.map((item, bi) => renderSheetBlock(item, `${pi}-${bi}`))}
               </div>
             ))}
@@ -491,6 +493,12 @@ export default function AdminPrint() {
           padding: 6mm;
           box-sizing: border-box;
           box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+        }
+
+        /* Pages holding fewer blocks than their template capacity drop the
+           leftover A4 space entirely — no empty template slots are shown. */
+        .print-sheet-page--partial {
+          min-height: 0;
         }
 
         .print-sheet-block {
