@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../supabase/client'
 import { getProgrammes, getStudents, getTeams } from '../../supabase/queries'
 import { ArrowLeft, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react'
@@ -16,40 +16,6 @@ function calcGrade(points) {
 const SHEETS_PER_PROGRAMME = 2
 const MAX_SHEETS = 8
 
-// Info-header cell (label + value), used on every sheet.
-const InfoCell = ({ label, value = '' }) => (
-  <th className="print-info-cell">
-    <span className="print-info-label">{label}</span>
-    <span className="print-info-value">{value}</span>
-  </th>
-)
-
-// Blank committee-stamp box cell for an info header row.
-const InfoStampCell = ({ stampImage }) => (
-  <th className="print-stamp-cell">
-    <div className="print-stamp-box">
-      {stampImage ? (
-        <img src={stampImage} alt="Committee Stamp" className="stamp-image" />
-      ) : (
-        'COMMITTEE STAMP'
-      )}
-    </div>
-  </th>
-)
-
-// Stamp box cell used as the last column of the Valuation sheet's sub-header.
-const SubStampCell = ({ stampImage }) => (
-  <th className="print-sub-stamp-cell">
-    <div className="print-stamp-box">
-      {stampImage ? (
-        <img src={stampImage} alt="Committee Stamp" className="stamp-image" />
-      ) : (
-        'COMMITTEE STAMP'
-      )}
-    </div>
-  </th>
-)
-
 export default function AdminPrint() {
   const [programmes, setProgrammes] = useState([])
   const [allResults, setAllResults] = useState([])
@@ -62,26 +28,6 @@ export default function AdminPrint() {
   const [catFilter, setCatFilter] = useState('')
   const [previewItems, setPreviewItems] = useState([])
   const [toastMsg, setToastMsg] = useState(null)
-  const [stampImage, setStampImage] = useState(() => localStorage.getItem('printStampImage') || null)
-  const stampInputRef = useRef(null)
-
-  useEffect(() => {
-    if (stampImage) localStorage.setItem('printStampImage', stampImage)
-    else localStorage.removeItem('printStampImage')
-  }, [stampImage])
-
-  const handleStampUpload = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => setStampImage(ev.target.result)
-    reader.readAsDataURL(file)
-  }
-
-  const clearStamp = () => {
-    setStampImage(null)
-    if (stampInputRef.current) stampInputRef.current.value = ''
-  }
 
   const loadData = useCallback(() => {
     getProgrammes().then(setProgrammes)
@@ -160,9 +106,7 @@ export default function AdminPrint() {
   const buildPreviewItems = (ids, type) => {
     const items = []
     if (type === 'programme') {
-      // Group ALL Sign sheets first, then ALL Valuation sheets. Sign sheets
-      // flow onto the first page(s); the Valuation group starts fresh on the
-      // following page via the `breakBefore` marker on its first sheet.
+      // Group ALL Sign sheets first, then ALL Valuation sheets.
       const signItems = []
       const valuationItems = []
       ids.forEach(id => {
@@ -203,7 +147,6 @@ export default function AdminPrint() {
           }))
         })
       })
-      if (valuationItems.length > 0) valuationItems[0].breakBefore = true
       items.push(...signItems, ...valuationItems)
       return items
     }
@@ -291,27 +234,6 @@ export default function AdminPrint() {
       {screenMode === 'list' && (
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText mb-6">Print</h2>
-
-          {/* Committee Stamp Upload */}
-          <div className="bg-card rounded-2xl p-4 mb-6 shadow-lg border border-secondary/30">
-            <label className="text-mutedText text-sm font-semibold block mb-3">Committee Stamp</label>
-            <div className="flex items-center gap-4">
-              <input ref={stampInputRef} type="file" accept="image/*" onChange={handleStampUpload} className="hidden" />
-              <button onClick={() => stampInputRef.current?.click()} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                {stampImage ? 'Change' : 'Browse'}
-              </button>
-              {stampImage && (
-                <>
-                  <div className="w-14 h-14 rounded-lg border-2 border-secondary/30 overflow-hidden shrink-0 bg-secondary/15 flex items-center justify-center">
-                    <img src={stampImage} alt="Stamp preview" className="w-full h-full object-cover" />
-                  </div>
-                  <button onClick={clearStamp} className="text-red-400 hover:text-red-300 text-sm font-semibold underline">&times; Remove</button>
-                </>
-              )}
-              {!stampImage && <span className="text-mutedText text-xs">Upload a committee stamp image to appear on the printed sheet</span>}
-            </div>
-          </div>
 
           {/* Tabs */}
           <div className="flex justify-center gap-4 sm:gap-6 mb-6">
@@ -475,54 +397,48 @@ export default function AdminPrint() {
             <p className="text-mutedText text-xs sm:text-sm mb-6">Print sheets are read-only.</p>
           </div>
 
-          {/* Preview sheets — each block is one self-contained sheet */}
+          {/* Preview sheets — each block is one self-contained A4 sheet */}
           <div className="print-page-container">
-            {previewItems.map((item, idx) => {
-              // For Valuation sheets, size each blank writable row to fill the
-              // fixed 67mm print slot without overflowing it, so the judge has
-              // comfortable handwriting room for Point / Grade / Prize etc.
-              const valuationRowH = item.sheet === 'valuation' && item.rows.length > 0
-                ? Math.max(8, Math.min(30, Math.floor(180 / item.rows.length)))
-                : null
-              return (
-              <div key={idx} className={`preview-sheet${item.breakBefore ? ' page-break-before' : ''}`}>
-                {/* Info header table */}
-                <table className="print-table print-info-table">
+            {previewItems.map((item, idx) => (
+              <div key={idx} className="preview-sheet">
+                {/* Sheet header */}
+                <div className="print-header">
+                  <div className="print-title">Rendezvous'26 - ISRA Vatanappally</div>
+                  <div className="print-subtitle">
+                    {item.sheet === 'valuation' && 'Valuation sheet'}
+                    {item.sheet === 'sign' && 'Sign Sheet'}
+                    {item.sheet === 'result' && 'Result'}
+                  </div>
+                </div>
+
+                {/* Metadata row: Program | Category | Type */}
+                <table className="print-table print-meta-table">
                   <thead>
                     <tr>
-                      {item.sheet === 'valuation' ? (
-                        <>
-                          <InfoCell label="RESULT NO" value={item.number} />
-                          <InfoCell label="CATEGORY" value={item.category} />
-                          <InfoCell label="PROGRAMME NAME" value={item.eventName} />
-                          <InfoCell label="INDIVIDUAL/GROUP" value={item.participationType} />
-                          <InfoCell label="ON/OFF-STAGE" value={item.programmeType} />
-                        </>
-                      ) : (
-                        <>
-                          <InfoCell label="RESULT NO" value={item.number} />
-                          <InfoCell label="CATEGORY" value={item.category} />
-                          <InfoCell label="PROGRAMME NAME" value={item.eventName} />
-                          <InfoCell label="INDIVIDUAL/GROUP" value={item.participationType} />
-                          <InfoCell label="ON/OFF-STAGE" value={item.programmeType} />
-                          <InfoStampCell stampImage={stampImage} />
-                        </>
-                      )}
+                      <th>Program</th>
+                      <th>Category</th>
+                      <th>Type</th>
                     </tr>
                   </thead>
+                  <tbody>
+                    <tr>
+                      <td>{item.eventName}</td>
+                      <td>{item.category}</td>
+                      <td>{item.programmeType}</td>
+                    </tr>
+                  </tbody>
                 </table>
 
                 {/* Data table */}
-                <table className="print-table">
+                <table className="print-table print-data-table">
                   {item.sheet === 'sign' && (
                     <>
                       <thead>
                         <tr>
-                          <th>CHEST NO</th>
-                          <th>NAME</th>
-                          <th>TEAM</th>
-                          <th>SIGN</th>
-                          <th>CODE LETTER</th>
+                          <th>Chest No</th>
+                          <th>Name</th>
+                          <th>Code Letter</th>
+                          <th>Signature</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -530,7 +446,6 @@ export default function AdminPrint() {
                           <tr key={row.key}>
                             <td className="text-center">{row.chestNo}</td>
                             <td>{row.name}</td>
-                            <td>{row.team}</td>
                             <td></td>
                             <td></td>
                           </tr>
@@ -543,21 +458,17 @@ export default function AdminPrint() {
                     <>
                       <thead>
                         <tr>
-                          <th>CODE LETTER</th>
-                          <th>POINT</th>
-                          <th>GRADE</th>
-                          <th>PRIZE</th>
-                          <SubStampCell stampImage={stampImage} />
+                          <th>Code Letter</th>
+                          <th>Grade</th>
+                          <th>Price</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {item.rows.map(row => (
-                          <tr key={row.key}>
-                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
-                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
-                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
-                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
-                            <td style={{ height: `${valuationRowH}px`, boxSizing: 'border-box' }}></td>
+                        {(item.rows.length > 0 ? item.rows : [{ key: 'val-blank' }]).map(row => (
+                          <tr key={row.key} className="write-row">
+                            <td></td>
+                            <td></td>
+                            <td></td>
                           </tr>
                         ))}
                       </tbody>
@@ -568,13 +479,13 @@ export default function AdminPrint() {
                     <>
                       <thead>
                         <tr>
-                          <th>CHEST NO</th>
-                          <th>NAME</th>
-                          <th>TEAM</th>
-                          <th>CODE LETTER</th>
-                          <th>GRADE</th>
-                          <th>PRIZE</th>
-                          <th>POINT</th>
+                          <th>Chest No</th>
+                          <th>Name</th>
+                          <th>Team</th>
+                          <th>Code</th>
+                          <th>Grade</th>
+                          <th>Price</th>
+                          <th>Point</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -593,175 +504,136 @@ export default function AdminPrint() {
                     </>
                   )}
                 </table>
+
+                {/* Valuation signature footer */}
+                {item.sheet === 'valuation' && (
+                  <div className="print-sign">
+                    <span className="print-sign-label">Signature of Judge</span>
+                    <span className="print-sign-line" />
+                  </div>
+                )}
               </div>
-              )
-            })}
+            ))}
           </div>
         </div>
       )}
 
-      {/* Toast styles */}
+      {/* Sheet & print styles */}
       <style>{`
-        .no-print { display: block; }
         .preview-sheet {
-          font-family: 'Sora', sans-serif;
-          color: black;
-          padding: 10mm;
-          max-width: 210mm;
-          margin: 16px auto;
-          background: white;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-          border-radius: 4px;
-        }
-        .print-page-container {
+          font-family: 'Sora', 'Segoe UI', system-ui, sans-serif;
+          color: #000;
+          background: #fff;
+          width: 210mm;
+          min-height: 297mm;
+          margin: 20px auto;
+          padding: 14mm;
+          box-sizing: border-box;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.18);
           display: flex;
           flex-direction: column;
-          gap: 8px;
-          align-items: stretch;
-          justify-content: flex-start;
         }
-        .preview-sheet {
-          position: relative;
-          max-width: none;
-          width: 100%;
-          margin: 0;
-          padding: 8mm;
-          flex-shrink: 0;
-          box-sizing: border-box;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-        }
-        .preview-sheet.page-break-before {
-          break-before: page;
-          page-break-before: always;
-        }
-        .preview-sheet .print-stamp-box {
-          border: 2px solid black;
-          padding: 8px 16px;
-          font-size: 10px;
-          font-weight: bold;
+
+        .print-header {
           text-align: center;
-          min-width: 100px;
-          min-height: 44px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
+          margin-bottom: 8mm;
         }
-        .preview-sheet .stamp-image {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain;
+        .print-title {
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          color: #000;
         }
-        .preview-sheet .print-table {
+        .print-subtitle {
+          font-size: 17px;
+          font-weight: 700;
+          margin-top: 3px;
+          color: #000;
+        }
+
+        .print-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 12px;
-          min-width: 500px;
-        }
-        .preview-sheet .print-table th,
-        .preview-sheet .print-table td {
-          border: 1px solid black;
-          padding: 6px 10px;
-          text-align: left;
-        }
-        .preview-sheet .print-table th {
-          background: white !important;
-          font-weight: bold;
-        }
-        .preview-sheet .print-table td.text-center {
-          text-align: center;
-        }
-        .preview-sheet .print-info-table {
-          margin-bottom: 0;
-        }
-        .preview-sheet .print-info-cell {
-          text-align: center;
-          vertical-align: middle;
-          padding: 5px 8px;
-        }
-        .preview-sheet .print-info-label {
-          display: block;
-          font-size: 8px;
-          font-weight: normal;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-        .preview-sheet .print-info-value {
-          display: block;
+          font-family: 'Sora', 'Segoe UI', system-ui, sans-serif;
           font-size: 13px;
-          font-weight: bold;
-          margin-top: 2px;
+          color: #000;
         }
-        .preview-sheet .print-stamp-cell {
-          text-align: center;
+        .print-table th,
+        .print-table td {
+          border: 1px solid #000;
+          padding: 8px;
+          text-align: left;
           vertical-align: middle;
-          width: 0;
         }
-        .preview-sheet .print-sub-stamp-cell {
-          text-align: center;
-          vertical-align: middle;
-          width: 0;
-        }
-        .print-input {
-          width: 100%;
-          border: none;
-          background: transparent;
-          font-family: inherit;
-          font-size: inherit;
-          color: inherit;
-          padding: 2px;
-          outline: none;
-          border-bottom: 1px dashed #999;
-          box-sizing: border-box;
-        }
-        .print-input:focus {
-          border-bottom-color: #2563eb;
-          background: #f0f7ff;
-        }
-        .print-input.text-center {
+        .print-table th {
+          background: #fff;
+          font-weight: 700;
           text-align: center;
         }
-        .print-editable {
-          padding: 2px 6px !important;
+        .print-table td.text-center {
+          text-align: center;
         }
-        @media (max-width: 767px) {
-          .print-page-container {
-            gap: 4px;
-          }
+
+        .print-meta-table {
+          margin-bottom: 6mm;
+        }
+        .print-meta-table td {
+          font-weight: 700;
+          text-align: center;
+        }
+
+        .print-data-table tbody .write-row td {
+          height: 14mm;
+        }
+
+        .print-sign {
+          margin-top: 14mm;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 8mm;
+        }
+        .print-sign-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #000;
+        }
+        .print-sign-line {
+          width: 48mm;
+          height: 10mm;
+          border-bottom: 1px solid #000;
+        }
+
+        @media screen and (max-width: 767px) {
           .preview-sheet {
-            padding: 4mm;
+            width: 100%;
+            min-height: 0;
+            margin: 12px 0;
+            padding: 8mm;
+            overflow-x: auto;
           }
-          .preview-sheet .print-table {
-            font-size: 10px;
+          .print-table {
+            font-size: 11px;
             min-width: 460px;
           }
-          .preview-sheet .print-table th,
-          .preview-sheet .print-table td {
-            padding: 4px 6px;
+          .print-title {
+            font-size: 16px;
           }
-          .preview-sheet .print-info-cell {
-            padding: 3px 5px;
+          .print-subtitle {
+            font-size: 14px;
           }
-          .preview-sheet .print-info-label {
-            font-size: 7px;
+          .print-table th,
+          .print-table td {
+            padding: 6px;
           }
-          .preview-sheet .print-info-value {
-            font-size: 11px;
-          }
-          .preview-sheet .print-stamp-box {
-            min-width: 72px;
-            min-height: 34px;
-            padding: 4px 8px;
-            font-size: 8px;
-          }
-          .print-input {
-            font-size: 10px;
+          .print-data-table tbody .write-row td {
+            height: 10mm;
           }
         }
+
         @media print {
           @page {
-            margin: 8mm;
+            margin: 10mm;
             size: A4 portrait;
           }
           body {
@@ -774,6 +646,9 @@ export default function AdminPrint() {
           body * {
             visibility: hidden;
           }
+          .no-print {
+            display: none !important;
+          }
           .print-page-container,
           .print-page-container * {
             visibility: visible;
@@ -782,72 +657,24 @@ export default function AdminPrint() {
             position: absolute;
             top: 0;
             left: 0;
-            display: flex !important;
-            flex-direction: column;
-            align-items: stretch;
-            justify-content: flex-start;
-            gap: 3mm;
             width: 100%;
+            display: block;
           }
           .preview-sheet {
-            display: block !important;
-            visibility: visible;
             width: 100%;
-            height: 67mm;
+            min-height: 0;
+            height: auto;
             margin: 0;
             padding: 0;
-            background: white;
             box-shadow: none;
-            border-radius: 0;
-            border: 1px solid #ccc;
-            font-size: 9px;
-            page-break-inside: avoid;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-sizing: border-box;
+            display: block;
+            page-break-after: always;
+            break-after: page;
+            visibility: visible;
           }
-          .preview-sheet .print-info-label {
-            font-size: 7px;
-          }
-          .preview-sheet .print-info-value {
-            font-size: 12px;
-          }
-          .preview-sheet .print-stamp-box {
-            border: 2px solid black;
-            min-width: 60px;
-            min-height: 36px;
-            font-size: 6px;
-            font-weight: bold;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            overflow: hidden;
-          }
-          .preview-sheet .print-table {
-            font-size: 9px;
-            min-width: 0;
-          }
-          .preview-sheet .print-table th,
-          .preview-sheet .print-table td {
-            padding: 3px 5px;
-          }
-          .no-print {
-            display: none !important;
-          }
-          .preview-sheet .stamp-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-          }
-          .print-input {
-            border: none;
-            background: transparent;
-            border-bottom: 1px dashed #999;
-          }
-          .print-input:focus {
-            background: transparent;
+          .preview-sheet:last-child {
+            page-break-after: auto;
+            break-after: auto;
           }
         }
       `}</style>
