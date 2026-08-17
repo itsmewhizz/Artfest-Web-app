@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { getProgrammes, getResultNoMap, getCategories, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../../supabase/queries'
-import { Plus, X, Printer, Pencil } from 'lucide-react'
+import { Plus, X, Printer, Pencil, Trash2 } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import FilterDropdown from '../../components/FilterDropdown'
 import { CATEGORY_COLORS } from '../../components/TeamBreakdown'
@@ -83,6 +83,17 @@ export default function AdminProgrammes() {
       setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: originalStatus } : p))
       toast('Failed to update status: ' + err.message, 'error')
     }
+  }
+
+  const handleDelete = async (prog) => {
+    if (!window.confirm(`Delete programme "${prog.name}"? This cannot be undone.`)) return
+    const { error } = await supabase.from('programmes').delete().eq('id', prog.id)
+    if (error) {
+      console.error('Programme delete failed:', error)
+      return toast('Failed to delete programme: ' + error.message, 'error')
+    }
+    toast('Programme deleted!')
+    loadData()
   }
 
   const startEdit = (prog) => {
@@ -236,7 +247,10 @@ export default function AdminProgrammes() {
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full shadow transition-transform duration-300 ${prog.isFinished ? 'translate-x-5 sm:translate-x-7' : ''}`} />
               </button>
               <KebabMenu
-                items={[{ label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(prog) }]}
+                items={[
+                  { label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(prog) },
+                  { label: 'Delete', icon: <Trash2 size={15} />, danger: true, onClick: () => handleDelete(prog) },
+                ]}
               />
             </div>
           </div>
