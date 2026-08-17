@@ -7,6 +7,10 @@ import useScrollReveal from '../hooks/useScrollReveal'
 import ThemeToggle from '../components/ThemeToggle'
 import LoginControl from '../components/LoginControl'
 
+// Toggle for the hero background photo-flash card animation.
+// Set to true to re-enable it (no other changes needed).
+const HERO_ANIMATION_ENABLED = false
+
 const stats = [
   { value: '3', label: 'Teams', icon: Users },
   { value: '3', label: 'Days', icon: CalendarDays },
@@ -19,7 +23,7 @@ const teamMembers = [
   { name: 'Muhammed AbdulQadar', role: 'Festival Convenor', initials: 'MA', tint: 'from-[#7BEAFE] to-[#FFDA63]', photo: '/team/Mohammed.jpeg' },
   { name: 'Sayyid Mueen Hussain', role: 'Finance Convenor', initials: 'SM', tint: 'from-[#FFDA63] to-[#6366F1]', photo: '/team/Moinu.jpeg' },
   { name: 'Shammas Mujeeb', role: 'Vice Chairman', initials: 'SM', tint: 'from-[#6366F1] to-[#A78BFA]', photo: '/team/Shammas.jpeg' },
-  { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#A78BFA] to-[#7BEAFE]', photo: '/team/moidu.jpg' },
+  { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#A78BFA] to-[#7BEAFE]', photo: '/team/midlaj moideen.jpg' },
   { name: 'Afsal Sharafudheen', role: 'Joint Convenor', initials: 'AS', tint: 'from-[#7BEAFE] to-[#94A3B8]', photo: '/team/Afsal.jpg' },
   { name: 'Vahid', role: 'Joint Convenor', initials: 'v', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/vahid.jpg' },
   { name: 'Farhan Musthafa', role: 'Software Handling', initials: 'FM', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/Farhan Musthafa.jpg' }
@@ -118,7 +122,9 @@ export default function Home() {
 
       {/* ── Full-Viewport Hero ── */}
       <section className="relative h-screen w-full overflow-hidden">
-        <HeroAnimation spotlightImages={featured.length > 0 ? featured : allImages} />
+        {HERO_ANIMATION_ENABLED && (
+          <HeroAnimation spotlightImages={featured.length > 0 ? featured : allImages} />
+        )}
 
         <div className="aurora-layer">
           <div className="aurora-blob aurora-a" />

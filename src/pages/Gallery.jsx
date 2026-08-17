@@ -50,16 +50,7 @@ export default function Gallery() {
     <div className="min-h-screen">
       {/* Transparent Top Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-8 lg:px-16 py-4 lg:py-5">
-        <Link
-          to="/"
-          className="flex items-center gap-2 tracking-tight select-none focus:outline-none"
-        >
-          <span className="font-bold text-2xl sm:text-3xl leading-none uppercase text-mainText">ISRA</span>
-          <div className="flex flex-col text-[10px] sm:text-[11px] font-semibold leading-tight uppercase tracking-wider text-mainText border-l-0 pl-1">
-            <span>LIFE</span>
-            <span>FESTIVAL</span>
-          </div>
-        </Link>
+        <div className="flex items-center gap-2 tracking-tight select-none focus:outline-none" />
         <Link
           to="/"
           className="flex items-center gap-1 px-4 py-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-mainText text-xs sm:text-sm font-semibold hover:bg-white/20 transition"
