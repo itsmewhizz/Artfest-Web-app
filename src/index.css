@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: 'CSGENERAL-REGULAR_DEMO';
-  src: url('assets/CSGENERAL-REGULAR_DEMO.OTF') format('opentype');
+  src: url('./assets/CSGENERAL-REGULAR_DEMO.OTF') format('opentype');
   font-weight: normal;
   font-style: normal;
 }

@@ -4,13 +4,15 @@ import { getProgrammes, getStudents, getTeams } from '../../supabase/queries'
 import { ArrowLeft, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react'
 import FilterDropdown from '../../components/FilterDropdown'
 
-function calcGrade(points) {
-  const p = Number(points)
-  if (p === 10) return 'A+'
-  if (p >= 8 && p <= 9) return 'A'
-  if (p >= 6 && p <= 7) return 'B'
-  if (p >= 4 && p <= 5) return 'C'
-  return '-'
+// Copies of each sheet type that fit on a single printed A4 page (reference layout).
+const PER_PAGE = { valuation: 2, sign: 2, result: 4 }
+// Sheet-specific subheader, shown directly under the title on every block.
+const SHEET_SUBTITLES = { valuation: 'Valuation sheet', sign: 'Sign Sheet', result: 'Result' }
+// Exact column layout from the reference document.
+const COL_HEADERS = {
+  valuation: ['Code letter', 'Grade', 'Price'],
+  sign: ['Chest No', 'Name', 'Code Letter', 'Signature'],
+  result: ['Chest No', 'Name', 'Team', 'code', 'Grade', 'Price', 'Point'],
 }
 
 const SHEETS_PER_PROGRAMME = 2
@@ -27,6 +29,9 @@ export default function AdminPrint() {
   const [screenMode, setScreenMode] = useState('list') // 'list' | 'preview'
   const [catFilter, setCatFilter] = useState('')
   const [previewItems, setPreviewItems] = useState([])
+  const [valuationCopies, setValuationCopies] = useState(2)
+  const [signCopies, setSignCopies] = useState(2)
+  const [resultCopies, setResultCopies] = useState(4)
   const [toastMsg, setToastMsg] = useState(null)
 
   const loadData = useCallback(() => {
@@ -100,54 +105,33 @@ export default function AdminPrint() {
   }
 
   // ---- Build preview data ----
-  // Each programme expands into TWO sheet items (Sign + Valuation);
-  // each result is a single sheet item.
+  // Each programme expands into TWO base sheet items (Valuation + Sign);
+  // each result is a single base sheet item. Copy counts are applied at render.
 
   const buildPreviewItems = (ids, type) => {
     const items = []
     if (type === 'programme') {
-      // Group ALL Sign sheets first, then ALL Valuation sheets.
-      const signItems = []
-      const valuationItems = []
       ids.forEach(id => {
         const prog = programmes.find(p => p.id === id)
         if (!prog) return
-        const resultRec = resultNoMap[prog.id]
-        const number = resultRec?.resultNo || ''
         const info = {
           id: prog.id,
           category: prog.category || '',
           eventName: prog.name,
-          programmeType: prog.programmeType || prog.type || '',
           participationType: prog.participationType || prog.participation_type || '',
-          number,
         }
-        const participants = students.filter(s => (s.programmeIds || []).includes(prog.id))
-
-        // Sign Sheet
-        signItems.push({
-          ...info,
-          sheet: 'sign',
-          type: 'programme',
-          rows: participants.map(s => ({
-            key: `sign-${prog.id}-${s.id}`,
+        const participants = students
+          .filter(s => (s.programmeIds || []).includes(prog.id))
+          .map(s => ({
+            key: `p-${prog.id}-${s.id}`,
             chestNo: s.chestNo || '',
             name: s.name,
             team: teamMap[s.team] || s.team || '',
           }))
-        })
 
-        // Valuation Sheet
-        valuationItems.push({
-          ...info,
-          sheet: 'valuation',
-          type: 'programme',
-          rows: participants.map(s => ({
-            key: `val-${prog.id}-${s.id}`,
-          }))
-        })
+        items.push({ ...info, sheet: 'valuation', participants })
+        items.push({ ...info, sheet: 'sign', participants })
       })
-      items.push(...signItems, ...valuationItems)
       return items
     }
 
@@ -155,34 +139,21 @@ export default function AdminPrint() {
       const res = allResults.find(r => r.id === id)
       if (!res) return
       const prog = programmes.find(p => p.id === res.programmeId)
-      const rows = []
-      const addRow = (placementKey, placement) => {
-        if (!placement) return
-        const student = students.find(s => s.id === placement.studentId)
-        rows.push({
-          key: `res-${res.id}-${placementKey}`,
-          chestNo: student?.chestNo || '',
-          name: placement.name || student?.name || '',
-          team: teamMap[student?.team] || student?.team || '',
-          codeLetter: placement.codeLetter || '',
-          grade: placement.grade || calcGrade(placement.points),
-          prize: placement.prize || '',
-          point: placement.points || 0,
-        })
-      }
-      addRow('first', res.first)
-      addRow('second', res.second)
-      addRow('third', res.third)
+      const participants = students
+        .filter(s => (s.programmeIds || []).includes(prog?.id))
+        .map(s => ({
+          key: `r-${res.id}-${s.id}`,
+          chestNo: s.chestNo || '',
+          name: s.name,
+          team: teamMap[s.team] || s.team || '',
+        }))
       items.push({
-        type: 'result',
         sheet: 'result',
         id: res.id,
         category: prog?.category || '',
         eventName: res.name || prog?.name || '',
-        programmeType: prog?.programmeType || prog?.type || '',
         participationType: prog?.participationType || prog?.participation_type || '',
-        number: res.resultNo || '',
-        rows
+        participants,
       })
     })
     return items
@@ -216,6 +187,66 @@ export default function AdminPrint() {
   const handlePrint = () => {
     window.print()
   }
+
+  // ---- Expand copies + group into physical pages ----
+
+  const blocks = []
+  previewItems.forEach(item => {
+    const copies = item.sheet === 'valuation' ? valuationCopies : item.sheet === 'sign' ? signCopies : resultCopies
+    for (let i = 0; i < copies; i += 1) blocks.push(item)
+  })
+
+  const pages = []
+  let currentPage = []
+  let currentSheet = null
+  const flushPage = () => {
+    if (currentPage.length) { pages.push(currentPage); currentPage = [] }
+  }
+  blocks.forEach(block => {
+    if (currentSheet && block.sheet !== currentSheet) flushPage()
+    if (currentPage.length >= PER_PAGE[block.sheet]) flushPage()
+    currentSheet = block.sheet
+    currentPage.push(block)
+  })
+  flushPage()
+
+  // ---- Render helpers ----
+
+  const renderSheetBlock = (item, blockKey) => (
+    <div className="print-sheet-block" key={blockKey}>
+      <div className="print-header">
+        <div className="print-title">Rendezvous'26 - ISRA Vatanappally</div>
+        <div className="print-subtitle">{SHEET_SUBTITLES[item.sheet]}</div>
+      </div>
+      <table className="print-table">
+        <tbody>
+          <tr className="print-meta-row">
+            <td><span className="print-meta-label">Programme</span><span className="print-meta-value">{item.eventName}</span></td>
+            <td><span className="print-meta-label">Category</span><span className="print-meta-value">{item.category}</span></td>
+            <td><span className="print-meta-label">Type</span><span className="print-meta-value">{item.participationType}</span></td>
+          </tr>
+          <tr className="print-col-head">
+            {COL_HEADERS[item.sheet].map((label, i) => <th key={i}>{label}</th>)}
+          </tr>
+          {item.sheet === 'valuation' && item.participants.map(p => (
+            <tr key={p.key}><td></td><td></td><td></td></tr>
+          ))}
+          {item.sheet === 'sign' && item.participants.map(p => (
+            <tr key={p.key}><td className="text-center">{p.chestNo}</td><td>{p.name}</td><td></td><td></td></tr>
+          ))}
+          {item.sheet === 'result' && item.participants.map(p => (
+            <tr key={p.key}><td className="text-center">{p.chestNo}</td><td>{p.name}</td><td>{p.team}</td><td></td><td></td><td></td><td></td></tr>
+          ))}
+        </tbody>
+      </table>
+      {item.sheet === 'valuation' && (
+        <div className="print-sign">
+          <span className="print-sign-label">Signature of Judge</span>
+          <span className="print-sign-line" />
+        </div>
+      )}
+    </div>
+  )
 
   const selectedCount = selectedSet.size
   const selectedSheets = sheetsUsed()
@@ -385,7 +416,7 @@ export default function AdminPrint() {
             </button>
             <div className="flex items-center justify-between mb-4 gap-4">
               <h2 className="text-lg sm:text-2xl font-poppins font-bold text-mainText">
-                {previewItems.length > 1 ? `Print Preview (${previewItems.length} sheets)` : 'Print Preview'}
+                {blocks.length > 1 ? `Print Preview (${blocks.length} sheets)` : 'Print Preview'}
               </h2>
               <button
                 onClick={handlePrint}
@@ -394,124 +425,49 @@ export default function AdminPrint() {
                 <Printer size={18} className="sm:w-[22px] sm:h-[22px]" /> Print
               </button>
             </div>
-            <p className="text-mutedText text-xs sm:text-sm mb-6">Print sheets are read-only.</p>
+            <p className="text-mutedText text-xs sm:text-sm mb-2">Print sheets are read-only.</p>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-6">
+              <label className="flex items-center gap-2 text-mutedText text-sm font-semibold">
+                Valuation copies
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={valuationCopies}
+                  onChange={e => setValuationCopies(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-20 bg-card border border-secondary/40 rounded-lg px-3 py-1.5 text-mainText font-semibold"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-mutedText text-sm font-semibold">
+                Sign copies
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={signCopies}
+                  onChange={e => setSignCopies(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-20 bg-card border border-secondary/40 rounded-lg px-3 py-1.5 text-mainText font-semibold"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-mutedText text-sm font-semibold">
+                Result copies
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={resultCopies}
+                  onChange={e => setResultCopies(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-20 bg-card border border-secondary/40 rounded-lg px-3 py-1.5 text-mainText font-semibold"
+                />
+              </label>
+            </div>
           </div>
 
-          {/* Preview sheets — each block is one self-contained A4 sheet */}
+          {/* Preview pages — each physical A4 page holds 2 valuation/sign or 4 result blocks */}
           <div className="print-page-container">
-            {previewItems.map((item, idx) => (
-              <div key={idx} className="preview-sheet">
-                {/* Sheet header */}
-                <div className="print-header">
-                  <div className="print-title">Rendezvous'26 - ISRA Vatanappally</div>
-                  <div className="print-subtitle">
-                    {item.sheet === 'valuation' && 'Valuation sheet'}
-                    {item.sheet === 'sign' && 'Sign Sheet'}
-                    {item.sheet === 'result' && 'Result'}
-                  </div>
-                </div>
-
-                {/* Metadata row: Program | Category | Type */}
-                <table className="print-table print-meta-table">
-                  <thead>
-                    <tr>
-                      <th>Program</th>
-                      <th>Category</th>
-                      <th>Type</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>{item.eventName}</td>
-                      <td>{item.category}</td>
-                      <td>{item.programmeType}</td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                {/* Data table */}
-                <table className="print-table print-data-table">
-                  {item.sheet === 'sign' && (
-                    <>
-                      <thead>
-                        <tr>
-                          <th>Chest No</th>
-                          <th>Name</th>
-                          <th>Code Letter</th>
-                          <th>Signature</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {item.rows.map(row => (
-                          <tr key={row.key}>
-                            <td className="text-center">{row.chestNo}</td>
-                            <td>{row.name}</td>
-                            <td></td>
-                            <td></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </>
-                  )}
-
-                  {item.sheet === 'valuation' && (
-                    <>
-                      <thead>
-                        <tr>
-                          <th>Code Letter</th>
-                          <th>Grade</th>
-                          <th>Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(item.rows.length > 0 ? item.rows : [{ key: 'val-blank' }]).map(row => (
-                          <tr key={row.key} className="write-row">
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </>
-                  )}
-
-                  {item.sheet === 'result' && (
-                    <>
-                      <thead>
-                        <tr>
-                          <th>Chest No</th>
-                          <th>Name</th>
-                          <th>Team</th>
-                          <th>Code</th>
-                          <th>Grade</th>
-                          <th>Price</th>
-                          <th>Point</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {item.rows.map(row => (
-                          <tr key={row.key}>
-                            <td className="text-center">{row.chestNo}</td>
-                            <td>{row.name}</td>
-                            <td>{row.team}</td>
-                            <td className="text-center">{row.codeLetter}</td>
-                            <td className="text-center">{row.grade || '-'}</td>
-                            <td className="text-center">{row.prize}</td>
-                            <td className="text-center">{row.point}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </>
-                  )}
-                </table>
-
-                {/* Valuation signature footer */}
-                {item.sheet === 'valuation' && (
-                  <div className="print-sign">
-                    <span className="print-sign-label">Signature of Judge</span>
-                    <span className="print-sign-line" />
-                  </div>
-                )}
+            {pages.map((page, pi) => (
+              <div className="print-sheet-page" key={pi}>
+                {page.map((item, bi) => renderSheetBlock(item, `${pi}-${bi}`))}
               </div>
             ))}
           </div>
@@ -520,34 +476,47 @@ export default function AdminPrint() {
 
       {/* Sheet & print styles */}
       <style>{`
-        .preview-sheet {
+        .print-page-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 28px;
+          overflow-x: auto;
+        }
+
+        .print-sheet-page {
+          width: 210mm;
+          min-height: 248mm;
+          background: #fff;
+          padding: 6mm;
+          box-sizing: border-box;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+        }
+
+        .print-sheet-block {
           font-family: 'Sora', 'Segoe UI', system-ui, sans-serif;
           color: #000;
           background: #fff;
-          width: 210mm;
-          min-height: 297mm;
-          margin: 20px auto;
-          padding: 14mm;
           box-sizing: border-box;
-          box-shadow: 0 2px 16px rgba(0,0,0,0.18);
-          display: flex;
-          flex-direction: column;
+        }
+        .print-sheet-block + .print-sheet-block {
+          margin-top: 5mm;
         }
 
         .print-header {
           text-align: center;
-          margin-bottom: 8mm;
+          margin-bottom: 2mm;
         }
         .print-title {
-          font-size: 20px;
+          font-size: 15px;
           font-weight: 700;
           letter-spacing: 0.02em;
           color: #000;
         }
         .print-subtitle {
-          font-size: 17px;
+          font-size: 13px;
           font-weight: 700;
-          margin-top: 3px;
+          margin-top: 1px;
           color: #000;
         }
 
@@ -555,13 +524,13 @@ export default function AdminPrint() {
           width: 100%;
           border-collapse: collapse;
           font-family: 'Sora', 'Segoe UI', system-ui, sans-serif;
-          font-size: 13px;
+          font-size: 12px;
           color: #000;
         }
         .print-table th,
         .print-table td {
           border: 1px solid #000;
-          padding: 8px;
+          padding: 6px 8px;
           text-align: left;
           vertical-align: middle;
         }
@@ -574,66 +543,69 @@ export default function AdminPrint() {
           text-align: center;
         }
 
-        .print-meta-table {
-          margin-bottom: 6mm;
-        }
-        .print-meta-table td {
-          font-weight: 700;
+        .print-meta-row td {
           text-align: center;
         }
-
-        .print-data-table tbody .write-row td {
-          height: 14mm;
+        .print-meta-label {
+          display: block;
+          font-size: 9px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+        .print-meta-value {
+          display: block;
+          font-size: 12px;
+          font-weight: 700;
+          margin-top: 1px;
         }
 
         .print-sign {
-          margin-top: 14mm;
+          margin-top: 4mm;
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          gap: 8mm;
+          gap: 5mm;
         }
         .print-sign-label {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           color: #000;
         }
         .print-sign-line {
-          width: 48mm;
-          height: 10mm;
+          width: 38mm;
+          height: 7mm;
           border-bottom: 1px solid #000;
         }
 
         @media screen and (max-width: 767px) {
-          .preview-sheet {
+          .print-page-container {
+            align-items: stretch;
+          }
+          .print-sheet-page {
             width: 100%;
             min-height: 0;
-            margin: 12px 0;
-            padding: 8mm;
-            overflow-x: auto;
+            padding: 4mm;
           }
           .print-table {
             font-size: 11px;
             min-width: 460px;
           }
           .print-title {
-            font-size: 16px;
+            font-size: 13px;
           }
           .print-subtitle {
-            font-size: 14px;
+            font-size: 12px;
           }
           .print-table th,
           .print-table td {
-            padding: 6px;
-          }
-          .print-data-table tbody .write-row td {
-            height: 10mm;
+            padding: 4px 6px;
           }
         }
 
         @media print {
           @page {
-            margin: 10mm;
+            margin: 6mm;
             size: A4 portrait;
           }
           body {
@@ -658,23 +630,28 @@ export default function AdminPrint() {
             top: 0;
             left: 0;
             width: 100%;
-            display: block;
+            align-items: stretch;
+            gap: 0;
           }
-          .preview-sheet {
-            width: 100%;
+          .print-sheet-page {
+            width: auto;
+            max-width: none;
             min-height: 0;
-            height: auto;
-            margin: 0;
             padding: 0;
+            margin: 0;
             box-shadow: none;
-            display: block;
+            display: flex;
+            flex-direction: column;
+            gap: 4mm;
             page-break-after: always;
             break-after: page;
-            visibility: visible;
           }
-          .preview-sheet:last-child {
+          .print-sheet-page:last-child {
             page-break-after: auto;
             break-after: auto;
+          }
+          .print-sheet-block + .print-sheet-block {
+            margin-top: 0;
           }
         }
       `}</style>
