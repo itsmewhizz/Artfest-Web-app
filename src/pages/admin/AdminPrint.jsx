@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '../../supabase/client'
-import { getProgrammes, getStudents, getTeams } from '../../supabase/queries'
+import { getProgrammes, getStudents, getTeams, getAllResults } from '../../supabase/queries'
 import { ArrowLeft, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react'
 import FilterDropdown from '../../components/FilterDropdown'
 
@@ -52,15 +51,7 @@ export default function AdminPrint() {
     getProgrammes().then(setProgrammes)
     getStudents().then(setStudents)
     getTeams().then(setTeams)
-    supabase.from('results').select('*').then(({ data }) => {
-      const latest = {}
-      ;(data || []).forEach(r => {
-        if (!latest[r.programmeId] || r.updatedAt > latest[r.programmeId].updatedAt) {
-          latest[r.programmeId] = r
-        }
-      })
-      setAllResults(Object.values(latest))
-    })
+    getAllResults().then(setAllResults)
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
@@ -152,14 +143,13 @@ export default function AdminPrint() {
 
     ids.forEach(id => {
       const res = allResults.find(r => r.id === id)
-      if (!res) return
-      const prog = programmes.find(p => p.id === res.programmeId)
+      const prog = res ? programmes.find(p => p.id === res.programmeId) : null
       const rows = []
       const addRow = (placement) => {
         if (!placement) return
         const student = students.find(s => s.id === placement.studentId)
         rows.push({
-          key: `res-${res.id}-${placement.studentId || rows.length}`,
+          key: `res-${id}-${placement.studentId || rows.length}`,
           chestNo: student?.chestNo || '',
           name: placement.name || student?.name || '',
           team: teamMap[student?.team] || student?.team || '',
@@ -168,16 +158,23 @@ export default function AdminPrint() {
           point: placement.points ?? '',
         })
       }
-      addRow(res.first)
-      addRow(res.second)
-      addRow(res.third)
+      if (res) {
+        addRow(res.first)
+        addRow(res.second)
+        addRow(res.third)
+      }
       items.push({
         sheet: 'result',
-        id: res.id,
+        id,
         category: prog?.category || '',
-        eventName: res.name || prog?.name || '',
+        eventName: res?.name || prog?.name || '',
         participationType: prog?.participationType || prog?.participation_type || '',
         rows,
+        warning: !res
+          ? 'Result record not found for this programme.'
+          : rows.length === 0
+            ? 'No placement data found for this result — check the Results section.'
+            : null,
       })
     })
     return items
@@ -269,7 +266,12 @@ export default function AdminPrint() {
           {item.sheet === 'sign' && item.participants.map(p => (
             <tr key={p.key}><td className="text-center">{p.chestNo}</td><td>{p.name}</td><td></td><td></td></tr>
           ))}
-          {item.sheet === 'result' && item.rows.map(row => (
+          {item.sheet === 'result' && item.warning && (
+            <tr className="print-warning-row">
+              <td colSpan={COL_HEADERS.result.length}>{item.warning}</td>
+            </tr>
+          )}
+          {item.sheet === 'result' && !item.warning && item.rows.map(row => (
             <tr key={row.key}><td className="text-center">{row.chestNo}</td><td>{row.name}</td><td>{row.team}</td><td></td><td className="text-center">{row.grade}</td><td className="text-center">{row.price}</td><td className="text-center">{row.point}</td></tr>
           ))}
         </tbody>
@@ -615,6 +617,15 @@ export default function AdminPrint() {
           font-size: 12px;
           font-weight: 600;
           color: #000;
+        }
+
+        /* Visible placeholder when a selected result has no data to render. */
+        .print-warning-row td {
+          background: #fff4e5;
+          color: #9a6a00;
+          font-weight: 700;
+          text-align: center;
+          padding: 10px 8px;
         }
 
         @media screen and (max-width: 767px) {
