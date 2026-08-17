@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
 import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers } from 'lucide-react'
 import HeroAnimation from '../components/HeroAnimation'
@@ -26,7 +26,7 @@ const teamMembers = [
   { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#A78BFA] to-[#7BEAFE]', photo: '/team/midlaj moideen.jpg' },
   { name: 'Afsal Sharafudheen', role: 'Joint Convenor', initials: 'AS', tint: 'from-[#7BEAFE] to-[#94A3B8]', photo: '/team/Afsal.jpg' },
   { name: 'Vahid', role: 'Joint Convenor', initials: 'v', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/vahid.jpg' },
-  { name: 'Farhan Musthafa', role: 'Software Handling', initials: 'FM', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/Farhan Musthafa.jpg' }
+  { name: 'Farhan Musthafa', role: 'Software Developer', initials: 'FM', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/faruuunn.jpg' }
 ]
 
 export default function Home() {
@@ -91,18 +91,18 @@ export default function Home() {
       {/* ── Floating Top Nav ── */}
       <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 sm:px-8 pt-4">
         <div className="floating-nav grid grid-cols-[1fr_auto_1fr] items-center w-full max-w-3xl px-4 py-2 sm:px-5">
-          <button
-            type="button"
+          <Link
+            to="/"
             aria-label="Go to the festival home"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex items-center gap-2 tracking-tight select-none focus:outline-none justify-self-start"
+            className="flex items-center gap-2 tracking-tight select-none focus:outline-none justify-self-start font-sora"
           >
             <span className="font-bold text-2xl sm:text-3xl leading-none uppercase text-mainText">ISRA</span>
             <div className="flex flex-col text-[10px] sm:text-[11px] font-semibold leading-tight uppercase tracking-wider text-mainText border-l-0 pl-1">
               <span>LIFE</span>
               <span>FESTIVAL</span>
             </div>
-          </button>
+          </Link>
 
           <nav className="hidden sm:flex items-center gap-1">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="nav-link active">
