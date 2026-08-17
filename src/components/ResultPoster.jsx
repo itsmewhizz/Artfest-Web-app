@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import html2canvas from 'html2canvas'
 import { saveAs } from 'file-saver'
 import { Download } from 'lucide-react'
@@ -8,7 +8,7 @@ const themes = {
   classic: {
     container: 'bg-white p-8 rounded-2xl text-center',
     border: 'border-4 border-[#E8845C] rounded-2xl p-6',
-    title: 'text-2xl font-bold text-[#0F2A3D] font-serif mb-1',
+    title: 'text-2xl font-bold text-[#0F2A3D] mb-1',
     subtitle: 'text-sm text-[#6E8A99] mb-6',
     rank: (i) => ['text-[#E8845C] font-bold', 'text-slate-400 font-bold', 'text-amber-700 font-bold'][i],
     name: 'text-[#0F2A3D] font-semibold text-sm',
@@ -54,9 +54,28 @@ function calcGrade(points) {
 const themeNames = ['classic', 'vibrant', 'minimal']
 const themeLabels = ['Classic', 'Vibrant', 'Minimal']
 
+// Previews render the poster at this natural width, then scale it down by
+// PREVIEW_SCALE. The preview box is sized to the scaled dimensions so the
+// whole poster is always visible (no fixed height / overflow clipping).
+const PREVIEW_WIDTH = 340
+const PREVIEW_SCALE = 0.5
+
 export default function ResultPoster({ programme, result, studentPhotos = {}, onClose }) {
   const captureRefs = useRef({})
+  const sizeRefs = useRef({})
   const [downloading, setDownloading] = useState('')
+  const [originalSizes, setOriginalSizes] = useState({})
+
+  // Measure each poster's natural size (at PREVIEW_WIDTH) so the preview box
+  // can be sized to the exact scaled dimensions — the full poster is shown.
+  useLayoutEffect(() => {
+    const next = {}
+    themeNames.forEach(tName => {
+      const el = sizeRefs.current[tName]
+      if (el) next[tName] = { w: el.offsetWidth, h: el.offsetHeight }
+    })
+    setOriginalSizes(next)
+  }, [programme, result])
 
   const getPhoto = (data) => studentPhotos[data?.studentId] || data?.photoURL
 
@@ -120,6 +139,15 @@ export default function ResultPoster({ programme, result, studentPhotos = {}, on
         ))}
       </div>
 
+      {/* Hidden measurer used to size the previews to the full scaled poster */}
+      <div style={{ position: 'fixed', left: -9999, top: 0, pointerEvents: 'none', visibility: 'hidden' }} aria-hidden="true">
+        {themeNames.map(tName => (
+          <div key={`size-${tName}`} ref={el => { sizeRefs.current[tName] = el }} style={{ width: PREVIEW_WIDTH }}>
+            {renderPoster(tName)}
+          </div>
+        ))}
+      </div>
+
       <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
@@ -147,10 +175,20 @@ export default function ResultPoster({ programme, result, studentPhotos = {}, on
               </div>
 
               <div
-                className="preview-box rounded-xl overflow-hidden mb-3 flex items-start justify-center"
-                style={{ height: 210 }}
+                className="preview-box rounded-xl overflow-hidden mb-3 mx-auto"
+                style={{
+                  width: Math.ceil(PREVIEW_WIDTH * PREVIEW_SCALE),
+                  height: Math.ceil((originalSizes[tName]?.h || 340) * PREVIEW_SCALE),
+                }}
               >
-                <div style={{ width: 340, transform: 'scale(0.5)', transformOrigin: 'top center' }}>
+                <div
+                  style={{
+                    width: PREVIEW_WIDTH,
+                    height: originalSizes[tName]?.h || 340,
+                    transform: `scale(${PREVIEW_SCALE})`,
+                    transformOrigin: 'top left',
+                  }}
+                >
                   {renderPoster(tName)}
                 </div>
               </div>

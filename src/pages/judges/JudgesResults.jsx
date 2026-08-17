@@ -606,12 +606,12 @@ export default function JudgesResults() {
 
             <label className="text-mutedText text-xs mb-1 block">Security Code</label>
             <div className="flex gap-2 mb-4">
-              <div className="bg-black/40 text-accent font-mono font-bold tracking-widest text-lg px-4 py-2 rounded-xl flex items-center justify-center select-none border border-secondary/40">
+              <div className="bg-black/40 text-accent font-bold tracking-widest text-lg px-4 py-2 rounded-xl flex items-center justify-center select-none border border-secondary/40">
                 {captcha || '------'}
               </div >
               <input
                 type="text"
-                className="flex-1 bg-black/20 text-mainText uppercase font-mono font-bold tracking-wider rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-center text-sm"
+                className="flex-1 bg-black/20 text-mainText uppercase font-bold tracking-wider rounded-xl p-3 outline-none border border-secondary/30 focus:border-mainText text-center text-sm"
                 maxLength={6}
                 value={vCaptcha}
                 onChange={e => setVCaptcha(e.target.value.toUpperCase())}

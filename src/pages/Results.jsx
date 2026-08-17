@@ -66,14 +66,13 @@ export default function Results() {
         <div className="flex items-center gap-4">
           <Link
             to="/"
-            className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none"
+            className="flex items-center gap-2 tracking-tight select-none focus:outline-none"
           >
-            <span className="font-brand font-black text-[1.05rem] sm:text-[1.2rem] tracking-[0.14em] text-purple uppercase">
-              ISRA
-            </span>
-            <span className="font-brand text-[0.48rem] sm:text-[0.56rem] tracking-[0.3em] text-textMute uppercase">
-              Festival
-            </span>
+            <span className="font-bold text-2xl sm:text-3xl leading-none uppercase text-mainText">ISRA</span>
+            <div className="flex flex-col text-[10px] sm:text-[11px] font-semibold leading-tight uppercase tracking-wider text-mainText border-l-0 pl-1">
+              <span>LIFE</span>
+              <span>FESTIVAL</span>
+            </div>
           </Link>
         </div>
         <div className="flex items-center gap-3">

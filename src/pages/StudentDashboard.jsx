@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Download, LogOut, Trophy } from 'lucide-react'
 import { supabase } from '../supabase/client'
-import { getStudentById, getProgrammes, getCategories, getStudentSessionState, clearStudentSession, getAllResults } from '../supabase/queries'
+import { getStudentById, getProgrammes, getCategories, getStudentSessionState, clearStudentSession, getAllResults, getTeams } from '../supabase/queries'
 import StudentAvatar from '../components/StudentAvatar'
 import ResultPoster from '../components/ResultPoster'
 import ThemeToggle from '../components/ThemeToggle'
@@ -12,6 +12,7 @@ const ringCircumference = 2 * Math.PI * ringRadius
 
 export default function StudentDashboard() {
   const [student, setStudent] = useState(null)
+  const [teams, setTeams] = useState([])
   const [programmes, setProgrammes] = useState([])
   const [allResults, setAllResults] = useState([])
   const [studentPhotos, setStudentPhotos] = useState({})
@@ -35,11 +36,12 @@ export default function StudentDashboard() {
         return
       }
 
-      const [studentData, programmeData, resultData, categoriesData] = await Promise.all([
+      const [studentData, programmeData, resultData, categoriesData, teamsData] = await Promise.all([
         getStudentById(studentId),
         getProgrammes(),
         getAllResults(),
         getCategories().then(({ student }) => student),
+        getTeams(),
       ])
 
       if (!studentData) {
@@ -48,6 +50,7 @@ export default function StudentDashboard() {
       }
 
       setStudent(studentData)
+      setTeams(teamsData)
       setProgrammes(programmeData)
       setAllResults(resultData)
 
@@ -71,6 +74,17 @@ export default function StudentDashboard() {
   }, [navigate, studentId])
 
   const programmeIds = useMemo(() => student?.programmeIds || [], [student])
+
+  // Resolve the participant's actual team name from their team field —
+  // handles both a stored team id and a stored team name (legacy data).
+  const teamName = useMemo(() => {
+    const raw = student?.team
+    if (!raw) return ''
+    const byId = teams.find(t => t.id === raw)
+    if (byId) return byId.name
+    const byName = teams.find(t => t.name === raw)
+    return byName ? byName.name : raw
+  }, [student, teams])
 
   const completedProgrammes = useMemo(() => {
     const resultMap = new Map()
@@ -126,7 +140,7 @@ export default function StudentDashboard() {
                 <div className="mt-2 flex flex-wrap gap-2 text-sm text-mutedText">
                   <span className="rounded-full bg-secondary/20 px-2.5 py-1">Chest No: {student.chestNo || '—'}</span>
                   <span className="rounded-full bg-secondary/20 px-2.5 py-1">{student.class || 'Unassigned Category'}</span>
-                  <span className="rounded-full bg-secondary/20 px-2.5 py-1">{student.team || 'No Team'}</span>
+                  <span className="rounded-full bg-secondary/20 px-2.5 py-1">{teamName || 'No Team'}</span>
                 </div>
               </div>
             </div>

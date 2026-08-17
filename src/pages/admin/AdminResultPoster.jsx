@@ -224,20 +224,29 @@ export default function AdminResultPoster() {
             {counts.map(count => {
               const poster = posters[count]
               return (
-                <div key={count} className="flex items-center justify-between rounded-xl p-3 border border-secondary/30 bg-black/10">
-                  <span className="text-mainText font-semibold">{count}</span>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-semibold ${poster.published ? 'text-success' : 'text-mutedText'}`}>
-                      {poster.published ? 'Published' : 'Unpublished'}
-                    </span>
-                    <button
-                      onClick={() => togglePublished(count)}
-                      aria-label={poster.published ? 'Unpublish' : 'Publish'}
-                      className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${poster.published ? 'bg-green-500' : 'bg-white/20'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${poster.published ? 'translate-x-6' : ''}`} />
-                    </button>
+                <div key={count} className="rounded-xl p-3 border border-secondary/30 bg-black/10">
+                  <div className="flex items-center justify-between">
+                    <span className="text-mainText font-semibold">{count}</span>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-semibold ${poster.published ? 'text-success' : 'text-mutedText'}`}>
+                        {poster.published ? 'Published' : 'Unpublished'}
+                      </span>
+                      <button
+                        onClick={() => togglePublished(count)}
+                        aria-label={poster.published ? 'Unpublish' : 'Publish'}
+                        className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${poster.published ? 'bg-green-500' : 'bg-white/20'}`}
+                      >
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${poster.published ? 'translate-x-6' : ''}`} />
+                      </button>
+                    </div>
                   </div>
+                  {poster.imageUrl && (
+                    <img
+                      src={poster.imageUrl}
+                      alt={`Generated poster through programme ${count}`}
+                      className="mt-3 w-full max-w-md mx-auto object-contain rounded-xl border border-secondary/30"
+                    />
+                  )}
                 </div>
               )
             })}

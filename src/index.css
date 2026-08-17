@@ -9,11 +9,15 @@
   box-sizing: border-box;
 }
 
-/* Use the existing web-safe brand stack and avoid a 404 from a missing local font file. */
+/* Default brand/logo text is Sora. The only exception is the "Corvion"
+   brand element, which keeps its CSGENERAL-REGULAR_DEMO font. */
 .font-brand,
-.brand-logo-text,
-.corvion-name {
+.brand-logo-text {
   font-family: 'Sora', 'Segoe UI', sans-serif;
+}
+
+.corvion-name {
+  font-family: 'CSGENERAL-REGULAR_DEMO', 'Sora', sans-serif;
   font-weight: 400;
 }
 

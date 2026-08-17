@@ -52,14 +52,13 @@ export default function Gallery() {
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-8 lg:px-16 py-4 lg:py-5">
         <Link
           to="/"
-          className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none"
+          className="flex items-center gap-2 tracking-tight select-none focus:outline-none"
         >
-          <span className="font-display font-black text-[1.05rem] sm:text-[1.25rem] md:text-[1.45rem] tracking-[0.16em] text-mainText/95 uppercase">
-            ISRA
-          </span>
-          <span className="font-display text-[0.48rem] sm:text-[0.56rem] md:text-[0.62rem] tracking-[0.34em] text-mainText/85 uppercase">
-            Festival
-          </span>
+          <span className="font-bold text-2xl sm:text-3xl leading-none uppercase text-mainText">ISRA</span>
+          <div className="flex flex-col text-[10px] sm:text-[11px] font-semibold leading-tight uppercase tracking-wider text-mainText border-l-0 pl-1">
+            <span>LIFE</span>
+            <span>FESTIVAL</span>
+          </div>
         </Link>
         <Link
           to="/"

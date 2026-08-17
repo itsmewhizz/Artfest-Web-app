@@ -54,9 +54,12 @@ export default function AdminLayout() {
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2.5">
-          <div className="leading-none">
-            <p className="font-display font-bold text-sm tracking-[0.16em] uppercase">ISRA</p>
-            <p className="text-[9px] tracking-[0.28em] text-mutedText uppercase">Festival Admin</p>
+          <div className="flex items-center gap-2 leading-none tracking-tight select-none">
+            <span className="font-bold text-2xl uppercase">ISRA</span>
+            <div className="flex flex-col text-[10px] font-semibold leading-tight uppercase tracking-wider border-l-0 pl-1">
+              <span>LIFE</span>
+              <span>FESTIVAL</span>
+            </div>
           </div>
           <IsraLogo variant="mark" className="w-8 h-8" />
         </div>
@@ -76,9 +79,12 @@ export default function AdminLayout() {
         {/* Brand */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 dark:border-black/10">
           <IsraLogo variant="mark" className="w-10 h-10" />
-          <div className="min-w-0 leading-none">
-            <p className="font-display font-bold text-lg tracking-[0.16em] uppercase text-inherit">ISRA</p>
-            <p className="mt-1 text-[10px] tracking-[0.3em] text-mutedText uppercase opacity-70">Festival Admin</p>
+          <div className="flex items-center gap-2 min-w-0 leading-none tracking-tight select-none">
+            <span className="font-bold text-2xl uppercase text-inherit">ISRA</span>
+            <div className="flex flex-col text-[10px] font-semibold leading-tight uppercase tracking-wider text-inherit border-l-0 pl-1">
+              <span>LIFE</span>
+              <span>FESTIVAL</span>
+            </div>
           </div>
           <button onClick={closeDrawer} aria-label="Close navigation" className="lg:hidden ml-auto p-1 text-mutedText hover:text-mainText">
             <X size={22} />

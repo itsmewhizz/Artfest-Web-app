@@ -38,7 +38,7 @@ export default {
         inter: ['Sora', 'sans-serif'],
         display: ['Sora', 'sans-serif'],
         playfair: ['Sora', 'sans-serif'],
-        brand: ['"CSGENERAL-REGULAR_DEMO"',],
+        brand: ['Sora', 'sans-serif'],
       },
     },
   },

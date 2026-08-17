@@ -604,7 +604,7 @@ export default function AdminPrint() {
       <style>{`
         .no-print { display: block; }
         .preview-sheet {
-          font-family: 'Times New Roman', Times, serif;
+          font-family: 'Sora', sans-serif;
           color: black;
           padding: 10mm;
           max-width: 210mm;

@@ -6,7 +6,6 @@ import HeroAnimation from '../components/HeroAnimation'
 import useScrollReveal from '../hooks/useScrollReveal'
 import ThemeToggle from '../components/ThemeToggle'
 import LoginControl from '../components/LoginControl'
-import IsraLogo from '../components/IsraLogo'
 
 const stats = [
   { value: '3', label: 'Teams', icon: Users },
@@ -92,14 +91,13 @@ export default function Home() {
             type="button"
             aria-label="Go to the festival home"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="group flex flex-col items-start leading-none select-none text-mainText focus:outline-none justify-self-start"
+            className="flex items-center gap-2 tracking-tight select-none focus:outline-none justify-self-start"
           >
-            <span className="font-brand font-black text-[1.05rem] sm:text-[1.2rem] tracking-[0.14em] text-purple uppercase">
-              ISRA
-            </span>
-            <span className="font-brand text-[0.48rem] sm:text-[0.56rem] tracking-[0.3em] text-textMute uppercase">
-              Festival
-            </span>
+            <span className="font-bold text-2xl sm:text-3xl leading-none uppercase text-mainText">ISRA</span>
+            <div className="flex flex-col text-[10px] sm:text-[11px] font-semibold leading-tight uppercase tracking-wider text-mainText border-l-0 pl-1">
+              <span>LIFE</span>
+              <span>FESTIVAL</span>
+            </div>
           </button>
 
           <nav className="hidden sm:flex items-center gap-1">

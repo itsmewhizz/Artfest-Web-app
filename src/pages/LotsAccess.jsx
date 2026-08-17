@@ -52,7 +52,7 @@ export default function LotsAccess() {
             type={showCode ? 'text' : 'password'}
             inputMode="numeric"
             maxLength={6}
-            className="w-full bg-black/20 text-mainText rounded-xl p-3 pr-12 outline-none border border-secondary/30 focus:border-mainText text-center font-mono font-bold tracking-[0.35em]"
+            className="w-full bg-black/20 text-mainText rounded-xl p-3 pr-12 outline-none border border-secondary/30 focus:border-mainText text-center font-bold tracking-[0.35em]"
             placeholder="••••••"
             value={code}
             onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
