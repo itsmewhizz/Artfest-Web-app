@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
 import { getStudents, getTeams, getProgrammes, getCategories, STUDENT_CATEGORIES } from '../../supabase/queries'
-import { Plus, X, Pencil, Trash2 } from 'lucide-react'
+import { Plus, X, Pencil, Trash2, Upload } from 'lucide-react'
 import StudentAvatar from '../../components/StudentAvatar'
 import FilterDropdown from '../../components/FilterDropdown'
 import KebabMenu from '../../components/KebabMenu'
+import FileImportModal from '../../components/FileImportModal'
+import { rowField } from '../../utils/importParsers'
 import { useToast } from '../../components/Toast'
 
 export default function AdminStudents() {
@@ -23,6 +25,7 @@ export default function AdminStudents() {
   const [editingId, setEditingId] = useState(null)
   const [selectedProgs, setSelectedProgs] = useState([])
   const [viewStudent, setViewStudent] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
   const [genFilter, setGenFilter] = useState('')
   const toast = useToast()
 
@@ -123,6 +126,70 @@ export default function AdminStudents() {
     setGenFilter('')
   }
 
+  const handleImport = async (parsed) => {
+    const teamById = Object.fromEntries(teams.map(t => [t.id, t.name]))
+    const teamByName = Object.fromEntries(teams.map(t => [t.name.toUpperCase(), t.id]))
+    let inserted = 0
+    const failed = []
+
+    for (const raw of parsed.rows) {
+      const name = rowField(raw, 'name', 'participantname', 'studentname', 'names')
+      const chestNo = rowField(raw, 'chestno', 'chest', 'rollno')
+      const category = rowField(raw, 'category', 'class')
+      const teamRaw = rowField(raw, 'team')
+
+      if (!name) {
+        failed.push('a row missing a name')
+        continue
+      }
+      const normalizedCategory = category.replace(/\b\w/g, c => c.toUpperCase())
+      const normalizedTeam = (teamRaw || '').trim().toUpperCase()
+      if (!categories.includes(normalizedCategory)) {
+        failed.push(name)
+        continue
+      }
+      let team = teamRaw
+      if (teamByName[normalizedTeam]) {
+        team = teamByName[normalizedTeam]
+      } else if (Object.values(teamById).some(t => t.toUpperCase() === normalizedTeam)) {
+        team = Object.entries(teamById).find(([, t]) => t.toUpperCase() === normalizedTeam)[0]
+      }
+      if (!team) {
+        failed.push(name)
+        continue
+      }
+
+      const { error } = await supabase.from('students').insert({
+        name,
+        chestNo: chestNo || null,
+        class: normalizedCategory,
+        team,
+        photoURL: '',
+        programmeIds: [],
+      })
+      if (error) {
+        console.error('Participant import row failed:', error)
+        failed.push(name)
+        continue
+      }
+      inserted += 1
+    }
+
+    const refreshedStudents = await getStudents()
+    setStudents(refreshedStudents)
+
+    if (inserted > 0) {
+      toast(`Imported ${inserted} participant${inserted === 1 ? '' : 's'}!`)
+    }
+    if (failed.length > 0) {
+      toast(`Skipped ${failed.length} row${failed.length === 1 ? '' : 's'} (missing or invalid data)`, 'error')
+    }
+    if (inserted === 0 && failed.length > 0) {
+      throw new Error('No rows could be imported — check the name, category and team columns.')
+    }
+    setImportOpen(false)
+  }
+
   const toggleProg = (progId) => {
     setSelectedProgs(prev =>
       prev.includes(progId) ? prev.filter(id => id !== progId) : [...prev, progId]
@@ -219,9 +286,14 @@ export default function AdminStudents() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Participants</h2>
-        <button onClick={openAdd} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
-          <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Participant
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 bg-card hover:bg-white/10 border border-secondary/40 text-mainText px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
+            <Upload size={16} className="sm:w-[18px] sm:h-[18px]" /> Import File
+          </button>
+          <button onClick={openAdd} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
+            <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Participant
+          </button>
+        </div>
       </div>
 
       {formOpen && (
@@ -353,6 +425,16 @@ export default function AdminStudents() {
       </div>
 
       {viewStudent && programmesModal(viewStudent)}
+
+      <FileImportModal
+        open={importOpen}
+        title="Import Participants"
+        description="Bulk-add participants from a file. The file must contain a Name column; Category/Class and Team columns are mapped to existing categories and teams."
+        onClose={() => setImportOpen(false)}
+        onImport={handleImport}
+        accept=".csv,.xlsx,.xls,.pdf,image/*"
+        hint="Expected columns: Name, Chest No (optional), Category/Class, Team. Team values are matched by team name or id."
+      />
     </div>
   )
 }

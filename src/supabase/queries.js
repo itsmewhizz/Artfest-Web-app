@@ -75,6 +75,29 @@ export const getProgrammes = async () => {
   return data || []
 }
 
+export const getFinishedProgrammeIds = async () => {
+  const { data, error } = await supabase.from('programmes').select('id, isFinished')
+  if (error) {
+    console.error('getFinishedProgrammeIds error:', error)
+    return new Set()
+  }
+  return new Set((data || []).filter(p => p.isFinished).map(p => p.id))
+}
+
+// Latest result row per programme, restricted to programmes that are
+// marked as finished. Unfinished programmes are excluded so stale or
+// incomplete result data never surfaces in result-reading views.
+export const getResultsForFinishedProgrammes = async () => {
+  const finishedIds = await getFinishedProgrammeIds()
+  const { data, error } = await supabase.from('results').select('*')
+  if (error) {
+    console.error('getResultsForFinishedProgrammes error:', error)
+    return []
+  }
+  const filtered = (data || []).filter(r => r.programmeId && finishedIds.has(r.programmeId))
+  return latestPerProgramme(filtered).sort((a, b) => (b.resultNo || 0) - (a.resultNo || 0))
+}
+
 export const getProgrammeById = async (id) => {
   const { data, error } = await supabase.from('programmes').select('*').eq('id', id).single()
   if (error) console.error(error)
@@ -136,14 +159,10 @@ export async function getTeamPlacements(teamId) {
     .map(s => s.id)
   if (studentIds.length === 0) return { first: [], second: [], third: [] }
 
-  const { data: results, error: resErr } = await supabase
-    .from('results')
-    .select('*')
-  if (resErr) return { first: [], second: [], third: [] }
+  const results = await getResultsForFinishedProgrammes()
 
-  const unique = latestPerProgramme(results)
   const placements = { first: [], second: [], third: [] }
-  for (const result of unique) {
+  for (const result of results) {
     if (result.first?.studentId && studentIds.includes(result.first.studentId)) {
       placements.first.push(result)
     }
@@ -166,9 +185,7 @@ export const getStudentsByTeamId = async (teamId) => {
 }
 
 export async function getStudentResults(studentId) {
-  const { data: allResults, error } = await supabase.from('results').select('*')
-  if (error) return []
-  const unique = latestPerProgramme(allResults)
+  const unique = await getResultsForFinishedProgrammes()
   const studentResults = []
   for (const result of unique) {
     const placement = [result.first, result.second, result.third].find(p => p?.studentId === studentId)
@@ -180,10 +197,8 @@ export async function getStudentResults(studentId) {
 }
 
 export async function getStudentPoints(studentId) {
-  const { data: results, error } = await supabase.from('results').select('*')
-  if (error) return 0
+  const unique = await getResultsForFinishedProgrammes()
   let total = 0
-  const unique = latestPerProgramme(results)
   for (const r of unique) {
     if (r.first?.studentId === studentId) total += (r.first.points || 0)
     if (r.second?.studentId === studentId) total += (r.second.points || 0)
@@ -326,7 +341,7 @@ export const getTeamCategoryPoints = async () => {
     supabase.from('teams').select('*').then(r => r.data || []),
     supabase.from('students').select('*').then(r => r.data || []),
     supabase.from('programmes').select('*').then(r => r.data || []),
-    supabase.from('results').select('*').then(r => r.data || []),
+    getResultsForFinishedProgrammes(),
   ])
 
   const latestPerProg = {}

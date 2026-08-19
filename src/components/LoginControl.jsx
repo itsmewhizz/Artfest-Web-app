@@ -61,10 +61,10 @@ export default function LoginControl() {
           if (!wrapRef.current?.contains(e.relatedTarget)) setOpen(false)
         }}
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-subtle text-mainText text-xs font-semibold hover:bg-lavender transition shadow-sm"
+        className="glass-chip flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold shadow-sm hover:scale-[1.03]"
       >
         <span>Login</span>
-        <ChevronDown size={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={13} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       <div

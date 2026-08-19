@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Download, LogOut, Trophy, Pencil, X, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../supabase/client'
-import { getStudentById, getProgrammes, getCategories, getStudentSessionState, clearStudentSession, getAllResults, getTeams, STUDENT_CATEGORIES } from '../supabase/queries'
+import { getStudentById, getProgrammes, getCategories, getStudentSessionState, clearStudentSession, getTeams, getResultsForFinishedProgrammes, STUDENT_CATEGORIES } from '../supabase/queries'
 import StudentAvatar from '../components/StudentAvatar'
 import ResultPoster from '../components/ResultPoster'
 import ThemeToggle from '../components/ThemeToggle'
@@ -55,7 +55,7 @@ export default function StudentDashboard() {
       const [studentData, programmeData, resultData, categoriesData, teamsData] = await Promise.all([
         getStudentById(studentId),
         getProgrammes(),
-        getAllResults(),
+        getResultsForFinishedProgrammes(),
         getCategories().then(({ student }) => student),
         getTeams(),
       ])

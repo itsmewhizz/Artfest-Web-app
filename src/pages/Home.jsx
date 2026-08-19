@@ -21,7 +21,7 @@ const stats = [
 const teamMembers = [
   { name: 'Anwar Ahmed', role: 'Festival Chairman', initials: 'AA', tint: 'from-[#6366F1] to-[#7BEAFE]', photo: '/team/Anwar.jpg' },
   { name: 'Muhammed AbdulQadar', role: 'Festival Convenor', initials: 'MA', tint: 'from-[#7BEAFE] to-[#FFDA63]', photo: '/team/Mohammed.jpeg' },
-  { name: 'Sayyid Mueen Hussain', role: 'Finance Convenor', initials: 'SM', tint: 'from-[#FFDA63] to-[#6366F1]', photo: '/team/Moinu.jpeg' },
+  { name: 'Sayyid Mueenudheen', role: 'Finance Convenor', initials: 'SM', tint: 'from-[#FFDA63] to-[#6366F1]', photo: '/team/Moinu.jpeg' },
   { name: 'Shammas Mujeeb', role: 'Vice Chairman', initials: 'SM', tint: 'from-[#6366F1] to-[#A78BFA]', photo: '/team/Shammas.jpeg' },
   { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#A78BFA] to-[#7BEAFE]', photo: '/team/midlaj moideen.jpg' },
   { name: 'Afsal Sharafudheen', role: 'Joint Convenor', initials: 'AS', tint: 'from-[#7BEAFE] to-[#94A3B8]', photo: '/team/Afsal.jpg' },
@@ -89,22 +89,22 @@ export default function Home() {
     <div className="min-h-screen">
 
       {/* ── Floating Top Nav ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 sm:px-8 pt-4">
-        <div className="floating-nav grid grid-cols-[1fr_auto_1fr] items-center w-full max-w-3xl px-4 py-2 sm:px-5">
+      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-3 sm:px-8 pt-4">
+        <div className="floating-nav relative flex items-center w-full max-w-3xl px-3 py-2 sm:px-5 gap-2 sm:gap-3">
           <Link
             to="/"
             aria-label="Go to the festival home"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex items-center gap-2 tracking-tight select-none focus:outline-none justify-self-start font-sora"
+            className="flex items-center gap-1.5 tracking-tight select-none focus:outline-none font-sora"
           >
-            <span className="font-bold text-2xl sm:text-3xl leading-none uppercase text-mainText">ISRA</span>
-            <div className="flex flex-col text-[10px] sm:text-[11px] font-semibold leading-tight uppercase tracking-wider text-mainText border-l-0 pl-1">
+            <span className="font-bold text-xl sm:text-3xl leading-none uppercase text-mainText">ISRA</span>
+            <div className="flex flex-col text-[9px] sm:text-[11px] font-semibold leading-tight uppercase tracking-tight sm:tracking-wider text-mainText border-l-0 pl-0.5 sm:pl-1">
               <span>LIFE</span>
               <span>FESTIVAL</span>
             </div>
           </Link>
 
-          <nav className="hidden sm:flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="nav-link active">
               Home
             </button>
@@ -113,7 +113,7 @@ export default function Home() {
             </button>
           </nav>
 
-          <div className="flex items-center gap-3 justify-self-end ml-2 sm:ml-0">
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
             <LoginControl />
             <ThemeToggle />
           </div>
@@ -160,13 +160,13 @@ export default function Home() {
               onClick={() => navigate('/results')}
               className="cta-gradient px-8 py-3 font-semibold font-inter"
             >
-              View Results
+              Results
             </button>
             <button
               onClick={() => scrollTo(aboutRef)}
               className="px-8 py-3 bg-card border border-subtle text-mainText rounded-full font-semibold font-inter hover:bg-lavender transition"
             >
-              About the Fest
+              About
             </button>
           </div>
         </div>
@@ -310,7 +310,7 @@ export default function Home() {
             <p className="text-mutedText text-sm sm:text-base italic leading-loose">
               Campus Art Fest is an annual celebration of creativity and talent, bringing together
               participants from all departments to showcase their skills in dance, music, art,
-              literary arts, and stage performances. Our mission is to Track, Celebrate, and
+              literary arts, and Stage performances. Our mission is to Track, Celebrate, and
               Remember every moment of this vibrant festival.
             </p>
             <p className="text-mutedText text-sm sm:text-base italic leading-loose">
@@ -353,43 +353,21 @@ export default function Home() {
           </h3>
           <p className="max-w-2xl mx-auto text-mutedText text-sm sm:text-base italic leading-loose mb-12 px-2">
             A passionate crew of organizers, coordinators, and volunteers who bring the festival
-            to life — from stage lights to score sheets.
+            to life — from Stage lights to score sheets.
           </p>
 
-          <div className="grid grid-cols-4 gap-x-6 gap-y-10 place-items-center max-w-6xl mx-auto px-4 mb-8">
-            {teamMembers.slice(0, 4).map(member => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-x-6 md:gap-y-10 place-items-center max-w-6xl mx-auto px-4">
+            {teamMembers.map(member => (
               <div key={member.name} className="w-full max-w-[301px] text-center">
                 {member.photo ? (
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] object-cover object-top shadow-lg"
+                    className="mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-2xl md:rounded-[24px] object-cover object-top shadow-lg"
                   />
                 ) : (
                   <div
-                    className={`mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
-                  >
-                    {member.initials}
-                  </div>
-                )}
-                <p className="team-profile-name text-center">{member.name}</p>
-                <p className="team-profile-role text-center">{member.role}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-4 gap-x-6 gap-y-8 place-items-center max-w-6xl mx-auto px-4">
-            {teamMembers.slice(4).map(member => (
-              <div key={member.name} className="w-full max-w-[301px] text-center">
-                {member.photo ? (
-                  <img
-                    src={member.photo}
-                    alt={member.name}
-                    className="mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] object-cover object-top shadow-lg"
-                  />
-                ) : (
-                  <div
-                    className={`mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[24px] bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
+                    className={`mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-2xl md:rounded-[24px] bg-gradient-to-br ${member.tint} flex items-center justify-center font-display text-2xl font-bold text-white shadow-lg`}
                   >
                     {member.initials}
                   </div>

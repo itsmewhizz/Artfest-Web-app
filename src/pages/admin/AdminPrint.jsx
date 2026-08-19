@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { getProgrammes, getStudents, getTeams, getAllResults } from '../../supabase/queries'
+import { getProgrammes, getStudents, getTeams, getAllResults, getResultsForFinishedProgrammes } from '../../supabase/queries'
 import { ArrowLeft, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react'
 import FilterDropdown from '../../components/FilterDropdown'
 
@@ -37,6 +37,7 @@ const MAX_SHEETS = 8
 export default function AdminPrint() {
   const [programmes, setProgrammes] = useState([])
   const [allResults, setAllResults] = useState([])
+  const [finishedResults, setFinishedResults] = useState([])
   const [students, setStudents] = useState([])
   const [teams, setTeams] = useState([])
   const [activeTab, setActiveTab] = useState('programmes')
@@ -52,6 +53,7 @@ export default function AdminPrint() {
     getStudents().then(setStudents)
     getTeams().then(setTeams)
     getAllResults().then(setAllResults)
+    getResultsForFinishedProgrammes().then(setFinishedResults)
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
@@ -142,7 +144,7 @@ export default function AdminPrint() {
     }
 
     ids.forEach(id => {
-      const res = allResults.find(r => r.id === id)
+      const res = finishedResults.find(r => r.id === id)
       const prog = res ? programmes.find(p => p.id === res.programmeId) : null
       const rows = []
       const addRow = (placement) => {
@@ -399,8 +401,8 @@ export default function AdminPrint() {
           {/* Result List */}
           {activeTab === 'results' && (
             <div className="space-y-3">
-              {allResults.length === 0 && <p className="text-mutedText text-center">No results found.</p>}
-              {allResults.filter(res => {
+              {finishedResults.length === 0 && <p className="text-mutedText text-center">No results found.</p>}
+              {finishedResults.filter(res => {
                 if (!catFilter) return true
                 const prog = programmes.find(p => p.id === res.programmeId)
                 return prog?.category === catFilter

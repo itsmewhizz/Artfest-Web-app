@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
 import { getSpotlight } from '../../supabase/queries'
-import { Upload, ToggleLeft, ToggleRight, X, Pencil, Trash2 } from 'lucide-react'
+import { Upload, ToggleLeft, ToggleRight, X, Pencil, Trash2, Loader2, ImagePlus } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import { useToast } from '../../components/Toast'
 
 const NEW_ALBUM = '__new__'
+const MAX_BATCH = 10
 
 const resolveAlbum = (value, newValue) => (value === NEW_ALBUM ? newValue.trim() : (value || '').trim())
 
@@ -39,7 +40,9 @@ function AlbumPicker({ albums, value, newValue, onValue, onNewValue, label }) {
 
 export default function AdminSpotlight() {
   const [images, setImages] = useState([])
-  const [file, setFile] = useState(null)
+  const [files, setFiles] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [caption, setCaption] = useState('')
   const [album, setAlbum] = useState('')
   const [newAlbum, setNewAlbum] = useState('')
@@ -54,18 +57,42 @@ export default function AdminSpotlight() {
 
   const albums = [...new Set(images.map(i => (i.album || '').trim()).filter(Boolean))]
 
+  const addFiles = (e) => {
+    const picked = Array.from(e.target.files || [])
+    setFiles(prev => [...prev, ...picked].slice(0, MAX_BATCH))
+    e.target.value = ''
+  }
+
+  const removeFile = (idx) => {
+    setFiles(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const handleUpload = async () => {
-    if (!file) return toast('Select an image', 'error')
-    const { data } = await supabase.storage.from('photos').upload(`spotlight/${Date.now()}_${file.name}`, file)
-    const { data: urlData } = supabase.storage.from('photos').getPublicUrl(data.path)
-    await supabase.from('spotlight').insert({
-      imageURL: urlData.publicUrl,
-      caption,
-      isFeatured: false,
-      album: resolveAlbum(album, newAlbum) || null,
-    })
-    setFile(null); setCaption(''); setAlbum(''); setNewAlbum('')
-    toast('Image uploaded!')
+    if (files.length === 0) return toast('Select at least one image', 'error')
+    setUploading(true)
+    setProgress(0)
+    let uploaded = 0
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i]
+      try {
+        const { data } = await supabase.storage.from('photos').upload(`spotlight/${Date.now()}_${i}_${file.name}`, file)
+        const { data: urlData } = supabase.storage.from('photos').getPublicUrl(data.path)
+        await supabase.from('spotlight').insert({
+          imageURL: urlData.publicUrl,
+          caption,
+          isFeatured: false,
+          album: resolveAlbum(album, newAlbum) || null,
+        })
+        uploaded += 1
+      } catch (err) {
+        console.error('Image upload failed:', err)
+      }
+      setProgress(Math.round(((i + 1) / files.length) * 100))
+    }
+    setUploading(false)
+    setFiles([]); setCaption(''); setAlbum(''); setNewAlbum('')
+    if (uploaded > 0) toast(`Uploaded ${uploaded} image${uploaded === 1 ? '' : 's'}!`)
+    if (uploaded < files.length) toast(`${files.length - uploaded} image${files.length - uploaded === 1 ? '' : 's'} failed to upload`, 'error')
     load()
   }
 
@@ -119,7 +146,44 @@ export default function AdminSpotlight() {
 
       <div className="bg-card rounded-2xl p-4 mb-6 shadow-sm border border-secondary/30">
         <h3 className="text-mainText font-bold mb-3 text-sm sm:text-base">Upload New Image</h3>
-        <input type="file" accept="image/*" className="w-full text-mutedText mb-3 text-sm" onChange={e => setFile(e.target.files[0])} />
+        <label className="w-full flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-secondary/40 bg-black/10 hover:bg-black/15 transition cursor-pointer p-6 mb-3 text-center">
+          <ImagePlus size={22} className="text-accent" />
+          <span className="text-mainText text-sm font-semibold">Choose images</span>
+          <span className="text-mutedText text-xs">Up to {MAX_BATCH} images per batch</span>
+          <input type="file" accept="image/*" multiple className="hidden" onChange={addFiles} />
+        </label>
+
+        {files.length > 0 && (
+          <div className="mb-3 space-y-2">
+            {files.map((f, i) => (
+              <div key={`${f.name}-${i}`} className="flex items-center gap-3 rounded-xl bg-black/10 border border-secondary/30 px-3 py-2">
+                <img src={URL.createObjectURL(f)} alt="" className="w-10 h-8 rounded-md object-cover shrink-0" />
+                <span className="flex-1 min-w-0 text-mainText text-xs sm:text-sm truncate">{f.name}</span>
+                <button
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  disabled={uploading}
+                  className="text-mutedText hover:text-red-400 transition shrink-0 disabled:opacity-50"
+                  aria-label={`Remove ${f.name}`}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {uploading && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 text-mutedText text-sm mb-2">
+              <Loader2 size={16} className="animate-spin" /> Uploading... {progress}%
+            </div>
+            <div className="h-2 rounded-full bg-black/20 overflow-hidden">
+              <div className="h-full bg-primary transition-all duration-200" style={{ width: `${progress || 4}%` }} />
+            </div>
+          </div>
+        )}
+
         <input className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-3 outline-none border border-secondary/40 focus:border-mainText text-sm sm:text-base" placeholder="Caption (optional)" value={caption} onChange={e => setCaption(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))} />
         <AlbumPicker
           albums={albums}
@@ -129,8 +193,8 @@ export default function AdminSpotlight() {
           onNewValue={setNewAlbum}
           label="Album"
         />
-        <button onClick={handleUpload} className="w-full bg-primary text-white rounded-xl p-3 font-semibold flex items-center justify-center gap-2 text-sm sm:text-base hover:bg-primary/90 transition">
-          <Upload size={16} className="sm:w-[18px] sm:h-[18px]" /> Upload Image
+        <button onClick={handleUpload} disabled={uploading || files.length === 0} className="w-full bg-primary text-white rounded-xl p-3 font-semibold flex items-center justify-center gap-2 text-sm sm:text-base hover:bg-primary/90 transition disabled:opacity-60">
+          <Upload size={16} className="sm:w-[18px] sm:h-[18px]" /> {uploading ? 'Uploading...' : `Upload ${files.length || ''} Image${files.length === 1 ? '' : 's'}`}
         </button>
       </div>
 

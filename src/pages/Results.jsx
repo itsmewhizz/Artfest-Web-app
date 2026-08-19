@@ -127,7 +127,7 @@ export default function Results() {
                       {prog.isFinished ? 'Result' : 'Pending'}
                     </span>
                     <span className="font-display font-extrabold text-2xl text-resultNavy leading-none">
-                      {no ? `#${no}` : '—'}
+                      {prog.isFinished && no ? `#${no}` : '—'}
                     </span>
                   </div>
 

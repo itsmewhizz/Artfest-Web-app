@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Eye, Search, Trophy, Image } from 'lucide-react'
-import { getAllResults, getProgrammes, getStudents, getTeams } from '../../supabase/queries'
-import AdminResultPoster from './AdminResultPoster'
+import { Eye, Search, Trophy, Layers2 } from 'lucide-react'
+import { getProgrammes, getStudents, getTeams, getResultsForFinishedProgrammes } from '../../supabase/queries'
+import AdminTemplates from './AdminTemplates'
 
 export default function AdminResults() {
   const [programmes, setProgrammes] = useState([])
@@ -10,14 +10,14 @@ export default function AdminResults() {
   const [results, setResults] = useState([])
   const [expandedResultId, setExpandedResultId] = useState(null)
   const [search, setSearch] = useState('')
-  const [showPoster, setShowPoster] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
 
   useEffect(() => {
     Promise.all([
       getProgrammes(),
       getStudents(),
       getTeams(),
-      getAllResults(),
+      getResultsForFinishedProgrammes(),
     ]).then(([progData, studentData, teamData, resultData]) => {
       setProgrammes(progData)
       setStudents(studentData)
@@ -84,20 +84,20 @@ export default function AdminResults() {
           </div>
         </div>
         <button
-          onClick={() => setShowPoster(s => !s)}
+          onClick={() => setShowTemplates(s => !s)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base shrink-0 ${
-            showPoster
+            showTemplates
               ? 'bg-card border border-secondary/40 text-mainText hover:bg-white/10'
               : 'bg-primary text-white hover:bg-primary/90'
           }`}
         >
-          <Image size={16} className="sm:w-[18px] sm:h-[18px]" /> {showPoster ? 'Hide Poster' : 'Generate Poster'}
+          <Layers2 size={16} className="sm:w-[18px] sm:h-[18px]" /> {showTemplates ? 'Hide Templates' : 'Templates'}
         </button>
       </div>
 
-      {showPoster && (
-        <div className="mb-6">
-          <AdminResultPoster />
+      {showTemplates && (
+        <div className="mb-8">
+          <AdminTemplates onClose={() => setShowTemplates(false)} />
         </div>
       )}
 

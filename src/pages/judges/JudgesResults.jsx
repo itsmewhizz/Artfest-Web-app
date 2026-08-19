@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { judgeClient, verifyJudgeClient } from '../../supabase/client'
-import { getProgrammes, getStudents, getAllResults, getCategories, PROGRAMME_CATEGORIES } from '../../supabase/queries'
+import { getProgrammes, getStudents, getAllResults, getCategories, getFinishedProgrammeIds, PROGRAMME_CATEGORIES } from '../../supabase/queries'
 import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../../components/Toast'
 import FilterDropdown from '../../components/FilterDropdown'
@@ -21,6 +21,7 @@ export default function JudgesResults() {
   const [programmes, setProgrammes] = useState([])
   const [students, setStudents] = useState([])
   const [savedResults, setSavedResults] = useState([])
+  const [finishedIds, setFinishedIds] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [categories, setCategories] = useState(PROGRAMME_CATEGORIES)
   const [expandedId, setExpandedId] = useState(null)
@@ -56,8 +57,9 @@ export default function JudgesResults() {
   const toast = useToast()
 
   const loadResults = () => {
-    getAllResults().then(data => {
+    Promise.all([getAllResults(), getFinishedProgrammeIds()]).then(([data, ids]) => {
       setSavedResults(data || [])
+      setFinishedIds(ids)
     }).catch(err => {
       console.error('Failed to load results:', err)
       toast('Failed to load results: ' + err.message, 'error')
@@ -119,7 +121,7 @@ export default function JudgesResults() {
     .filter(p => !lockedProgrammeIds.has(p.id))
     .sort((a, b) => (resultNoMap[a.id] || 999) - (resultNoMap[b.id] || 999) || a.name.localeCompare(b.name))
 
-  const lockedResults = savedResults.filter(r => r.locked)
+  const lockedResults = savedResults.filter(r => r.locked && finishedIds?.has(r.programmeId))
   const filteredLockedResults = categoryFilter
     ? lockedResults.filter(r => {
         const prog = programmes.find(p => p.id === r.programmeId)

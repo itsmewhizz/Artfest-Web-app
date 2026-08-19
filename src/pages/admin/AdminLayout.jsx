@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import {
   LayoutDashboard,
@@ -15,7 +15,6 @@ import {
   X,
   ArrowLeft,
 } from 'lucide-react'
-import IsraLogo from '../../components/IsraLogo'
 
 const navItems = [
   { label: 'Dashboard', path: '/admin', end: true, icon: LayoutDashboard },
@@ -35,6 +34,21 @@ export default function AdminLayout() {
   const location = useLocation()
   const isDashboard = location.pathname === '/admin'
 
+  const BrandWordmark = ({ small = false }) => (
+    <Link
+      to="/"
+      onClick={() => setOpen(false)}
+      aria-label="ISRA Life Festival home"
+      className={`flex items-center gap-2 tracking-tight select-none font-sora shrink-0 ${small ? 'gap-1.5' : 'gap-2'}`}
+    >
+      <span className={`font-bold leading-none uppercase text-inherit ${small ? 'text-xl' : 'text-2xl'}`}>ISRA</span>
+      <div className={`flex flex-col leading-tight uppercase tracking-wider text-inherit font-semibold ${small ? 'text-[9px]' : 'text-[10px]'} border-l-0`}>
+        <span>LIFE</span>
+        <span>FESTIVAL</span>
+      </div>
+    </Link>
+  )
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setAdminEmail(data.user?.email || ''))
   }, [])
@@ -53,8 +67,8 @@ export default function AdminLayout() {
         <button onClick={() => setOpen(true)} aria-label="Open navigation" className="p-1.5 text-mainText">
           <Menu size={24} />
         </button>
-        <div className="flex items-center gap-2.5">
-          <IsraLogo variant="mark" className="w-8 h-8" />
+        <div className="flex items-center text-white">
+          <BrandWordmark small />
         </div>
       </div>
 
@@ -71,7 +85,7 @@ export default function AdminLayout() {
       >
         {/* Brand */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 dark:border-black/10">
-          <IsraLogo variant="mark" className="w-10 h-10" />
+          <BrandWordmark />
           <button onClick={closeDrawer} aria-label="Close navigation" className="lg:hidden ml-auto p-1 text-mutedText hover:text-mainText">
             <X size={22} />
           </button>
@@ -86,18 +100,16 @@ export default function AdminLayout() {
               end={end}
               onClick={closeDrawer}
               className={({ isActive }) =>
-                `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-white/10 text-mainText border border-white/15 shadow-inner'
-                    : 'text-inherit opacity-70 hover:opacity-100 border border-transparent'
+                `admin-nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                  isActive ? 'admin-nav-link-active' : 'border-transparent opacity-70 hover:opacity-100'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={18} className={isActive ? 'text-accent' : 'text-mutedText group-hover:text-mainText'} />
+                  <Icon size={18} className="admin-nav-ico" />
                   <span className="flex-1 truncate">{label}</span>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-accent' : 'bg-transparent'}`} />
+                  <span className={`admin-nav-dot w-1.5 h-1.5 rounded-full ${isActive ? '' : 'bg-transparent'}`} />
                 </>
               )}
             </NavLink>

@@ -2,9 +2,11 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { getProgrammes, getResultNoMap, getCategories, getTeams, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../../supabase/queries'
-import { Plus, X, Printer, Pencil, Trash2 } from 'lucide-react'
+import { Plus, X, Printer, Pencil, Trash2, Upload, Eraser } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import FilterDropdown from '../../components/FilterDropdown'
+import FileImportModal from '../../components/FileImportModal'
+import { rowField } from '../../utils/importParsers'
 import { CATEGORY_COLORS } from '../../components/TeamBreakdown'
 import { useToast } from '../../components/Toast'
 
@@ -38,8 +40,18 @@ export default function AdminProgrammes() {
   const [editResultNo, setEditResultNo] = useState('')
   const [editFinished, setEditFinished] = useState(false)
   const [viewProg, setViewProg] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
+
+  const deleteResultsForProgramme = async (progId) => {
+    const { data, error } = await supabase.rpc('admin_delete_results_for_programme', { p_programme_id: progId })
+    if (error) {
+      console.error('Delete results failed:', error)
+      return { error }
+    }
+    return { data }
+  }
 
   const loadData = () => {
     getProgrammes().then(setProgrammes)
@@ -78,6 +90,10 @@ export default function AdminProgrammes() {
     setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: !originalStatus } : p))
 
     try {
+      if (originalStatus) {
+        const del = await deleteResultsForProgramme(prog.id)
+        if (del.error) throw new Error(del.error.message)
+      }
       const { data: updated, error } = await supabase.from('programmes').update({ isFinished: !originalStatus }).eq('id', prog.id).select('id')
       if (error) throw error
       if (!updated || updated.length === 0) throw new Error('the database rejected the update (permission denied)')
@@ -88,7 +104,8 @@ export default function AdminProgrammes() {
   }
 
   const handleDelete = async (prog) => {
-    if (!window.confirm(`Delete programme "${prog.name}"? This cannot be undone.`)) return
+    if (!window.confirm(`Delete programme "${prog.name}"? All results for this programme will also be deleted. This cannot be undone.`)) return
+    await deleteResultsForProgramme(prog.id)
     const { error } = await supabase.from('programmes').delete().eq('id', prog.id)
     if (error) {
       console.error('Programme delete failed:', error)
@@ -96,6 +113,81 @@ export default function AdminProgrammes() {
     }
     toast('Programme deleted!')
     loadData()
+  }
+
+  const handleClearResult = async (prog) => {
+    if (!window.confirm(`Clear the result for "${prog.name}"? Its result rows will be deleted and the programme will be marked as not finished.`)) return
+    const del = await deleteResultsForProgramme(prog.id)
+    if (del.error) {
+      console.error('Clear result failed:', del.error)
+      return toast('Failed to clear result: ' + del.error.message, 'error')
+    }
+    await supabase.from('programmes').update({ isFinished: false }).eq('id', prog.id).select('id')
+    toast('Result cleared!')
+    loadData()
+  }
+
+  const handleImport = async (parsed) => {
+    let inserted = 0
+    const failed = []
+
+    for (const raw of parsed.rows) {
+      const name = rowField(raw, 'name', 'programme', 'programmename', 'event')
+      const category = rowField(raw, 'category')
+      const typeRaw = rowField(raw, 'type', 'programmetype')
+      const participationRaw = rowField(raw, 'participation', 'participationtype', 'categorytype')
+      const resultNo = rowField(raw, 'resultno', 'resultnumber', 'result', 'no')
+
+      if (!name || !category) {
+        failed.push(name || 'a row missing a name')
+        continue
+      }
+      const normalizedCategory = category.replace(/\b\w/g, c => c.toUpperCase())
+      if (!categories.includes(normalizedCategory)) {
+        failed.push(name)
+        continue
+      }
+      const typeCandidates = PROGRAMME_TYPES.filter(t => t.toLowerCase() === typeRaw.toLowerCase())
+      const participationCandidates = PARTICIPATION_TYPES.filter(t => t.toLowerCase() === participationRaw.toLowerCase())
+
+      const { data: newProg, error: progErr } = await supabase.from('programmes').insert({
+        name,
+        category: normalizedCategory,
+        programmeType: typeCandidates[0] || '',
+        participationType: participationCandidates[0] || '',
+        isFinished: false,
+      }).select('id')
+
+      if (progErr || !newProg || newProg.length === 0) {
+        console.error('Programme import row failed:', progErr)
+        failed.push(name)
+        continue
+      }
+
+      if (resultNo && Number(resultNo)) {
+        const { data: rpcData, error: noErr } = await supabase.rpc('admin_set_result_no', {
+          p_programme_id: newProg[0].id,
+          p_programme_name: name,
+          p_result_no: Number(resultNo),
+        })
+        const rpcMsg = noErr?.message || rpcData?.error
+        if (rpcMsg) console.error('Result number not saved for', name, rpcMsg)
+      }
+      inserted += 1
+    }
+
+    loadData()
+
+    if (inserted > 0) {
+      toast(`Imported ${inserted} programme${inserted === 1 ? '' : 's'}!`)
+    }
+    if (failed.length > 0) {
+      toast(`Skipped ${failed.length} row${failed.length === 1 ? '' : 's'} (missing or invalid data)`, 'error')
+    }
+    if (inserted === 0 && failed.length > 0) {
+      throw new Error('No rows could be imported — check the name and category columns.')
+    }
+    setImportOpen(false)
   }
 
   const startEdit = (prog) => {
@@ -115,12 +207,22 @@ export default function AdminProgrammes() {
 
   const handleEditSave = async () => {
     if (!editName || !editCategory || !editProgrammeType || !editParticipationType) return toast('Fill all fields', 'error')
+    const originalProg = programmes.find(p => p.id === editingId)
+    const turningOff = Boolean(originalProg?.isFinished) && !editFinished
     const { data: updated, error: progErr } = await supabase.from('programmes').update({
       name: editName, category: editCategory, programmeType: editProgrammeType, participationType: editParticipationType, isFinished: editFinished,
     }).eq('id', editingId).select('id')
     if (progErr || !updated || updated.length === 0) {
       console.error('Programme update failed:', progErr || { message: 'Update returned no rows (RLS).' })
       return toast('Failed to update programme: ' + (progErr?.message || 'the database rejected the update (permission denied).'), 'error')
+    }
+
+    if (turningOff) {
+      const del = await deleteResultsForProgramme(editingId)
+      if (del.error) {
+        console.error('Result cleanup on unfinish failed:', del.error)
+        return toast('Programme updated but result cleanup failed: ' + del.error.message, 'error')
+      }
     }
 
     if (editResultNo) {
@@ -194,7 +296,10 @@ export default function AdminProgrammes() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Programmes</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 bg-card hover:bg-white/10 border border-secondary/40 text-mainText px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
+            <Upload size={16} className="sm:w-[18px] sm:h-[18px]" /> Import File
+          </button>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
             <Plus size={16} className="sm:w-[18px] sm:h-[18px]" /> Add Programme
           </button>
@@ -256,6 +361,7 @@ export default function AdminProgrammes() {
               <KebabMenu
                 items={[
                   { label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(prog) },
+                  { label: 'Clear Result', icon: <Eraser size={15} />, danger: true, onClick: () => handleClearResult(prog) },
                   { label: 'Delete', icon: <Trash2 size={15} />, danger: true, onClick: () => handleDelete(prog) },
                 ]}
               />
@@ -424,6 +530,16 @@ export default function AdminProgrammes() {
 
       {/* View Participants Modal */}
       {viewProg && participantsModal(viewProg)}
+
+      <FileImportModal
+        open={importOpen}
+        title="Import Programmes"
+        description="Bulk-add programmes from a file. The file must contain Name and Category columns; Type (On-stage/Off-stage), Participation (Individual/Group) and Result No are optional."
+        onClose={() => setImportOpen(false)}
+        onImport={handleImport}
+        accept=".csv,.xlsx,.xls,.pdf,image/*"
+        hint="Expected columns: Name, Category, Type, Participation, Result No. Categories must match existing categories."
+      />
     </div>
   )
 }
