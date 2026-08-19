@@ -8,7 +8,7 @@ import {
 import PosterStage from '../../components/PosterStage'
 import { useToast } from '../../components/Toast'
 import {
-  TEMPLATE_TYPES, ALL_FIELDS, BG_PRESETS,
+  TEMPLATE_TYPES, FIELD_GROUPS, BG_PRESETS,
   FONT_FAMILIES, createDefaultTemplate, createId,
   persistTemplates, seedTemplatesIfEmpty,
   buildPosterSource, makeSampleSource, isRepeatableField,
@@ -488,7 +488,7 @@ export default function AdminTemplates({ onClose }) {
 
   // ── Render: Editor ──
   const selected = activeTemplate?.elements?.find(e => e.id === selectedId)
-  const elFields = activeTemplate ? ALL_FIELDS(activeTemplate.type) : []
+  const elGroups = activeTemplate ? (FIELD_GROUPS[activeTemplate.type] || []) : []
   const bg = activeTemplate?.background || { kind: 'solid', color: '#5E35B1', gradient: '', imageUrl: '' }
 
   return (
@@ -608,7 +608,7 @@ export default function AdminTemplates({ onClose }) {
                   className={selectCls}
                 >
                   <option value="">Static text</option>
-                  {elFields.map(g => (
+                  {elGroups.map(g => (
                     <optgroup key={g.label} label={g.label}>
                       {g.fields.map(f => (
                         <option key={f.key} value={f.key}>{f.label}{isRepeatableField(f.key) ? ' (repeats)' : ''}</option>
