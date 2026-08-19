@@ -1,7 +1,5 @@
 import { useRef } from 'react'
-import { POSTER_CANVAS, FONT_FAMILY_CSS, elementText, elementRows } from '../utils/posterTemplates'
-
-const { width: W, height: H } = POSTER_CANVAS
+import { canvasFor, FONT_FAMILY_CSS, elementText, elementRows } from '../utils/posterTemplates'
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max)
 
@@ -23,6 +21,8 @@ export default function PosterStage({
 
   if (!template) return null
 
+  const { width: W, height: H } = canvasFor(template)
+
   const bgStyle = (() => {
     const bg = template.background || { kind: 'solid', color: '#5E35B1', gradient: '', imageUrl: '' }
     if (bg.kind === 'image' && bg.imageUrl) {
@@ -34,7 +34,7 @@ export default function PosterStage({
       }
     }
     if (bg.kind === 'gradient' && bg.gradient) {
-      return { backgroundColor: bg.color || '#5E35B1', backgroundImage: bg.gradient }
+      return { backgroundImage: bg.gradient }
     }
     return { backgroundColor: bg.color || '#5E35B1' }
   })()

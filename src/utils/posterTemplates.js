@@ -1,9 +1,15 @@
 // ─────────────────────────────────────────────────────────────
-// Poster template model + helpers for the admin Templates feature
-// (visual drag-and-drop template editor → data mapping → export).
+// Poster template model + helpers for the Program Posters →
+// Templates system (visual drag-and-drop template editor →
+// data mapping → generate → 1:1 export).
 // ─────────────────────────────────────────────────────────────
 
-export const POSTER_CANVAS = { width: 720, height: 960 }
+// New templates are 1:1 square (event-poster standard). Templates saved by
+// earlier versions don't carry a `canvas` — they keep their legacy layout.
+export const POSTER_CANVAS = { width: 1080, height: 1080 }
+export const LEGACY_CANVAS = { width: 720, height: 960 }
+export const canvasFor = (template) => template?.canvas || LEGACY_CANVAS
+
 export const POSTER_STORAGE_KEY = 'poster_templates_v1'
 
 export const TEMPLATE_TYPES = {
@@ -11,7 +17,7 @@ export const TEMPLATE_TYPES = {
     key: 'result',
     label: 'Program Result Poster',
     short: 'Program Result',
-    description: 'Show a single programme’s 1st / 2nd / 3rd place winners.',
+    description: 'A single programme’s winners — result no, programme, category & 1st/2nd/3rd.',
   },
   standings: {
     key: 'standings',
@@ -80,6 +86,12 @@ export const createId = () =>
     ? crypto.randomUUID()
     : `tpl-${Date.now()}-${Math.floor(Math.random() * 1e6)}`
 
+// Display number for a template inside a list (1-based, zero-padded).
+export const templateIndexLabel = (list, id) => {
+  const idx = (list || []).findIndex(t => t && t.id === id)
+  return `#${String(idx + 1).padStart(2, '0')}`
+}
+
 // ── Fonts available to poster text elements ──
 export const FONT_FAMILIES = [
   { value: 'Sora', label: 'Sora (Brand)' },
@@ -97,9 +109,36 @@ export const FONT_FAMILY_CSS = {
   monospace: '"Courier New", monospace',
 }
 
+// ── Colour themes for the event-poster design ──
+// Light: off-white + soft blurred pastels (pale yellow, green, cyan).
+// Dark: deep black/blue + luminous glows (blue, cyan, purple).
+const PALETTES = {
+  light: {
+    bg: 'radial-gradient(circle at 14% 16%, #FFF3C4 0%, transparent 42%), radial-gradient(circle at 86% 14%, #D9F4E8 0%, transparent 42%), radial-gradient(circle at 82% 84%, #D8F0FA 0%, transparent 46%), #FBF7EE',
+    header: '#1D192B',
+    muted: 'rgba(29, 25, 43, 0.62)',
+    label: '#676375',
+    accent: '#E57F17',
+    body: '#1D192B',
+  },
+  dark: {
+    bg: 'radial-gradient(circle at 14% 16%, rgba(61,120,255,0.30) 0%, transparent 42%), radial-gradient(circle at 86% 14%, rgba(45,212,255,0.22) 0%, transparent 42%), radial-gradient(circle at 80% 84%, rgba(179,110,255,0.30) 0%, transparent 46%), #0B0F19',
+    header: '#FFFFFF',
+    muted: 'rgba(255,255,255,0.62)',
+    label: '#C9D6FF',
+    accent: '#FFC94D',
+    body: '#FFFFFF',
+  },
+}
+
+export const PALETTE_KEYS = Object.keys(PALETTES)
+export const paletteFor = (theme) => PALETTES[theme] || PALETTES.light
+
 export const BG_PRESETS = {
   solid: ['#5E35B1', '#7C4DFF', '#0B0F19', '#112E81', '#0F766E', '#B91C1C', '#FFFFFF'],
   gradient: [
+    { label: 'Pastel Frame', css: PALETTES.light.bg },
+    { label: 'Luminous Glow', css: PALETTES.dark.bg },
     { label: 'Purple Night', css: 'linear-gradient(160deg, #5E35B1 0%, #3E1F8E 55%, #1D192B 100%)' },
     { label: 'Ocean', css: 'linear-gradient(160deg, #0F2A3D 0%, #2872A1 60%, #5C93AA 100%)' },
     { label: 'Sunset', css: 'linear-gradient(160deg, #B91C1C 0%, #E8845C 55%, #FFD54F 120%)' },
@@ -108,8 +147,40 @@ export const BG_PRESETS = {
   ],
 }
 
-// ── Template factory ──
+// ── Image helpers (background / logo / frame uploads) ──
+export const loadImage = (src) => new Promise((resolve, reject) => {
+  const img = new Image()
+  img.onload = () => resolve(img)
+  img.onerror = () => reject(new Error('The image could not be loaded'))
+  img.src = src
+})
 
+// Downscales/compresses an image source into a storage-safe data URL. Large
+// data URLs blow past localStorage quotas, which is what made background
+// images appear to "not persist" after save/reopen.
+export const compressImageSrc = async (src, maxDim = 1600, mime = 'image/jpeg', quality = 0.85) => {
+  const img = await loadImage(src)
+  const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
+  const w = Math.max(1, Math.round(img.width * scale))
+  const h = Math.max(1, Math.round(img.height * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(img, 0, 0, w, h)
+  return canvas.toDataURL(mime, quality)
+}
+
+export const compressImageFile = async (file, maxDim = 1600, mime = 'image/jpeg', quality = 0.85) => {
+  const url = URL.createObjectURL(file)
+  try {
+    return await compressImageSrc(url, maxDim, mime, quality)
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+// ── Template factory ──
 const textElement = (id, props) => ({
   id,
   field: null,
@@ -117,10 +188,10 @@ const textElement = (id, props) => ({
   prefix: '',
   suffix: '',
   repeat: false,
-  x: 40,
-  y: 40,
-  width: 640,
-  height: 48,
+  x: 60,
+  y: 60,
+  width: 960,
+  height: 50,
   fontSize: 24,
   fontColor: '#FFFFFF',
   fontWeight: 600,
@@ -130,59 +201,82 @@ const textElement = (id, props) => ({
   ...props,
 })
 
-export const createDefaultTemplate = (type) => {
+// Shared compact header: event logo (ISRA / LIFE FESTIVAL) + metadata.
+const buildHeaderElements = (palette) => [
+  textElement(createId(), { text: 'ISRA', x: 90, y: 52, width: 180, height: 62, fontSize: 46, fontWeight: 800, textAlign: 'left', fontColor: palette.header }),
+  textElement(createId(), { text: 'LIFE · FESTIVAL', x: 90, y: 120, width: 220, height: 26, fontSize: 18, fontWeight: 600, textAlign: 'left', textTransform: 'uppercase', fontColor: palette.muted }),
+  textElement(createId(), { text: "RENDEZVOUS'26", x: 700, y: 52, width: 290, height: 30, fontSize: 20, fontWeight: 800, textAlign: 'right', textTransform: 'uppercase', fontColor: palette.header }),
+  textElement(createId(), { text: 'ISRA VATANAPPALLY', x: 700, y: 86, width: 290, height: 24, fontSize: 14, fontWeight: 600, textAlign: 'right', textTransform: 'uppercase', fontColor: palette.muted }),
+  textElement(createId(), { field: 'date', x: 700, y: 118, width: 290, height: 24, fontSize: 14, fontWeight: 500, textAlign: 'right', fontColor: palette.muted }),
+]
+
+export const createDefaultTemplate = (type, theme = 'light') => {
   const now = new Date().toISOString()
   const id = createId()
+  const palette = paletteFor(theme)
+  const header = buildHeaderElements(palette)
 
   if (type === 'standings') {
-    const elements = []
-    const rows = 8
-    const top = 250
-    const rowH = 640
-    elements.push(textElement(createId(), { text: 'TEAM STANDINGS', x: 40, y: 56, width: 640, height: 92, fontSize: 46, fontWeight: 800, textTransform: 'uppercase', textAlign: 'center', fontColor: '#FFD54F' }))
-    elements.push(textElement(createId(), { field: 'date', x: 40, y: 160, width: 640, height: 44, fontSize: 24, fontWeight: 500, textAlign: 'center', fontColor: 'rgba(255,255,255,0.85)' }))
-    elements.push(textElement(createId(), { field: 'team.{i}.rank', repeat: true, x: 40, y: top, width: 84, height: rowH, fontSize: 22, fontWeight: 800, textAlign: 'center', fontColor: '#FFD54F' }))
-    elements.push(textElement(createId(), { field: 'team.{i}.name', repeat: true, x: 128, y: top, width: 432, height: rowH, fontSize: 24, fontWeight: 700, textAlign: 'left', fontColor: '#FFFFFF' }))
-    elements.push(textElement(createId(), { field: 'team.{i}.points', repeat: true, x: 560, y: top, width: 120, height: rowH, fontSize: 24, fontWeight: 800, textAlign: 'right', fontColor: '#EDE7F6' }))
-    elements.push(textElement(createId(), { text: "Rendezvous'26 · ISRA Vatanappally", x: 40, y: 908, width: 640, height: 32, fontSize: 16, fontWeight: 500, textAlign: 'center', fontColor: 'rgba(255,255,255,0.7)' }))
-
+    const elements = [
+      ...header,
+      textElement(createId(), { text: 'TEAM STANDINGS', x: 60, y: 168, width: 960, height: 76, fontSize: 60, fontWeight: 800, textTransform: 'uppercase', textAlign: 'center', fontColor: palette.body }),
+      textElement(createId(), { text: 'OVERALL LEADERBOARD', x: 60, y: 250, width: 960, height: 30, fontSize: 20, fontWeight: 600, textAlign: 'center', textTransform: 'uppercase', fontColor: palette.label }),
+      textElement(createId(), { field: 'team.{i}.rank', repeat: true, x: 90, y: 320, width: 110, height: 670, fontSize: 30, fontWeight: 800, textAlign: 'left', fontColor: palette.accent }),
+      textElement(createId(), { field: 'team.{i}.name', repeat: true, x: 210, y: 320, width: 620, height: 670, fontSize: 34, fontWeight: 700, textAlign: 'left', fontColor: palette.body }),
+      textElement(createId(), { field: 'team.{i}.points', repeat: true, x: 850, y: 320, width: 140, height: 670, fontSize: 32, fontWeight: 800, textAlign: 'right', fontColor: palette.accent }),
+      textElement(createId(), { text: "Rendezvous'26 · ISRA Vatanappally · Festival Collective", x: 90, y: 1020, width: 900, height: 30, fontSize: 16, fontWeight: 500, textAlign: 'center', fontColor: palette.muted }),
+    ]
     return {
       id,
-      name: 'Team Standings',
+      name: theme === 'dark' ? 'Standings Scoreboard — Dark' : 'Standings Scoreboard — Light',
       type: 'standings',
+      canvas: { width: 1080, height: 1080 },
+      teamsToShow: 8,
       createdAt: now,
       updatedAt: now,
-      teamsToShow: rows,
-      background: { kind: 'gradient', gradient: BG_PRESETS.gradient[0].css, color: '#5E35B1', imageUrl: '' },
+      background: { kind: 'gradient', gradient: palette.bg, color: palette.bg, imageUrl: '' },
       elements,
     }
   }
 
-  // Default Program Result template
-  const top = 330
-  const rowH = 300
-  const elements = []
-  elements.push(textElement(createId(), { field: 'programme.name', x: 40, y: 60, width: 640, height: 96, fontSize: 48, fontWeight: 800, textTransform: 'uppercase', fontColor: '#FFFFFF' }))
-  elements.push(textElement(createId(), { field: 'result.resultNo', prefix: '#', x: 150, y: 168, width: 420, height: 56, fontSize: 32, fontWeight: 800, fontColor: '#FFD54F' }))
-  elements.push(textElement(createId(), { field: 'programme.category', x: 40, y: 236, width: 640, height: 44, fontSize: 24, fontWeight: 600, textTransform: 'uppercase', fontColor: 'rgba(255,255,255,0.85)' }))
-  elements.push(textElement(createId(), { field: 'placement.{i}.rank', repeat: true, x: 40, y: top, width: 150, height: rowH, fontSize: 24, fontWeight: 800, textAlign: 'left', fontColor: '#FFD54F' }))
-  elements.push(textElement(createId(), { field: 'placement.{i}.name', repeat: true, x: 200, y: top, width: 340, height: rowH, fontSize: 28, fontWeight: 700, textAlign: 'left', fontColor: '#FFFFFF' }))
-  elements.push(textElement(createId(), { field: 'placement.{i}.points', repeat: true, x: 560, y: top, width: 120, height: rowH, fontSize: 28, fontWeight: 800, textAlign: 'right', fontColor: '#EDE7F6' }))
-  elements.push(textElement(createId(), { text: "Rendezvous'26 · ISRA Vatanappally", x: 40, y: 908, width: 640, height: 32, fontSize: 16, fontWeight: 500, textAlign: 'center', fontColor: 'rgba(255,255,255,0.7)' }))
-
+  // Default Program Result poster — 1:1 event-poster layout:
+  // left = programme info (result no / programme / category), right = winners.
+  const elements = [
+    ...header,
+    textElement(createId(), { text: 'RESULT', x: 90, y: 244, width: 200, height: 28, fontSize: 20, fontWeight: 700, textAlign: 'left', textTransform: 'uppercase', fontColor: palette.label }),
+    textElement(createId(), { field: 'result.resultNo', x: 90, y: 282, width: 420, height: 118, fontSize: 96, fontWeight: 800, textAlign: 'left', fontColor: palette.accent }),
+    textElement(createId(), { field: 'programme.name', x: 90, y: 430, width: 420, height: 300, fontSize: 50, fontWeight: 800, textAlign: 'left', fontColor: palette.body }),
+    textElement(createId(), { field: 'programme.category', x: 90, y: 742, width: 420, height: 38, fontSize: 26, fontWeight: 600, textAlign: 'left', fontColor: palette.label }),
+    textElement(createId(), { text: 'WINNERS', x: 570, y: 244, width: 420, height: 28, fontSize: 20, fontWeight: 700, textAlign: 'left', textTransform: 'uppercase', fontColor: palette.label }),
+    textElement(createId(), { field: 'placement.{i}.rank', repeat: true, x: 570, y: 300, width: 80, height: 520, fontSize: 42, fontWeight: 800, textAlign: 'left', fontColor: palette.accent }),
+    textElement(createId(), { field: 'placement.{i}.name', repeat: true, x: 655, y: 300, width: 250, height: 520, fontSize: 30, fontWeight: 800, textAlign: 'left', fontColor: palette.body }),
+    textElement(createId(), { field: 'placement.{i}.team', repeat: true, x: 915, y: 300, width: 100, height: 520, fontSize: 19, fontWeight: 500, textAlign: 'left', fontColor: palette.muted }),
+    textElement(createId(), { text: "Rendezvous'26 · ISRA Vatanappally · Festival Collective", x: 90, y: 980, width: 900, height: 30, fontSize: 16, fontWeight: 500, textAlign: 'center', fontColor: palette.muted }),
+  ]
   return {
     id,
-    name: 'Program Result',
+    name: theme === 'dark' ? 'Result Poster — Dark' : 'Result Poster — Light',
     type: 'result',
+    canvas: { width: 1080, height: 1080 },
     createdAt: now,
     updatedAt: now,
-    background: { kind: 'gradient', gradient: BG_PRESETS.gradient[0].css, color: '#5E35B1', imageUrl: '' },
+    background: { kind: 'gradient', gradient: palette.bg, color: palette.bg, imageUrl: '' },
     elements,
   }
 }
 
-// ── Storage ──
+// Curated built-in designs for "Explore Public Templates" — the admin picks
+// one and it is duplicated into their own template library.
+export const PUBLIC_TEMPLATES = [
+  { type: 'result', theme: 'light', label: 'Result Poster — Light' },
+  { type: 'result', theme: 'dark', label: 'Result Poster — Dark' },
+  { type: 'standings', theme: 'light', label: 'Standings Scoreboard — Light' },
+  { type: 'standings', theme: 'dark', label: 'Standings Scoreboard — Dark' },
+]
 
+export const explorePublicTemplates = () => PUBLIC_TEMPLATES.map(p => createDefaultTemplate(p.type, p.theme))
+
+// ── Storage ──
 export const loadTemplates = () => {
   try {
     const raw = localStorage.getItem(POSTER_STORAGE_KEY)
@@ -202,13 +296,12 @@ export const persistTemplates = (list) => {
 export const seedTemplatesIfEmpty = () => {
   const list = loadTemplates()
   if (list.length > 0) return list
-  const seeded = [createDefaultTemplate('result'), createDefaultTemplate('standings')]
+  const seeded = [createDefaultTemplate('result', 'light'), createDefaultTemplate('standings', 'light')]
   persistTemplates(seeded)
   return seeded
 }
 
 // ── Data resolution ──
-
 const fmtDate = (dateStr) => {
   if (!dateStr) return ''
   const d = new Date(dateStr)

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
-import { getSpotlight } from '../../supabase/queries'
-import { Upload, ToggleLeft, ToggleRight, X, Pencil, Trash2, Loader2, ImagePlus } from 'lucide-react'
+import { getSpotlight, getActiveGalleryFooter } from '../../supabase/queries'
+import { compositeWithFooter } from '../../utils/footerComposite'
+import { Upload, ToggleLeft, ToggleRight, X, Pencil, Trash2, Loader2, ImagePlus, Frame } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import { useToast } from '../../components/Toast'
 
@@ -50,9 +51,13 @@ export default function AdminSpotlight() {
   const [editCaption, setEditCaption] = useState('')
   const [editAlbum, setEditAlbum] = useState('')
   const [editNewAlbum, setEditNewAlbum] = useState('')
+  const [activeFooter, setActiveFooter] = useState(null)
   const toast = useToast()
 
-  const load = () => getSpotlight().then(setImages)
+  const load = () => Promise.all([getSpotlight(), getActiveGalleryFooter()]).then(([imgs, footer]) => {
+    setImages(imgs)
+    setActiveFooter(footer)
+  })
   useEffect(() => { load() }, [])
 
   const albums = [...new Set(images.map(i => (i.album || '').trim()).filter(Boolean))]
@@ -75,7 +80,13 @@ export default function AdminSpotlight() {
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i]
       try {
-        const { data } = await supabase.storage.from('photos').upload(`spotlight/${Date.now()}_${i}_${file.name}`, file)
+        let uploadSource = file
+        if (activeFooter?.image_url) {
+          const composite = await compositeWithFooter(URL.createObjectURL(file), activeFooter.image_url)
+          const baseName = file.name.replace(/\.[^.]+$/, '') || `spotlight_${Date.now()}_${i}`
+          uploadSource = new File([composite], `${baseName}_framed.jpg`, { type: composite.type })
+        }
+        const { data } = await supabase.storage.from('photos').upload(`spotlight/${Date.now()}_${i}_${uploadSource.name}`, uploadSource)
         const { data: urlData } = supabase.storage.from('photos').getPublicUrl(data.path)
         await supabase.from('spotlight').insert({
           imageURL: urlData.publicUrl,
@@ -145,6 +156,14 @@ export default function AdminSpotlight() {
       </p>
 
       <div className="bg-card rounded-2xl p-4 mb-6 shadow-sm border border-secondary/30">
+        {activeFooter && (
+          <div className="flex items-center gap-2 rounded-xl bg-success/10 border border-success/30 px-3 py-2 mb-3 text-xs sm:text-sm">
+            <Frame size={14} className="text-success shrink-0" />
+            <span className="text-mainText font-semibold truncate">
+              Footer overlay “{activeFooter.name}” will be applied to new uploads
+            </span>
+          </div>
+        )}
         <h3 className="text-mainText font-bold mb-3 text-sm sm:text-base">Upload New Image</h3>
         <label className="w-full flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-secondary/40 bg-black/10 hover:bg-black/15 transition cursor-pointer p-6 mb-3 text-center">
           <ImagePlus size={22} className="text-accent" />

@@ -7,9 +7,11 @@ import {
   Trophy,
   Users,
   GalleryHorizontalEnd,
+  Frame,
   FileText,
   Printer,
   Layers,
+  LayoutTemplate,
   LogOut,
   Menu,
   X,
@@ -23,7 +25,9 @@ const navItems = [
   { label: 'Teams', path: '/admin/teams', icon: Trophy },
   { label: 'Participants', path: '/admin/students', icon: Users },
   { label: 'Spotlight / Gallery', path: '/admin/spotlight', icon: GalleryHorizontalEnd },
+  { label: 'Footer Overlays', path: '/admin/spotlight/footers', icon: Frame },
   { label: 'Results', path: '/admin/results', icon: FileText },
+  { label: 'Posters', path: '/admin/posters/templates', icon: LayoutTemplate },
   { label: 'Print', path: '/admin/print', icon: Printer },
 ]
 

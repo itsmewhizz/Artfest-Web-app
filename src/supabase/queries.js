@@ -140,6 +140,40 @@ export const getSpotlight = async () => {
   return data || []
 }
 
+export const getGalleryFooters = async () => {
+  const { data, error } = await supabase.from('gallery_footers').select('*').order('createdAt', { ascending: false })
+  if (error) console.error(error)
+  return data || []
+}
+
+export const getActiveGalleryFooter = async () => {
+  const { data, error } = await supabase.from('gallery_footers').select('*').eq('is_active', true).limit(1).maybeSingle()
+  if (error) console.error(error)
+  return data || null
+}
+
+export const upsertGalleryFooter = async (footer) => {
+  const { data, error } = await supabase
+    .from('gallery_footers')
+    .upsert({ ...footer, updated_at: new Date().toISOString() })
+    .select('*')
+    .single()
+  return { data, error }
+}
+
+export const deleteGalleryFooter = async (id) => {
+  const { error } = await supabase.from('gallery_footers').delete().eq('id', id)
+  return { error }
+}
+
+export const setActiveGalleryFooter = async (id) => {
+  const { error } = await supabase
+    .from('gallery_footers')
+    .update({ is_active: true, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  return { error }
+}
+
 export const getFeaturedSpotlight = async () => {
   const { data, error } = await supabase.from('spotlight').select('*').eq('isFeatured', true).order('uploadedAt', { ascending: false })
   if (error) {

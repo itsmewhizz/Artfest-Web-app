@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Eye, Search, Trophy, Layers2 } from 'lucide-react'
 import { getProgrammes, getStudents, getTeams, getResultsForFinishedProgrammes } from '../../supabase/queries'
-import AdminTemplates from './AdminTemplates'
 
 export default function AdminResults() {
   const [programmes, setProgrammes] = useState([])
@@ -10,7 +10,6 @@ export default function AdminResults() {
   const [results, setResults] = useState([])
   const [expandedResultId, setExpandedResultId] = useState(null)
   const [search, setSearch] = useState('')
-  const [showTemplates, setShowTemplates] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -83,23 +82,13 @@ export default function AdminResults() {
             <p className="text-mutedText text-sm">Admin preview only. Judges remain the only write path for results.</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowTemplates(s => !s)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base shrink-0 ${
-            showTemplates
-              ? 'bg-card border border-secondary/40 text-mainText hover:bg-white/10'
-              : 'bg-primary text-white hover:bg-primary/90'
-          }`}
+        <Link
+          to="/admin/posters/templates"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base shrink-0 bg-primary text-white hover:bg-primary/90"
         >
-          <Layers2 size={16} className="sm:w-[18px] sm:h-[18px]" /> {showTemplates ? 'Hide Templates' : 'Templates'}
-        </button>
+          <Layers2 size={16} className="sm:w-[18px] sm:h-[18px]" /> Templates
+        </Link>
       </div>
-
-      {showTemplates && (
-        <div className="mb-8">
-          <AdminTemplates onClose={() => setShowTemplates(false)} />
-        </div>
-      )}
 
       <div className="space-y-4">
         <div className="bg-card rounded-2xl p-3 sm:p-4 shadow-sm border border-secondary/30">

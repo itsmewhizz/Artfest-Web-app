@@ -14,9 +14,12 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProgrammes from './pages/admin/AdminProgrammes'
 import AdminTeams from './pages/admin/AdminTeams'
 import AdminSpotlight from './pages/admin/AdminSpotlight'
+import AdminGalleryFooters from './pages/admin/AdminGalleryFooters'
 import AdminStudents from './pages/admin/AdminStudents'
 import AdminPrint from './pages/admin/AdminPrint'
 import AdminResults from './pages/admin/AdminResults'
+import AdminPosterTemplates from './pages/admin/AdminPosterTemplates'
+import AdminPosterEditor from './pages/admin/AdminPosterEditor'
 import LotsAccess from './pages/LotsAccess'
 import LotsDraw from './pages/LotsDraw'
 import AdminCategories from './pages/admin/AdminCategories'
@@ -70,9 +73,12 @@ function App() {
               <Route path="programmes" element={<AdminProgrammes />} />
               <Route path="teams" element={<AdminTeams />} />
               <Route path="spotlight" element={<AdminSpotlight />} />
+              <Route path="spotlight/footers" element={<AdminGalleryFooters />} />
               <Route path="students" element={<AdminStudents />} />
               <Route path="print" element={<AdminPrint />} />
               <Route path="results" element={<AdminResults />} />
+              <Route path="posters/templates" element={<AdminPosterTemplates />} />
+              <Route path="posters/templates/:id/edit" element={<AdminPosterEditor />} />
               <Route path="categories" element={<AdminCategories />} />
             </Route>
             <Route path="/lots" element={<LotsAccess />} />
