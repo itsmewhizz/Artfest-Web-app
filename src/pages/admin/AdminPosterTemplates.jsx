@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Layers2, Plus, Globe, Pencil, Copy, Trash2, X, FileText, ListOrdered, Wand2,
+  Layers2, Plus, Globe, Pencil, Copy, Trash2, X, FileText, ListOrdered, Wand2, Loader2,
 } from 'lucide-react'
 import PosterStage from '../../components/PosterStage'
 import { useToast } from '../../components/Toast'
@@ -16,40 +16,51 @@ const cardCls = 'bg-card rounded-2xl border border-secondary/30 p-3 flex flex-co
 export default function AdminPosterTemplates() {
   const navigate = useNavigate()
   const toast = useToast()
-  const [templates, setTemplates] = useState(() => seedTemplatesIfEmpty())
+  const [templates, setTemplates] = useState([])
+  const [loaded, setLoaded] = useState(false)
   const [typeModal, setTypeModal] = useState(false)
   const [publicModal, setPublicModal] = useState(false)
 
-  const persist = (next) => {
+  useEffect(() => {
+    seedTemplatesIfEmpty().then(list => {
+      setTemplates(list)
+      setLoaded(true)
+    })
+  }, [])
+
+  const persist = async (next) => {
     setTemplates(next)
-    persistTemplates(next)
+    const res = await persistTemplates(next)
+    if (res.backend === 'local') {
+      toast('Saved locally — run poster_templates.sql to enable cloud storage', 'error')
+    }
   }
 
-  const createFromType = (type, theme = 'light', openEditor = true) => {
+  const createFromType = async (type, theme = 'light', openEditor = true) => {
     const t = { ...createDefaultTemplate(type, theme), name: `${TEMPLATE_TYPES[type].short} — Light` }
-    persist([...templates, t])
+    await persist([...templates, t])
     if (openEditor) navigate(`/admin/posters/templates/${t.id}/edit`)
     return t
   }
 
-  const duplicateTemplate = (t) => {
+  const duplicateTemplate = async (t) => {
     const copy = JSON.parse(JSON.stringify(t))
     copy.id = createId()
     copy.name = `${t.name} (Copy)`
     const now = new Date().toISOString()
     copy.createdAt = now
     copy.updatedAt = now
-    persist([...templates, copy])
+    await persist([...templates, copy])
     toast('Template duplicated')
   }
 
-  const deleteTemplate = (t) => {
+  const deleteTemplate = async (t) => {
     if (!window.confirm(`Delete template "${t.name}"? This cannot be undone.`)) return
-    persist(templates.filter(x => x.id !== t.id))
+    await persist(templates.filter(x => x.id !== t.id))
     toast('Template deleted')
   }
 
-  const applyPublicTemplate = (tpl) => {
+  const applyPublicTemplate = async (tpl) => {
     const copy = {
       ...JSON.parse(JSON.stringify(tpl)),
       id: createId(),
@@ -57,7 +68,7 @@ export default function AdminPosterTemplates() {
       updatedAt: new Date().toISOString(),
     }
     const next = [...templates, copy]
-    persist(next)
+    await persist(next)
     setPublicModal(false)
     toast('Public template added to your library')
     navigate(`/admin/posters/templates/${copy.id}/edit`)
@@ -67,6 +78,14 @@ export default function AdminPosterTemplates() {
     // Cards are ~260px wide in the grid; a 1080 canvas thumb ≈ 0.22 scale.
     return 0.22
   }, [])
+
+  if (!loaded) {
+    return (
+      <div className="max-w-6xl mx-auto flex items-center justify-center gap-3 text-mainText text-center mt-20">
+        <Loader2 size={18} className="animate-spin" /> Loading templates…
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto">

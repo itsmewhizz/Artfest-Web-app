@@ -174,6 +174,43 @@ export const setActiveGalleryFooter = async (id) => {
   return { error }
 }
 
+// ── Poster templates (Supabase‑backed, shared with every user) ──
+export const getPosterTemplates = async () => {
+  const { data, error } = await supabase
+    .from('poster_templates')
+    .select('*')
+    .order('createdAt', { ascending: false })
+  if (error) console.error(error)
+  return data || []
+}
+
+// Rows carry the app template model: id, name, type, canvas, background,
+// elements, teamsToShow (camelCase columns in the DB).
+export const upsertPosterTemplates = async (rows) => {
+  return supabase.from('poster_templates').upsert(rows)
+}
+
+export const deletePosterTemplates = async (ids) => {
+  return supabase.from('poster_templates').delete().in('id', ids)
+}
+
+export const fetchPosterTemplateIds = async () => {
+  const { data, error } = await supabase.from('poster_templates').select('id')
+  if (error) console.error(error)
+  return (data || []).map(r => r.id)
+}
+
+// Upload a template background image into the `photos` storage bucket and
+// return its public URL (so the template record can persist the URL).
+export const uploadTemplateBackground = async (file, templateId) => {
+  const rawExt = (file?.name?.split('.').pop() || 'jpg').toLowerCase()
+  const ext = rawExt.replace(/[^a-z0-9]+/g, '').slice(0, 5) || 'jpg'
+  const path = `templates/${templateId}/bg-${Date.now()}.${ext}`
+  const { data, error } = await supabase.storage.from('photos').upload(path, file, { upsert: true })
+  if (error) throw error
+  return supabase.storage.from('photos').getPublicUrl(data.path).data.publicUrl
+}
+
 export const getFeaturedSpotlight = async () => {
   const { data, error } = await supabase.from('spotlight').select('*').eq('isFeatured', true).order('uploadedAt', { ascending: false })
   if (error) {

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getSpotlight } from '../supabase/queries'
-import { Download, Images, ChevronLeft } from 'lucide-react'
+import { getSpotlight, getActiveGalleryFooter } from '../supabase/queries'
+import { Download, Images, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useToast } from '../components/Toast'
+import GalleryFooterOverlay from '../components/GalleryFooterOverlay'
 
 const FALLBACK_ALBUM = 'Spotlight'
 
@@ -24,13 +25,18 @@ const groupByAlbum = (images) => {
 
 export default function Gallery() {
   const [images, setImages] = useState([])
+  const [activeFooter, setActiveFooter] = useState(null)
+  const [lightbox, setLightbox] = useState(null)
   const toast = useToast()
 
   useEffect(() => {
     getSpotlight().then(setImages)
+    getActiveGalleryFooter().then(setActiveFooter)
   }, [])
 
   const albums = useMemo(() => groupByAlbum(images), [images])
+  const flatImages = useMemo(() => albums.flatMap(a => a.imgs), [albums])
+  const footerSrc = activeFooter?.image_url || ''
 
   const handleDownloadImage = async (url, name) => {
     try {
@@ -82,33 +88,80 @@ export default function Gallery() {
                   <span className="text-mutedText text-xs font-semibold">({album.imgs.length})</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                  {album.imgs.map(img => (
-                    <div key={img.id} className="group relative">
-                      <div className="relative overflow-hidden rounded-xl border border-secondary/30">
-                        <img
-                          src={img.imageURL}
-                          alt={img.caption || ''}
-                          className="w-full h-36 sm:h-48 md:h-56 object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <button
-                          onClick={() => handleDownloadImage(img.imageURL, `spotlight_${img.id}.jpg`)}
-                          aria-label={`Download ${img.caption || 'image'}`}
-                          className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 p-1.5 sm:p-2 rounded-lg transition"
+                  {album.imgs.map(img => {
+                    const idx = flatImages.indexOf(img)
+                    return (
+                      <div key={img.id} className="group relative">
+                        <div
+                          onClick={() => idx >= 0 && setLightbox(idx)}
+                          className="relative overflow-hidden rounded-xl border border-secondary/30 cursor-pointer"
                         >
-                          <Download size={14} className="md:w-[18px] md:h-[18px]" color="white" />
-                        </button>
+                          <img
+                            src={img.imageURL}
+                            alt={img.caption || ''}
+                            className="w-full h-36 sm:h-48 md:h-56 object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <GalleryFooterOverlay src={footerSrc} />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDownloadImage(img.imageURL, `spotlight_${img.id}.jpg`) }}
+                            aria-label={`Download ${img.caption || 'image'}`}
+                            className={`absolute right-2 bg-black/60 hover:bg-black/80 p-1.5 sm:p-2 rounded-lg transition ${footerSrc ? 'bottom-[13%]' : 'bottom-2'}`}
+                          >
+                            <Download size={14} className="md:w-[18px] md:h-[18px]" color="white" />
+                          </button>
+                        </div>
+                        {img.caption && (
+                          <p className="text-mutedText text-xs sm:text-sm mt-1.5 truncate">{img.caption}</p>
+                        )}
                       </div>
-                      {img.caption && (
-                        <p className="text-mutedText text-xs sm:text-sm mt-1.5 truncate">{img.caption}</p>
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </section>
             ))}
           </div>
         )}
       </div>
+
+      {/* Lightbox / fullscreen view */}
+      {lightbox != null && flatImages[lightbox] && (() => {
+        const img = flatImages[lightbox]
+        return (
+          <div className="fixed inset-0 z-[80] bg-black/95 flex flex-col items-center justify-center p-4" onClick={() => setLightbox(null)}>
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <span className="text-white/60 text-xs font-semibold">{lightbox + 1} / {flatImages.length}</span>
+              <button onClick={() => setLightbox(null)} aria-label="Close" className="text-white/80 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition">
+                <X size={20} />
+              </button>
+            </div>
+            <button
+              aria-label="Previous image"
+              onClick={(e) => { e.stopPropagation(); setLightbox((lightbox - 1 + flatImages.length) % flatImages.length) }}
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              aria-label="Next image"
+              onClick={(e) => { e.stopPropagation(); setLightbox((lightbox + 1) % flatImages.length) }}
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+            >
+              <ChevronRight size={24} />
+            </button>
+            <div className="relative inline-block max-w-[86vw]" onClick={e => e.stopPropagation()}>
+              <img
+                src={img.imageURL}
+                alt={img.caption || ''}
+                className="max-w-[86vw] max-h-[78vh] object-contain rounded-lg"
+              />
+              <GalleryFooterOverlay src={footerSrc} />
+            </div>
+            {img.caption && (
+              <p className="text-white/80 text-sm mt-3 max-w-[86vw] text-center">{img.caption}</p>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }

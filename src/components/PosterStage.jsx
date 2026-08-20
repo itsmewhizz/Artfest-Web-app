@@ -15,6 +15,7 @@ export default function PosterStage({
   onSelect,
   onChangeElement,
   captureRef,
+  showGrid = false,
 }) {
   const previewWrapRef = useRef(null)
   const dragRef = useRef(null)
@@ -47,7 +48,7 @@ export default function PosterStage({
     fontWeight: el.fontWeight,
     textAlign: el.textAlign,
     textTransform: el.textTransform || 'none',
-    lineHeight: 1.15,
+    lineHeight: el.lineHeight ?? 1.15,
   })
 
   // Element box content. `interactive` adds drag/resize affordances and must be
@@ -231,6 +232,17 @@ export default function PosterStage({
       >
         <div style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
           <div style={{ position: 'relative', width: W, height: H }} onPointerDown={editable ? () => onSelect?.(null) : undefined}>
+            {showGrid && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  backgroundImage: 'linear-gradient(rgba(124,77,255,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(124,77,255,0.14) 1px, transparent 1px)',
+                  backgroundSize: '54px 54px',
+                }}
+              />
+            )}
             {template.elements.map((el, i) => renderElement(el, i, editable))}
           </div>
         </div>

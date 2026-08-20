@@ -2,7 +2,20 @@
 // Poster template model + helpers for the Program Posters →
 // Templates system (visual drag-and-drop template editor →
 // data mapping → generate → 1:1 export).
+//
+// Templates are pure design/layout definitions (background + positioned
+// text layers). They never hold real result data — real data is injected
+// only at render time when the Results page auto-generates a poster per
+// template (buildPosterSource + resolveFieldValue).
+//
+// Storage is Supabase-backed (shared with every user) with a localStorage
+// fallback so the editor still works before the poster_templates migration
+// SQL has been run once.
 // ─────────────────────────────────────────────────────────────
+
+import {
+  getPosterTemplates, upsertPosterTemplates, deletePosterTemplates, fetchPosterTemplateIds,
+} from '../supabase/queries'
 
 // New templates are 1:1 square (event-poster standard). Templates saved by
 // earlier versions don't carry a `canvas` — they keep their legacy layout.
@@ -198,6 +211,7 @@ const textElement = (id, props) => ({
   fontFamily: 'Sora',
   textAlign: 'center',
   textTransform: 'none',
+  lineHeight: 1.15,
   ...props,
 })
 
@@ -276,28 +290,109 @@ export const PUBLIC_TEMPLATES = [
 
 export const explorePublicTemplates = () => PUBLIC_TEMPLATES.map(p => createDefaultTemplate(p.type, p.theme))
 
-// ── Storage ──
-export const loadTemplates = () => {
+// ── Storage (Supabase-backed with localStorage fallback) ──
+const DB_SEED_KEY = 'poster_templates_db_seeded_v1'
+
+const isUuid = (id) => (
+  typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+)
+
+// Normalize a raw row/template into the app model (legacy templates lack
+// `canvas` / `elements` guards).
+const cast = (t) => ensureCanvas({
+  ...t,
+  id: t.id || createId(),
+  elements: Array.isArray(t?.elements) ? t.elements : [],
+  background: t?.background || { kind: 'solid', color: '#5E35B1', gradient: '', imageUrl: '' },
+})
+
+const ensureCanvas = (t) => (t && t.canvas ? t : { ...t, canvas: LEGACY_CANVAS })
+
+const toRow = (t) => ({
+  id: t.id,
+  name: t.name ?? 'Untitled Template',
+  type: t.type ?? 'result',
+  canvas: t.canvas || null,
+  background: t.background && (t.background.imageUrl || t.background.gradient || t.background.kind) ? t.background : null,
+  elements: Array.isArray(t.elements) ? t.elements : [],
+  teamsToShow: Number(t.teamsToShow ?? 8) || 8,
+})
+
+const readLocal = () => {
   try {
     const raw = localStorage.getItem(POSTER_STORAGE_KEY)
     const list = raw ? JSON.parse(raw) : []
     if (!Array.isArray(list)) return []
-    return list.filter(t => t && t.id && t.elements)
+    return list.filter(t => t && t.id && t.elements).map(cast)
   } catch {
     localStorage.removeItem(POSTER_STORAGE_KEY)
     return []
   }
 }
 
-export const persistTemplates = (list) => {
-  localStorage.setItem(POSTER_STORAGE_KEY, JSON.stringify(list))
+const writeLocal = (list) => {
+  try {
+    localStorage.setItem(POSTER_STORAGE_KEY, JSON.stringify(list))
+  } catch (e) {
+    console.warn('Could not cache templates locally:', e)
+  }
 }
 
-export const seedTemplatesIfEmpty = () => {
-  const list = loadTemplates()
+const loadFromDb = async () => {
+  const data = await getPosterTemplates()
+  return (data || []).map(cast)
+}
+
+export const loadTemplates = async () => {
+  try {
+    const db = await loadFromDb()
+    if (db.length > 0) return db
+
+    // DB is healthy but empty — import any templates cached locally once,
+    // so pre-migration work is not lost. Normalize legacy non-uuid ids.
+    if (localStorage.getItem(DB_SEED_KEY) !== '1') {
+      const local = readLocal().map(t => (isUuid(t.id) ? t : { ...t, id: createId() }))
+      if (local.length > 0) {
+        writeLocal(local)
+        await persistTemplates(local)
+        localStorage.setItem(DB_SEED_KEY, '1')
+        return local
+      }
+    }
+    return []
+  } catch (e) {
+    // DB missing / offline — fall back to the local cache.
+    console.warn('Poster templates DB unavailable, using local cache:', e)
+    return readLocal()
+  }
+}
+
+export const persistTemplates = async (list) => {
+  const normalized = list.map(cast)
+  writeLocal(normalized)
+  try {
+    const keepIds = normalized.map(t => t.id).filter(Boolean)
+    const existingIds = await fetchPosterTemplateIds()
+    const stale = existingIds.filter(id => !keepIds.includes(id))
+    if (stale.length > 0) await deletePosterTemplates(stale)
+    if (normalized.length > 0) {
+      const { error } = await upsertPosterTemplates(normalized.map(toRow))
+      if (error) throw error
+    }
+    return { backend: 'supabase' }
+  } catch (e) {
+    // Table may not exist yet (migration SQL not run) — keep everything in
+    // the local cache so no work is lost.
+    console.warn('Supabase save failed; kept local cache:', e)
+    return { backend: 'local' }
+  }
+}
+
+export const seedTemplatesIfEmpty = async () => {
+  const list = await loadTemplates()
   if (list.length > 0) return list
   const seeded = [createDefaultTemplate('result', 'light'), createDefaultTemplate('standings', 'light')]
-  persistTemplates(seeded)
+  await persistTemplates(seeded)
   return seeded
 }
 

@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver'
 import {
   ArrowLeft, Save, Plus, Trash2, Download, Check, X, Type, Palette,
   Eye, Layers, SlidersHorizontal, Loader2, ImagePlus,
-  Wand2, AlignLeft, AlignCenter, AlignRight, Bold,
+  Wand2, AlignLeft, AlignCenter, AlignRight, Grid3x3, ChevronDown, ChevronRight,
 } from 'lucide-react'
 import PosterStage from '../../components/PosterStage'
 import { useToast } from '../../components/Toast'
@@ -13,13 +13,26 @@ import {
   TEMPLATE_TYPES, FIELD_GROUPS, BG_PRESETS, FONT_FAMILIES, canvasFor,
   createId, loadTemplates, persistTemplates,
   buildPosterSource, makeSampleSource, isRepeatableField,
-  compressImageSrc, compressImageFile,
+  compressImageSrc,
 } from '../../utils/posterTemplates'
-import { getProgrammes, getStudents, getTeams, getResultsForFinishedProgrammes } from '../../supabase/queries'
+import {
+  getProgrammes, getStudents, getTeams, getResultsForFinishedProgrammes, uploadTemplateBackground,
+} from '../../supabase/queries'
 
 const inputCls = 'w-full rounded-xl bg-black/10 dark:bg-black/20 border border-secondary/40 text-mainText px-3 py-2 text-sm outline-none focus:border-primary transition'
 const selectCls = inputCls + ' appearance-none cursor-pointer'
 const successRing = ' ring-2 ring-success border-success'
+
+// field.key → human label (e.g. "placement.{i}.name" → "Placement # · Name")
+const FIELD_LABEL_MAP = {}
+Object.values(FIELD_GROUPS).forEach(groups =>
+  groups.forEach(g => g.fields.forEach(f => { FIELD_LABEL_MAP[f.key] = f.label })),
+)
+
+const layerLabel = (el) => {
+  if (el.field) return FIELD_LABEL_MAP[el.field] || el.field.replace(/\{i\}\.?/g, '').replace(/\./g, ' ')
+  return el.text || 'Custom text'
+}
 
 const Field = ({ label, children }) => (
   <label className="block mb-3">
@@ -28,22 +41,47 @@ const Field = ({ label, children }) => (
   </label>
 )
 
-const Panel = ({ title, children }) => (
-  <div className="rounded-2xl border border-secondary/30 bg-card p-4">
+const Panel = ({ title, children, className = '' }) => (
+  <div className={`rounded-2xl border border-secondary/30 bg-card p-4 ${className}`}>
     {title && <h4 className="text-mainText font-semibold text-sm mb-3 flex items-center gap-2">{title}</h4>}
     {children}
   </div>
 )
 
+// Build editable sample data for the "Example Poster Data for Preview" panel.
+const initSampleState = (type) => {
+  const base = makeSampleSource(type)
+  if (type === 'standings') {
+    return {
+      title: base.standings?.title || '',
+      teams: (base.teams || []).map(t => ({ name: t.name || '', points: t.points ?? '' })),
+    }
+  }
+  return {
+    programmeName: base.programme?.name || '',
+    category: base.programme?.category || '',
+    resultNo: base.result?.resultNo || '',
+    placements: (base.placements || []).map(p => ({ name: p.name || '', team: p.team || '' })),
+  }
+}
+
 export default function AdminPosterEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
-  const [templates, setTemplates] = useState(() => loadTemplates())
+  const [templates, setTemplates] = useState([])
   const [template, setTemplate] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
   const [zoom, setZoom] = useState(0.5)
+  const [grid, setGrid] = useState(false)
+  const [sampleOpen, setSampleOpen] = useState(true)
+  const [sampleState, setSampleState] = useState(null)
   const [bgStatus, setBgStatus] = useState('idle') // idle | loading | ok | error
+  const [bgUrlDirty, setBgUrlDirty] = useState(false)
+  const [pendingBg, setPendingBg] = useState(null)
+  const [canvasHint, setCanvasHint] = useState('')
   const [saved, setSaved] = useState(false)
 
   // Export state
@@ -59,14 +97,19 @@ export default function AdminPosterEditor() {
 
   // Load the template being edited (matches route /admin/posters/templates/:id/edit)
   useEffect(() => {
-    const found = templates.find(t => t?.id === id)
-    if (found) {
-      setTemplate(JSON.parse(JSON.stringify(found)))
-      setSelectedId(null)
-    } else {
-      toast('Template not found', 'error')
-      navigate('/admin/posters/templates', { replace: true })
-    }
+    (async () => {
+      const list = await loadTemplates()
+      const found = list.find(t => t?.id === id)
+      if (found) {
+        setTemplates(list)
+        setTemplate(JSON.parse(JSON.stringify(found)))
+        setSelectedId(null)
+      } else {
+        toast('Template not found', 'error')
+        navigate('/admin/posters/templates', { replace: true })
+      }
+      setLoading(false)
+    })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
@@ -76,32 +119,51 @@ export default function AdminPosterEditor() {
     )
   }, [])
 
+  // (Re)build the editable sample source used by the preview.
+  useEffect(() => {
+    if (template?.id) setSampleState(initSampleState(template.type))
+  }, [template?.id, template?.type])
+
   const bg = template?.background || { kind: 'solid', color: '#5E35B1', gradient: '', imageUrl: '' }
   const selected = template ? template.elements.find(e => e.id === selectedId) || null : null
   const elGroups = FIELD_GROUPS[template?.type] || []
-
-  const persist = () => {
-    const next = templates.map(t => (t.id === template.id ? template : t))
-    setTemplates(next)
-    persistTemplates(next)
-  }
+  const canvasCfg = canvasFor(template || {})
 
   const patchTemplate = (patch) => setTemplate(prev => prev && { ...prev, ...patch })
-
-  const saveTemplate = () => {
-    if (!template.name?.trim()) { toast('Give the template a name first', 'error'); return }
-    patchTemplate({ updatedAt: new Date().toISOString() })
-    persist()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1800)
-    toast('Template saved')
-  }
 
   const patchElement = (elId, patch) => {
     setTemplate(prev => prev && ({
       ...prev,
       elements: prev.elements.map(e => (e.id === elId ? { ...e, ...patch } : e)),
     }))
+  }
+
+  const saveTemplate = async () => {
+    if (!template.name?.trim()) { toast('Give the template a name first', 'error'); return }
+    setSaving(true)
+    let final = template
+    try {
+      // Upload a freshly-picked background to Supabase Storage now so the
+      // template record persists the public URL (not a huge data URL).
+      if (pendingBg && final.background.kind === 'image') {
+        const publicUrl = await uploadTemplateBackground(pendingBg, final.id)
+        final = { ...final, background: { ...final.background, imageUrl: publicUrl, kind: 'image' } }
+        setTemplate(final)
+        setPendingBg(null)
+      }
+      final = { ...final, updatedAt: new Date().toISOString() }
+      const next = templates.map(t => (t.id === final.id ? final : t))
+      setTemplates(next)
+      const res = await persistTemplates(next)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1800)
+      toast(res.backend === 'supabase' ? 'Template saved' : 'Saved locally — run poster_templates.sql for cloud storage')
+    } catch (err) {
+      console.error('Save failed:', err)
+      toast('Save failed. Please try again.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const addElement = () => {
@@ -114,6 +176,7 @@ export default function AdminPosterEditor() {
       x: 60, y: 60, width: 600, height: 50,
       fontSize: 24, fontColor: '#1D192B', fontWeight: 600,
       fontFamily: 'Sora', textAlign: 'center', textTransform: 'none',
+      lineHeight: 1.15,
     }
     setTemplate(prev => prev && ({ ...prev, elements: [...prev.elements, el] }))
     setSelectedId(el.id)
@@ -124,9 +187,39 @@ export default function AdminPosterEditor() {
     setSelectedId(null)
   }
 
-  const editorSource = useMemo(() => template ? makeSampleSource(template.type) : null, [template?.type]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Sample-data driven preview source.
+  const editorSource = useMemo(() => {
+    if (!template) return null
+    const base = makeSampleSource(template.type)
+    if (template.type === 'standings') {
+      const teams = (base.teams || []).map((t, i) => ({
+        ...t,
+        name: sampleState?.teams?.[i]?.name || t.name,
+        points: sampleState?.teams?.[i]?.points !== '' && sampleState?.teams?.[i]?.points != null
+          ? Number(sampleState.teams[i].points)
+          : t.points,
+      }))
+      return { ...base, standings: { title: sampleState?.title || base.standings?.title }, teams }
+    }
+    const placements = (base.placements || []).map((p, i) => ({
+      ...p,
+      name: sampleState?.placements?.[i]?.name || p.name,
+      team: sampleState?.placements?.[i]?.team || p.team,
+    }))
+    return {
+      ...base,
+      programme: {
+        name: sampleState?.programmeName || base.programme?.name,
+        category: sampleState?.category || base.programme?.category,
+      },
+      result: { resultNo: sampleState?.resultNo || base.result?.resultNo },
+      placements,
+    }
+  }, [template, sampleState])
 
-  // ── Background image handling (async preview + persistence-safe) ──
+  const patchSample = (patch) => setSampleState(prev => (prev ? { ...prev, ...patch } : patch))
+
+  // ── Background image (instant preview + Supabase storage on save) ──
   const applyBackgroundImage = async (src) => {
     setBgStatus('loading')
     try {
@@ -138,26 +231,59 @@ export default function AdminPosterEditor() {
     }
   }
 
-  const handleBgFile = async (e) => {
+  const handleBgFile = (e) => {
     const f = e.target.files?.[0]
-    if (!f) return
-    setBgStatus('loading')
-    try {
-      const data = await compressImageFile(f, 1600, 'image/jpeg', 0.88)
-      patchTemplate({ background: { ...bg, imageUrl: data, kind: 'image' } })
-      setBgStatus('ok')
-    } catch {
-      setBgStatus('error')
-    }
     e.target.value = ''
+    if (!f || !template) return
+    setPendingBg(f)
+    setBgStatus('loading')
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result
+      patchTemplate({ background: { ...template.background, imageUrl: dataUrl, kind: 'image' } })
+      setBgStatus('ok')
+      // Auto-fit the canvas to the picked image's natural size (clamped).
+      const probe = new Image()
+      probe.onload = () => {
+        const w = Math.round(Math.max(512, Math.min(2160, probe.naturalWidth || 1080)))
+        const h = Math.round(Math.max(512, Math.min(2160, probe.naturalHeight || 1080)))
+        patchTemplate({ canvas: { width: w, height: h } })
+        setCanvasHint(`Canvas dimensions set to image size (${w} × ${h}px)`)
+      }
+      probe.onerror = () => {}
+      probe.src = dataUrl
+    }
+    reader.onerror = () => setBgStatus('error')
+    reader.readAsDataURL(f)
   }
 
   const clearBackgroundImage = () => {
+    setPendingBg(null)
+    setBgUrlDirty(false)
     patchTemplate({ background: { ...bg, imageUrl: '' } })
     setBgStatus('idle')
+    setCanvasHint('')
   }
 
   const showBgCheck = bgStatus === 'ok' && bg.kind === 'image' && bg.imageUrl
+
+  // ── Arrow-key nudging for the selected element (Shift = 10px steps) ──
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!selected) return
+      const node = e.target
+      if (node && (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA' || node.tagName === 'SELECT' || node.isContentEditable)) return
+      const dirs = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }
+      const d = dirs[e.key]
+      if (!d) return
+      e.preventDefault()
+      const step = e.shiftKey ? 10 : 1
+      patchElement(selected.id, { x: selected.x + d[0] * step, y: selected.y + d[1] * step })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected])
 
   // ── Export / download helpers ──
   const studentMap = useMemo(() => { const m = {}; students.forEach(s => { m[s.id] = s }); return m }, [students])
@@ -226,9 +352,10 @@ export default function AdminPosterEditor() {
     }
   }
 
-  if (!template) return <div className="text-mainText text-center mt-20">Loading template...</div>
+  if (loading || !template) {
+    return <div className="text-mainText text-center mt-20">Loading template…</div>
+  }
 
-  const canvasCfg = canvasFor(template)
   const previewShell = (source, scale, editable) => (
     <div className="rounded-2xl p-3 bg-card border border-secondary/30 inline-block">
       <div className="rounded-lg overflow-auto">
@@ -237,6 +364,7 @@ export default function AdminPosterEditor() {
           source={source}
           scale={scale}
           editable={editable}
+          showGrid={editable && grid}
           selectedId={selectedId}
           onSelect={setSelectedId}
           onChangeElement={patchElement}
@@ -248,57 +376,54 @@ export default function AdminPosterEditor() {
 
   return (
     <div className="max-w-[1400px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate('/admin/posters/templates')} className="flex items-center gap-1.5 text-mainText hover:opacity-80 transition">
-            <ArrowLeft size={17} /> Templates
+      {/* Sticky top bar: back arrow + duplicate Save */}
+      <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-card/90 backdrop-blur border-b border-secondary/30 mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={() => navigate('/admin/posters/templates')} className="flex items-center gap-1.5 text-mainText hover:opacity-80 transition shrink-0">
+            <ArrowLeft size={18} /> Templates
           </button>
-          <span className="text-mutedText text-2xl font-light leading-none pb-0.5">/</span>
-          <input
-            value={template.name}
-            onChange={e => patchTemplate({ name: e.target.value })}
-            placeholder="Template name"
-            className="min-w-[180px] rounded-xl bg-black/10 dark:bg-black/20 border border-secondary/40 text-mainText px-4 py-2 text-sm font-semibold outline-none focus:border-primary transition"
-          />
+          <span className="text-mutedText font-light leading-none hidden md:block">/</span>
+          <h2 className="text-mainText font-semibold text-sm md:text-base truncate hidden md:block">{template.name || 'Untitled Template'}</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setExportOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 transition"
           >
             <Wand2 size={15} /> Export Poster
           </button>
           <button
             onClick={saveTemplate}
-            className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-sm bg-success text-white hover:bg-success/90 transition ${saved ? 'opacity-80' : ''}`}
+            disabled={saving}
+            className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-sm text-white transition ${saved ? 'bg-success/80' : 'bg-success hover:bg-success/90'} disabled:opacity-60`}
           >
-            {saved ? <Check size={15} /> : <Save size={15} />} {saved ? 'Saved' : 'Save'}
+            {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <Check size={15} /> : <Save size={15} />}
+            {saving ? 'Saving…' : saved ? 'Saved' : 'Save changes'}
           </button>
         </div>
       </div>
 
-      {/* 3-panel + bottom toolbar */}
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_300px] gap-4 items-start">
-        {/* LEFT: Layers / elements */}
-        <div className="space-y-4 lg:sticky lg:top-4 order-1">
+      {/* 3-panel layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-4 items-start">
+        {/* LEFT: Layers */}
+        <div className="space-y-4 lg:sticky lg:top-20 order-1">
           <Panel title={<span className="flex items-center gap-2"><Layers size={14} className="text-accent" /> Layers</span>}>
             <div className="space-y-1.5 mb-3">
-              {template.elements.length === 0 && <p className="text-mutedText text-xs">No text layers yet.</p>}
+              {template.elements.length === 0 && <p className="text-mutedText text-xs">No layers yet. Add a custom text field below.</p>}
               {template.elements.map((el, i) => (
                 <button
                   key={el.id}
                   onClick={() => setSelectedId(el.id)}
-                  className={`w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition border ${selectedId === el.id ? 'border-primary bg-purpleSoft text-mainText' : 'border-secondary/30 bg-black/5 dark:bg-black/20 text-mutedText hover:text-mainText'}`}
+                  className={`w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition border ${selectedId === el.id ? 'border-success bg-success/10 text-mainText ring-1 ring-success/40' : 'border-secondary/30 bg-black/5 dark:bg-black/20 text-mutedText hover:text-mainText'}`}
                 >
-                  <Type size={13} className="shrink-0" />
-                  <span className="truncate flex-1">{el.field ? el.field : (el.text || 'Text')}</span>
+                  <Type size={13} className={`shrink-0 ${selectedId === el.id ? 'text-success' : ''}`} />
+                  <span className="truncate flex-1">{layerLabel(el)}</span>
                   <span className="text-[10px] uppercase tracking-wide text-mutedText shrink-0">L{i + 1}</span>
                 </button>
               ))}
             </div>
             <button onClick={addElement} className="flex items-center gap-2 w-full justify-center rounded-xl border border-dashed border-secondary/50 text-mutedText hover:text-mainText hover:border-primary py-2.5 text-sm transition">
-              <Plus size={15} /> Add text layer
+              <Plus size={15} /> Add custom text field
             </button>
             {selected && (
               <button onClick={() => removeElement(selected.id)} className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-red-500/40 text-red-500 hover:bg-red-500/10 py-2 text-sm font-semibold transition">
@@ -308,35 +433,118 @@ export default function AdminPosterEditor() {
           </Panel>
         </div>
 
-        {/* CENTER: Live preview canvas */}
-        <div className="lg:sticky lg:top-4 order-2">
+        {/* CENTER: Live preview */}
+        <div className="lg:sticky lg:top-20 order-2">
           <Panel title={<span className="flex items-center gap-2"><Eye size={14} className="text-accent" /> Live Preview</span>} className="flex flex-col items-center">
             <div className="flex items-center gap-2 mb-3 self-end">
               <span className="text-mutedText text-xs font-semibold">Zoom</span>
               <button onClick={() => setZoom(z => Math.max(0.2, +(z - 0.05).toFixed(2)))} className="p-1.5 rounded-lg border border-secondary/40 text-mutedText hover:text-mainText transition">−</button>
+              <span className="text-mainText text-xs font-semibold w-10 text-center">{Math.round(zoom * 100)}%</span>
               <button onClick={() => setZoom(z => Math.min(1.5, +(z + 0.05).toFixed(2)))} className="p-1.5 rounded-lg border border-secondary/40 text-mutedText hover:text-mainText transition">+</button>
+              <span className="w-px h-5 bg-secondary/40 mx-1" />
+              <button
+                onClick={() => setGrid(g => !g)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border ${grid ? 'bg-primary text-white border-primary' : 'bg-black/10 dark:bg-black/20 text-mutedText border-secondary/40'}`}
+              >
+                <Grid3x3 size={13} /> Grid
+              </button>
             </div>
             {previewShell(editorSource, zoom, true)}
-            <p className="text-mutedText text-[11px] mt-3 text-center">Drag layers on the canvas to move them · drag the corner handle to resize. Sample text is shown while editing.</p>
+            <p className="text-mutedText text-[11px] mt-3 text-center">
+              Drag layers to move · drag the corner handle to resize · arrow keys nudge (Shift = 10px).
+            </p>
+
+            {/* Example Poster Data for Preview */}
+            <div className="w-full mt-3 rounded-xl border border-secondary/30 bg-black/5 dark:bg-black/20">
+              <button onClick={() => setSampleOpen(o => !o)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-mainText text-left">
+                {sampleOpen ? <ChevronDown size={15} className="text-accent shrink-0" /> : <ChevronRight size={15} className="text-accent shrink-0" />}
+                Example Poster Data for Preview
+              </button>
+              {sampleOpen && (
+                <div className="px-3 pb-3">
+                  {template.type === 'standings' ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Title">
+                          <input className={inputCls} value={sampleState?.title || ''} onChange={e => patchSample({ title: e.target.value })} />
+                        </Field>
+                      </div>
+                      {(sampleState?.teams || []).map((t, i) => (
+                        <div key={i} className="grid grid-cols-2 gap-3">
+                          <Field label={`Team #${i + 1} name`}>
+                            <input className={inputCls} value={t.name} onChange={e => {
+                              const teams = (sampleState?.teams || []).map((x, j) => (j === i ? { ...x, name: e.target.value } : x))
+                              patchSample({ teams })
+                            }} />
+                          </Field>
+                          <Field label="Points">
+                            <input className={inputCls} value={t.points} onChange={e => {
+                              const teams = (sampleState?.teams || []).map((x, j) => (j === i ? { ...x, points: e.target.value } : x))
+                              patchSample({ teams })
+                            }} />
+                          </Field>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Field label="Programme name">
+                          <input className={inputCls} value={sampleState?.programmeName || ''} onChange={e => patchSample({ programmeName: e.target.value })} />
+                        </Field>
+                        <Field label="Category">
+                          <input className={inputCls} value={sampleState?.category || ''} onChange={e => patchSample({ category: e.target.value })} />
+                        </Field>
+                        <Field label="Result no">
+                          <input className={inputCls} value={sampleState?.resultNo || ''} onChange={e => patchSample({ resultNo: e.target.value })} />
+                        </Field>
+                      </div>
+                      {(sampleState?.placements || []).map((p, i) => (
+                        <div key={i} className="grid grid-cols-2 gap-3">
+                          <Field label={`${i + 1}${i === 0 ? 'st' : i === 1 ? 'nd' : 'rd'} name`}>
+                            <input className={inputCls} value={p.name} onChange={e => {
+                              const placements = (sampleState?.placements || []).map((x, j) => (j === i ? { ...x, name: e.target.value } : x))
+                              patchSample({ placements })
+                            }} />
+                          </Field>
+                          <Field label="Team">
+                            <input className={inputCls} value={p.team} onChange={e => {
+                              const placements = (sampleState?.placements || []).map((x, j) => (j === i ? { ...x, team: e.target.value } : x))
+                              patchSample({ placements })
+                            }} />
+                          </Field>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </Panel>
         </div>
 
-        {/* RIGHT: Configuration */}
-        <div className="space-y-4 lg:sticky lg:top-4 order-3 max-h-[calc(100vh-13rem)] overflow-y-auto pb-4">
-          <Panel title={<span className="flex items-center gap-2"><Palette size={14} className="text-accent" /> Template</span>}>
+        {/* RIGHT: Template Configuration */}
+        <div className="space-y-4 lg:sticky lg:top-20 order-3 max-h-[calc(100vh-14rem)] overflow-y-auto pb-4">
+          <Panel title={<span className="flex items-center gap-2"><Palette size={14} className="text-accent" /> Template Configuration</span>}>
+            <Field label="Template Name">
+              <input value={template.name} onChange={e => patchTemplate({ name: e.target.value })} placeholder="e.g. Result Poster — Light" className={inputCls} />
+            </Field>
             <Field label="Type">
               <div className="rounded-xl bg-black/10 dark:bg-black/20 border border-secondary/40 px-3 py-2 text-sm text-mutedText font-medium">
                 {TEMPLATE_TYPES[template.type]?.label}
               </div>
             </Field>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <Field label="Width (px)">
-                <input type="number" min="512" max="2160" value={canvasCfg.width} onChange={e => patchTemplate({ canvas: { width: Math.max(512, Number(e.target.value) || 1080), height: canvasCfg.height } })} className={inputCls} />
-              </Field>
-              <Field label="Height (px)">
-                <input type="number" min="512" max="2160" value={canvasCfg.height} onChange={e => patchTemplate({ canvas: { height: Math.max(512, Number(e.target.value) || 1080), width: canvasCfg.width } })} className={inputCls} />
-              </Field>
-            </div>
+            <Field label="Canvas Dimensions">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Width (px)">
+                  <input type="number" min="512" max="2160" value={canvasCfg.width} onChange={e => { patchTemplate({ canvas: { width: Math.max(512, Number(e.target.value) || 1080), height: canvasCfg.height } }); setCanvasHint('') }} className={inputCls} />
+                </Field>
+                <Field label="Height (px)">
+                  <input type="number" min="512" max="2160" value={canvasCfg.height} onChange={e => { patchTemplate({ canvas: { height: Math.max(512, Number(e.target.value) || 1080), width: canvasCfg.width } }); setCanvasHint('') }} className={inputCls} />
+                </Field>
+              </div>
+              {canvasHint && <p className="text-success text-[11px] font-semibold">✓ {canvasHint}</p>}
+            </Field>
             <Field label="Background">
               <div className="flex gap-1.5 mb-2">
                 {['solid', 'gradient', 'image'].map(k => (
@@ -389,10 +597,14 @@ export default function AdminPosterEditor() {
                       value={bg.imageUrl}
                       onChange={e => {
                         patchTemplate({ background: { ...bg, imageUrl: e.target.value } })
-                        if (!e.target.value) setBgStatus('idle')
-                        else setBgStatus('idle')
+                        setBgUrlDirty(true)
                       }}
-                      onBlur={() => { if (bg.imageUrl && bgStatus === 'idle') applyBackgroundImage(bg.imageUrl) }}
+                      onBlur={() => {
+                        if (bgUrlDirty && bg.imageUrl && bgStatus !== 'loading') {
+                          applyBackgroundImage(bg.imageUrl)
+                          setBgUrlDirty(false)
+                        }
+                      }}
                       placeholder="Paste image URL"
                       className={`${inputCls} pr-9`}
                     />
@@ -402,7 +614,7 @@ export default function AdminPosterEditor() {
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-secondary/40 bg-black/5 dark:bg-black/20 text-mutedText hover:text-mainText py-2 text-xs font-semibold cursor-pointer transition">
-                      <ImagePlus size={14} /> Upload image
+                      <ImagePlus size={14} /> {pendingBg ? 'Uploading…' : 'Upload image'}
                       <input type="file" accept="image/*" className="hidden" onChange={handleBgFile} />
                     </label>
                     {bg.imageUrl && (
@@ -411,121 +623,128 @@ export default function AdminPosterEditor() {
                       </button>
                     )}
                   </div>
-                  <p className="text-mutedText text-[11px] mt-2">Images are auto-compressed so they persist reliably after saving.</p>
+                  {showBgCheck && (
+                    <p className="text-success text-[11px] mt-2 flex items-center gap-1">
+                      <Check size={12} strokeWidth={3} /> Background image loaded — preview updates live. Saved to storage on save.
+                    </p>
+                  )}
+                  {!showBgCheck && bg.kind === 'image' && !bg.imageUrl && !pendingBg && (
+                    <p className="text-mutedText text-[11px] mt-2">Pick a file or paste a URL. Picked files upload to Supabase Storage when you save.</p>
+                  )}
                 </div>
               )}
             </Field>
+
+            <button
+              onClick={saveTemplate}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-success hover:bg-success/90 text-white font-bold text-sm py-3 transition disabled:opacity-60"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+              {saving ? 'Saving…' : 'Save Template Changes'}
+            </button>
           </Panel>
-
-          {selected ? (
-            <Panel title={<span className="flex items-center gap-2"><Type size={14} className="text-accent" /> Element</span>}>
-              <Field label="Content source">
-                <select
-                  value={selected.field || ''}
-                  onChange={e => {
-                    const field = e.target.value
-                    patchElement(selected.id, { field, repeat: isRepeatableField(field) })
-                  }}
-                  className={selectCls}
-                >
-                  <option value="">Static text</option>
-                  {elGroups.map(g => (
-                    <optgroup key={g.label} label={g.label}>
-                      {g.fields.map(f => (
-                        <option key={f.key} value={f.key}>{f.label}{isRepeatableField(f.key) ? ' (repeats)' : ''}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </Field>
-
-              {selected.field ? (
-                <>
-                  {isRepeatableField(selected.field) && (
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-mutedText text-xs font-semibold">Repeat across rows</span>
-                      <button
-                        type="button"
-                        onClick={() => patchElement(selected.id, { repeat: !selected.repeat })}
-                        className={`relative w-10 h-6 rounded-full transition-colors duration-300 shrink-0 ${selected.repeat ? 'bg-primary' : 'bg-white/20 border border-secondary/40'}`}
-                        aria-pressed={selected.repeat}
-                      >
-                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${selected.repeat ? 'translate-x-4' : ''}`} />
-                      </button>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Prefix"><input value={selected.prefix} onChange={e => patchElement(selected.id, { prefix: e.target.value })} className={inputCls} placeholder="e.g. #" /></Field>
-                    <Field label="Suffix"><input value={selected.suffix} onChange={e => patchElement(selected.id, { suffix: e.target.value })} className={inputCls} placeholder="e.g. pts" /></Field>
-                  </div>
-                </>
-              ) : (
-                <Field label="Text">
-                  <textarea value={selected.text} onChange={e => patchElement(selected.id, { text: e.target.value })} rows={2} className={inputCls + ' resize-y'} />
-                </Field>
-              )}
-
-              <div className="grid grid-cols-4 gap-2 pb-1">
-                {['x', 'y', 'width', 'height'].map(k => (
-                  <Field key={k} label={k}>
-                    <input type="number" min="0" value={Math.round(selected[k])} onChange={e => patchElement(selected.id, { [k]: Number(e.target.value) || 0 })} className={inputCls} />
-                  </Field>
-                ))}
-              </div>
-            </Panel>
-          ) : (
-            <div className="rounded-2xl border border-secondary/30 bg-card p-4 text-center">
-              <SlidersHorizontal size={18} className="text-mutedText mx-auto mb-2" />
-              <p className="text-mutedText text-xs">Select a layer to configure its content and position.</p>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* BOTTOM: Formatting toolbar */}
+      {/* BOTTOM: layer content + formatting toolbar */}
       <div className="lg:sticky lg:bottom-3 mt-4 z-20">
-        <div className="rounded-2xl bg-card border border-secondary/40 backdrop-blur px-4 py-3 flex items-center gap-3 flex-wrap shadow-xl">
-          <div className="flex items-center gap-1.5 pr-2 border-r border-secondary/40">
-            <span className="text-mutedText text-[11px] font-semibold uppercase tracking-wide">Format</span>
-          </div>
+        <div className="rounded-2xl bg-card border border-secondary/40 backdrop-blur px-4 py-3 shadow-xl space-y-3">
           {!selected ? (
-            <span className="text-mutedText text-xs">Select a layer to edit its formatting.</span>
+            <div className="flex items-center gap-2 text-mutedText text-xs py-1">
+              <SlidersHorizontal size={16} /> Select a layer to edit its content, formatting (Prefix, Font, Color, Line Height…) and position (Width, X, Y).
+            </div>
           ) : (
             <>
-              <Field label="Font"><select value={selected.fontFamily} onChange={e => patchElement(selected.id, { fontFamily: e.target.value })} className={selectCls + ' w-auto min-w-[130px]'}>{FONT_FAMILIES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}</select></Field>
-              <Field label="Size"><input type="number" min="8" max="200" value={selected.fontSize} onChange={e => patchElement(selected.id, { fontSize: Number(e.target.value) || 12 })} className={inputCls + ' w-20'} /></Field>
-              <Field label="Weight">
-                <select value={selected.fontWeight} onChange={e => patchElement(selected.id, { fontWeight: Number(e.target.value) })} className={selectCls + ' w-auto min-w-[70px]'}>
-                  {[400, 500, 600, 700, 800].map(w => <option key={w} value={w}>{w}</option>)}
-                </select>
-              </Field>
-              <Field label="Bold">
-                <button
-                  onClick={() => patchElement(selected.id, { fontWeight: Math.abs(selected.fontWeight - 800) > 100 ? 800 : 500 })}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition border ${selected.fontWeight >= 700 ? 'bg-primary text-white border-primary' : 'bg-black/10 dark:bg-black/20 text-mutedText border-secondary/40'}`}
-                  title="Toggle bold"
-                >
-                  <Bold size={15} />
-                </button>
-              </Field>
-              <Field label="Align">
-                <div className="flex gap-1">
-                  {[{ v: 'left', I: AlignLeft }, { v: 'center', I: AlignCenter }, { v: 'right', I: AlignRight }].map(a => (
-                    <button key={a.v} onClick={() => patchElement(selected.id, { textAlign: a.v })} className={`w-9 h-9 rounded-xl flex items-center justify-center transition border ${selected.textAlign === a.v ? 'bg-primary text-white border-primary' : 'bg-black/10 dark:bg-black/20 text-mutedText border-secondary/40'}`} title={a.v}>
-                      <a.I size={14} />
+              {/* Content */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-mutedText text-[11px] font-semibold uppercase tracking-wide">Content</span>
+                <Field label="Data field">
+                  <select
+                    value={selected.field || ''}
+                    onChange={e => {
+                      const field = e.target.value
+                      patchElement(selected.id, { field, repeat: isRepeatableField(field) })
+                    }}
+                    className={selectCls + ' w-auto min-w-[170px]'}
+                  >
+                    <option value="">Custom text</option>
+                    {elGroups.map(g => (
+                      <optgroup key={g.label} label={g.label}>
+                        {g.fields.map(f => (
+                          <option key={f.key} value={f.key}>{f.label}{isRepeatableField(f.key) ? ' (per winner)' : ''}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </Field>
+                {selected.field && isRepeatableField(selected.field) && (
+                  <Field label="Repeat rows">
+                    <button
+                      type="button"
+                      onClick={() => patchElement(selected.id, { repeat: !selected.repeat })}
+                      className={`relative w-10 h-6 rounded-full transition-colors duration-300 shrink-0 ${selected.repeat ? 'bg-primary' : 'bg-white/20 border border-secondary/40'}`}
+                      aria-pressed={selected.repeat}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${selected.repeat ? 'translate-x-4' : ''}`} />
                     </button>
-                  ))}
-                </div>
-              </Field>
-              <Field label="Color"><input type="color" value={selected.fontColor} onChange={e => patchElement(selected.id, { fontColor: e.target.value })} className="w-9 h-9 rounded-lg bg-transparent border border-secondary/40 cursor-pointer" /></Field>
-              <Field label="Uppercase">
+                  </Field>
+                )}
+                <Field label="Prefix"><input className={inputCls + ' w-20'} value={selected.prefix} onChange={e => patchElement(selected.id, { prefix: e.target.value })} placeholder="e.g. #" /></Field>
+                <Field label="Suffix"><input className={inputCls + ' w-20'} value={selected.suffix} onChange={e => patchElement(selected.id, { suffix: e.target.value })} placeholder="e.g. pts" /></Field>
+                {!selected.field && (
+                  <Field label="Text"><input className={inputCls + ' min-w-[160px]'} value={selected.text} onChange={e => patchElement(selected.id, { text: e.target.value })} /></Field>
+                )}
+              </div>
+
+              {/* Format */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-mutedText text-[11px] font-semibold uppercase tracking-wide">Format</span>
+                <Field label="Font Family">
+                  <select value={selected.fontFamily} onChange={e => patchElement(selected.id, { fontFamily: e.target.value })} className={selectCls + ' w-auto min-w-[130px]'}>
+                    {FONT_FAMILIES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Font Size">
+                  <input type="number" min="8" max="200" value={selected.fontSize} onChange={e => patchElement(selected.id, { fontSize: Number(e.target.value) || 12 })} className={inputCls + ' w-20'} />
+                </Field>
+                <Field label="Font Weight">
+                  <select value={selected.fontWeight} onChange={e => patchElement(selected.id, { fontWeight: Number(e.target.value) })} className={selectCls + ' w-auto min-w-[70px]'}>
+                    {[400, 500, 600, 700, 800].map(w => <option key={w} value={w}>{w}</option>)}
+                  </select>
+                </Field>
+                <Field label="Alignment">
+                  <div className="flex gap-1">
+                    {[{ v: 'left', I: AlignLeft }, { v: 'center', I: AlignCenter }, { v: 'right', I: AlignRight }].map(a => (
+                      <button key={a.v} onClick={() => patchElement(selected.id, { textAlign: a.v })} className={`w-9 h-9 rounded-xl flex items-center justify-center transition border ${selected.textAlign === a.v ? 'bg-primary text-white border-primary' : 'bg-black/10 dark:bg-black/20 text-mutedText border-secondary/40'}`} title={a.v}>
+                        <a.I size={14} />
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+                <Field label="Color">
+                  <input type="color" value={selected.fontColor} onChange={e => patchElement(selected.id, { fontColor: e.target.value })} className="w-9 h-9 rounded-lg bg-transparent border border-secondary/40 cursor-pointer" />
+                </Field>
+                <Field label="Line Height">
+                  <input type="number" min="0.6" max="3" step="0.05" value={selected.lineHeight ?? 1.15} onChange={e => patchElement(selected.id, { lineHeight: Number(e.target.value) || 1.15 })} className={inputCls + ' w-20'} />
+                </Field>
+              </div>
+
+              {/* Position / size */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-mutedText text-[11px] font-semibold uppercase tracking-wide">Position</span>
+                {['width', 'height', 'x', 'y'].map(k => (
+                  <Field key={k} label={k === 'x' ? 'X Position' : k === 'y' ? 'Y Position' : k}>
+                    <input type="number" value={Math.round(selected[k] || 0)} onChange={e => patchElement(selected.id, { [k]: Number(e.target.value) || 0 })} className={inputCls + ' w-20'} />
+                  </Field>
+                ))}
                 <button
-                  onClick={() => patchElement(selected.id, { textTransform: selected.textTransform === 'uppercase' ? 'none' : 'uppercase' })}
-                  className={`px-3 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition border ${selected.textTransform === 'uppercase' ? 'bg-primary text-white border-primary' : 'bg-black/10 dark:bg-black/20 text-mutedText border-secondary/40'}`}
+                  onClick={() => removeElement(selected.id)}
+                  className="flex items-center gap-1.5 rounded-xl border border-red-500/40 text-red-500 hover:bg-red-500/10 px-3 py-2 text-xs font-semibold transition"
                 >
-                  ABC
+                  <Trash2 size={14} /> Delete layer
                 </button>
-              </Field>
+              </div>
             </>
           )}
         </div>

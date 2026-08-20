@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase/client'
-import { getProgrammeById, getResultByProgrammeId } from '../supabase/queries'
-import { ArrowLeft, Trophy, Download } from 'lucide-react'
+import { getProgrammeById, getResultByProgrammeId, getStudents, getTeams } from '../supabase/queries'
+import { ArrowLeft, Trophy, Layers } from 'lucide-react'
 import ResultPoster from '../components/ResultPoster'
+import TemplatePosterModal from '../components/TemplatePosterModal'
 import StudentAvatar from '../components/StudentAvatar'
+import { loadTemplates } from '../utils/posterTemplates'
 
 const MEDALS = [
   { label: '1st Place', color: '#E57F17', medal: '🥇' },
@@ -19,7 +21,19 @@ export default function ResultDetail() {
   const [result, setResult] = useState(null)
   const [studentPhotos, setStudentPhotos] = useState({})
   const [chestNos, setChestNos] = useState({})
+  const [templates, setTemplates] = useState([])
+  const [students, setStudents] = useState([])
+  const [teams, setTeams] = useState([])
   const [showPoster, setShowPoster] = useState(false)
+
+  // Shared template designs — used to auto-generate one poster per template.
+  useEffect(() => {
+    Promise.all([getStudents(), getTeams(), loadTemplates()]).then(([s, t, tpl]) => {
+      setStudents(s || [])
+      setTeams(t || [])
+      setTemplates((tpl || []).filter(x => x?.type === 'result'))
+    })
+  }, [])
 
   useEffect(() => {
     getProgrammeById(id).then(async (p) => {
@@ -44,6 +58,9 @@ export default function ResultDetail() {
       }
     })
   }, [id])
+
+  const studentMap = useMemo(() => { const m = {}; students.forEach(s => { m[s.id] = s }); return m }, [students])
+  const teamNameToId = useMemo(() => { const m = {}; teams.forEach(t => { m[t.name] = t.id }); return m }, [teams])
 
   if (!programme) return <div className="text-mainText text-center mt-20">Loading...</div>
 
@@ -108,19 +125,30 @@ export default function ResultDetail() {
             onClick={() => setShowPoster(true)}
             className="btn-result w-full mt-2 p-3.5 text-base"
           >
-            <Download size={18} /> Download Poster
+            <Layers size={18} /> View Posters
           </button>
         </div>
       )}
 
       {showPoster && (
-        <ResultPoster
-          programme={programme}
-          result={result}
-          studentPhotos={studentPhotos}
-          chestNos={chestNos}
-          onClose={() => setShowPoster(false)}
-        />
+        templates.length > 0 ? (
+          <TemplatePosterModal
+            programme={programme}
+            result={result}
+            templates={templates}
+            studentMap={studentMap}
+            teamNameToId={teamNameToId}
+            onClose={() => setShowPoster(false)}
+          />
+        ) : (
+          <ResultPoster
+            programme={programme}
+            result={result}
+            studentPhotos={studentPhotos}
+            chestNos={chestNos}
+            onClose={() => setShowPoster(false)}
+          />
+        )
       )}
     </div>
   )

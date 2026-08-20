@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../supabase/client'
 import { getSpotlight, getActiveGalleryFooter } from '../../supabase/queries'
-import { compositeWithFooter } from '../../utils/footerComposite'
 import { Upload, ToggleLeft, ToggleRight, X, Pencil, Trash2, Loader2, ImagePlus, Frame } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import { useToast } from '../../components/Toast'
@@ -80,13 +79,7 @@ export default function AdminSpotlight() {
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i]
       try {
-        let uploadSource = file
-        if (activeFooter?.image_url) {
-          const composite = await compositeWithFooter(URL.createObjectURL(file), activeFooter.image_url)
-          const baseName = file.name.replace(/\.[^.]+$/, '') || `spotlight_${Date.now()}_${i}`
-          uploadSource = new File([composite], `${baseName}_framed.jpg`, { type: composite.type })
-        }
-        const { data } = await supabase.storage.from('photos').upload(`spotlight/${Date.now()}_${i}_${uploadSource.name}`, uploadSource)
+        const { data } = await supabase.storage.from('photos').upload(`spotlight/${Date.now()}_${i}_${file.name}`, file)
         const { data: urlData } = supabase.storage.from('photos').getPublicUrl(data.path)
         await supabase.from('spotlight').insert({
           imageURL: urlData.publicUrl,
@@ -160,7 +153,7 @@ export default function AdminSpotlight() {
           <div className="flex items-center gap-2 rounded-xl bg-success/10 border border-success/30 px-3 py-2 mb-3 text-xs sm:text-sm">
             <Frame size={14} className="text-success shrink-0" />
             <span className="text-mainText font-semibold truncate">
-              Footer overlay “{activeFooter.name}” will be applied to new uploads
+              Footer overlay “{activeFooter.name}” is shown on gallery photos at render time — files stay untouched
             </span>
           </div>
         )}
