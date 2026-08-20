@@ -83,7 +83,7 @@ export default function AdminResults() {
           </div>
         </div>
         <Link
-          to="/admin/posters/templates"
+          to="/admin/frames/templates"
           className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base shrink-0 bg-primary text-white hover:bg-primary/90"
         >
           <Layers2 size={16} className="sm:w-[18px] sm:h-[18px]" /> Templates

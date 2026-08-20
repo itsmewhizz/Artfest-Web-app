@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Layers2, Plus, Globe, Pencil, Copy, Trash2, X, FileText, ListOrdered, Wand2, Loader2,
@@ -39,7 +39,7 @@ export default function AdminPosterTemplates() {
   const createFromType = async (type, theme = 'light', openEditor = true) => {
     const t = { ...createDefaultTemplate(type, theme), name: `${TEMPLATE_TYPES[type].short} — Light` }
     await persist([...templates, t])
-    if (openEditor) navigate(`/admin/posters/templates/${t.id}/edit`)
+    if (openEditor) navigate(`/admin/frames/templates/${t.id}/edit`)
     return t
   }
 
@@ -71,7 +71,7 @@ export default function AdminPosterTemplates() {
     await persist(next)
     setPublicModal(false)
     toast('Public template added to your library')
-    navigate(`/admin/posters/templates/${copy.id}/edit`)
+    navigate(`/admin/frames/templates/${copy.id}/edit`)
   }
 
   const gridScale = useMemo(() => {
@@ -137,7 +137,7 @@ export default function AdminPosterTemplates() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigate(`/admin/posters/templates/${t.id}/edit`)}
+                  onClick={() => navigate(`/admin/frames/templates/${t.id}/edit`)}
                   className="flex-1 flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl py-2 transition"
                 >
                   <Pencil size={14} /> Edit

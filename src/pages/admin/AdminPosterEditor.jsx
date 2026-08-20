@@ -95,7 +95,7 @@ export default function AdminPosterEditor() {
   const [downloading, setDownloading] = useState(false)
   const captureRef = useRef(null)
 
-  // Load the template being edited (matches route /admin/posters/templates/:id/edit)
+  // Load the template being edited (matches route /admin/frames/templates/:id/edit)
   useEffect(() => {
     (async () => {
       const list = await loadTemplates()
@@ -106,7 +106,7 @@ export default function AdminPosterEditor() {
         setSelectedId(null)
       } else {
         toast('Template not found', 'error')
-        navigate('/admin/posters/templates', { replace: true })
+        navigate('/admin/frames/templates', { replace: true })
       }
       setLoading(false)
     })()
@@ -379,7 +379,7 @@ export default function AdminPosterEditor() {
       {/* Sticky top bar: back arrow + duplicate Save */}
       <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-card/90 backdrop-blur border-b border-secondary/30 mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={() => navigate('/admin/posters/templates')} className="flex items-center gap-1.5 text-mainText hover:opacity-80 transition shrink-0">
+          <button onClick={() => navigate('/admin/frames/templates')} className="flex items-center gap-1.5 text-mainText hover:opacity-80 transition shrink-0">
             <ArrowLeft size={18} /> Templates
           </button>
           <span className="text-mutedText font-light leading-none hidden md:block">/</span>

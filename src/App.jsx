@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useEffect } from 'react'
 import { supabase } from './supabase/client'
 import BottomNav from './components/BottomNav'
@@ -50,6 +50,12 @@ function AdminSessionRedirect() {
   return null
 }
 
+// Legacy route alias for the frames/templates editor page.
+function PosterEditorRedirect() {
+  const { id } = useParams()
+  return <Navigate to={`/admin/frames/templates/${id}/edit`} replace />
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -73,12 +79,16 @@ function App() {
               <Route path="programmes" element={<AdminProgrammes />} />
               <Route path="teams" element={<AdminTeams />} />
               <Route path="spotlight" element={<AdminSpotlight />} />
-              <Route path="spotlight/footers" element={<AdminGalleryFooters />} />
+              <Route path="spotlight/footers" element={<Navigate to="/admin/frames/footer" replace />} />
+              <Route path="frames" element={<Navigate to="/admin/frames/templates" replace />} />
+              <Route path="frames/templates" element={<AdminPosterTemplates />} />
+              <Route path="frames/templates/:id/edit" element={<AdminPosterEditor />} />
+              <Route path="frames/footer" element={<AdminGalleryFooters />} />
+              <Route path="posters/templates" element={<Navigate to="/admin/frames/templates" replace />} />
+              <Route path="posters/templates/:id/edit" element={<PosterEditorRedirect />} />
               <Route path="students" element={<AdminStudents />} />
               <Route path="print" element={<AdminPrint />} />
               <Route path="results" element={<AdminResults />} />
-              <Route path="posters/templates" element={<AdminPosterTemplates />} />
-              <Route path="posters/templates/:id/edit" element={<AdminPosterEditor />} />
               <Route path="categories" element={<AdminCategories />} />
             </Route>
             <Route path="/lots" element={<LotsAccess />} />

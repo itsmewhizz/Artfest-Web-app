@@ -11,11 +11,12 @@ import {
   FileText,
   Printer,
   Layers,
-  LayoutTemplate,
   LogOut,
   Menu,
   X,
   ArrowLeft,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 
 const navItems = [
@@ -25,9 +26,7 @@ const navItems = [
   { label: 'Teams', path: '/admin/teams', icon: Trophy },
   { label: 'Participants', path: '/admin/students', icon: Users },
   { label: 'Spotlight / Gallery', path: '/admin/spotlight', icon: GalleryHorizontalEnd },
-  { label: 'Footer Overlays', path: '/admin/spotlight/footers', icon: Frame },
   { label: 'Results', path: '/admin/results', icon: FileText },
-  { label: 'Posters', path: '/admin/posters/templates', icon: LayoutTemplate },
   { label: 'Print', path: '/admin/print', icon: Printer },
 ]
 
@@ -37,6 +36,16 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const isDashboard = location.pathname === '/admin'
+  const isFramesActive = location.pathname === '/admin/frames' || location.pathname.startsWith('/admin/frames/')
+
+  // Frames submenu starts expanded whenever a frames route is active, so the
+  // Templates / Footer subsections are visible on direct links too.
+  const [framesOpen, setFramesOpen] = useState(location.pathname.startsWith('/admin/frames'))
+
+  useEffect(() => {
+    if (isFramesActive && !framesOpen) setFramesOpen(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
 
   const BrandWordmark = ({ small = false }) => (
     <Link
@@ -63,6 +72,18 @@ export default function AdminLayout() {
   }
 
   const closeDrawer = () => setOpen(false)
+
+  // Clicking "Frames" first reveals + defaults to the Templates subsection;
+  // clicking again while active collapses/expands the submenu.
+  const handleFramesClick = () => {
+    if (!isFramesActive) {
+      setFramesOpen(true)
+      closeDrawer()
+      navigate('/admin/frames/templates')
+    } else {
+      setFramesOpen(o => !o)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-mainBackground text-mainText">
@@ -118,6 +139,53 @@ export default function AdminLayout() {
               )}
             </NavLink>
           ))}
+
+          {/* Frames: groups Poster Templates + Gallery Footer */}
+          <div>
+            <button
+              type="button"
+              onClick={handleFramesClick}
+              aria-expanded={framesOpen}
+              className={`admin-nav-link group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                isFramesActive ? 'admin-nav-link-active' : 'border-transparent opacity-70 hover:opacity-100'
+              }`}
+            >
+              <Frame size={18} className="admin-nav-ico" />
+              <span className="flex-1 truncate text-left">Frames</span>
+              <span className={`admin-nav-dot w-1.5 h-1.5 rounded-full ${isFramesActive ? '' : 'bg-transparent'}`} />
+              {framesOpen ? (
+                <ChevronDown size={14} className="shrink-0 opacity-70" />
+              ) : (
+                <ChevronRight size={14} className="shrink-0 opacity-70" />
+              )}
+            </button>
+            {framesOpen && (
+              <div className="mt-1 ml-5 pl-3 border-l border-white/15 space-y-1">
+                {[
+                  { label: 'Templates', to: '/admin/frames/templates' },
+                  { label: 'Footer', to: '/admin/frames/footer' },
+                ].map(sub => (
+                  <NavLink
+                    key={sub.to}
+                    to={sub.to}
+                    onClick={closeDrawer}
+                    className={({ isActive }) =>
+                      `group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                        isActive ? 'admin-nav-link-active border-transparent' : 'border-transparent opacity-70 hover:opacity-100'
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-current' : 'border border-current'}`} />
+                        <span className="flex-1 truncate">{sub.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Admin user */}

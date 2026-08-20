@@ -231,7 +231,7 @@ export default function PosterStage({
         style={{ width: W * scale, height: H * scale, position: 'relative', overflow: 'hidden', flexShrink: 0 }}
       >
         <div style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-          <div style={{ position: 'relative', width: W, height: H }} onPointerDown={editable ? () => onSelect?.(null) : undefined}>
+          <div style={{ position: 'relative', width: W, height: H, ...bgStyle }} onPointerDown={editable ? () => onSelect?.(null) : undefined}>
             {showGrid && (
               <div
                 style={{
