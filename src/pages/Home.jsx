@@ -36,6 +36,7 @@ export default function Home() {
   const location = useLocation()
   const navigate = useNavigate()
   const aboutRef = useRef(null)
+  const teamRef = useRef(null)
   const teamsReveal = useScrollReveal()
   const statsReveal = useScrollReveal()
   const galleryReveal = useScrollReveal()
@@ -300,23 +301,15 @@ export default function Home() {
           id="about"
           className={`mb-12 text-center scroll-mt-24 reveal ${aboutReveal.visible ? 'reveal-visible' : ''}`}
         >
-          <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5">
-            About Fest
-          </span>
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-mainText mb-6">
-            26 Years of Legacy &amp; Vibe
+          <h3 className="text-4xl md:text-5xl font-display font-bold text-mainText mb-2">
+            Rendezvous'26
           </h3>
-          <div className="max-w-2xl mx-auto space-y-5 px-2 sm:px-0">
-            <p className="text-mutedText text-sm sm:text-base italic leading-loose">
-              Campus Art Fest is an annual celebration of creativity and talent, bringing together
-              participants from all departments to showcase their skills in dance, music, art,
-              literary arts, and Stage performances. Our mission is to Track, Celebrate, and
-              Remember every moment of this vibrant festival.
-            </p>
-            <p className="text-mutedText text-sm sm:text-base italic leading-loose">
-              With real-time score tracking, downloadable result posters, and a spotlight gallery,
-              the Art Fest platform keeps everyone connected — from competitors checking their
-              results to audiences cheering for their favorite teams.
+          <p className="text-lg md:text-xl font-semibold text-mutedText mb-6">
+            Jamia Madeenathunnoor Life Festival
+          </p>
+          <div className="max-w-2xl mx-auto px-2 sm:px-0">
+            <p className="text-mutedText text-sm sm:text-base leading-loose">
+              Rendezvous'26, the 26th edition of Jamia Madeenathunnoor's Life Festival, stands as a landmark moment in the institution's long-standing commitment to shaping well-rounded students. What began as a purely artistic gathering has, over time, grown into a dynamic space where academic achievement and creative talent come together. The festival continues its mission to build a thoughtful, ethical appreciation for the arts — recognizing their essential part in shaping character, personal growth, and intellectual maturity. Across 26 remarkable years, Rendezvous has left its mark on generations of students, refining their talents with a strong sense of purpose and preparing them to carry its values into the world beyond campus.
             </p>
           </div>
           <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
@@ -338,11 +331,22 @@ export default function Home() {
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg>
             </a>
           </div>
+          <div className="mt-8">
+            <button
+              onClick={() => scrollTo(teamRef)}
+              className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-6 py-2 hover:bg-accent-purple-soft transition"
+            >
+              OUR TEAM
+            </button>
+          </div>
         </div>
 
         {/* Our Team */}
         <div
-          ref={teamReveal.ref}
+          ref={(el) => {
+            teamRef.current = el
+            teamReveal.ref(el)
+          }}
           className={`mb-12 text-center reveal ${teamReveal.visible ? 'reveal-visible' : ''}`}
         >
           <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5">
