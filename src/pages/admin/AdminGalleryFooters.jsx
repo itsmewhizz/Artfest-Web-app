@@ -19,7 +19,8 @@ export default function AdminGalleryFooters() {
   const [name, setName] = useState('')
   const [frameFile, setFrameFile] = useState(null)
   const [frameUrl, setFrameUrl] = useState('')
-  const [frameStatus, setFrameStatus] = useState('idle') // idle | loading | ok
+  const [frameStatus, setFrameStatus] = useState('idle') // idle | ready | loading | ok | error
+  const [frameError, setFrameError] = useState('')
   const [saving, setSaving] = useState(false)
   const fileRef = useRef(null)
   const toast = useToast()
@@ -33,6 +34,7 @@ export default function AdminGalleryFooters() {
     setFrameFile(null)
     setFrameUrl(footer?.image_url || '')
     setFrameStatus(footer?.image_url ? 'ok' : 'idle')
+    setFrameError('')
   }
 
   const pickFrame = (e) => {
@@ -41,7 +43,8 @@ export default function AdminGalleryFooters() {
     if (!file) return
     if (!file.type.startsWith('image/')) return toast('Choose an image file', 'error')
     setFrameFile(file)
-    setFrameStatus('loading')
+    setFrameStatus('ready')
+    setFrameError('')
     setFrameUrl('')
   }
 
@@ -51,12 +54,18 @@ export default function AdminGalleryFooters() {
     if (!frameFile && !frameUrl) return toast('Upload a frame image', 'error')
 
     let imageUrl = frameUrl
+    setSaving(true)
+    setFrameError('')
     try {
       if (frameFile) {
+        setFrameStatus('loading')
         const path = `footers/${Date.now()}_${frameFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
         const { data, error } = await supabase.storage.from('photos').upload(path, frameFile, { upsert: true })
         if (error) throw error
+        if (!data?.path) throw new Error('Storage upload returned no file path')
         imageUrl = supabase.storage.from('photos').getPublicUrl(data.path).data.publicUrl
+        setFrameUrl(imageUrl)
+        setFrameStatus('ok')
       }
 
       const footer = {
@@ -72,7 +81,10 @@ export default function AdminGalleryFooters() {
       load()
     } catch (err) {
       console.error('Footer save failed:', err)
-      toast('Failed to save: ' + (err.message || 'unknown error'), 'error')
+      const message = err?.message || 'Unknown upload error'
+      setFrameStatus('error')
+      setFrameError(`Upload failed: ${message}`)
+      toast('Failed to save: ' + message, 'error')
     } finally {
       setSaving(false)
     }
@@ -203,6 +215,7 @@ export default function AdminGalleryFooters() {
                   </button>
                 )}
               </div>
+              {frameError && <p className="mt-2 text-red-400 text-xs font-semibold">{frameError}</p>}
               {frameUrl && (
                 <div className="mt-3 rounded-xl border border-success/40 bg-success/5 p-2">
                   <p className="flex items-center gap-1.5 text-success text-xs font-semibold">
