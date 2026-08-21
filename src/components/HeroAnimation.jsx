@@ -149,7 +149,7 @@ export default function HeroAnimation({ spotlightImages = [] }) {
         .hero-card-placeholder {
           width: 100%;
           height: 100%;
-          background: linear-gradient(135deg, #7C4DFF 0%, #5E35B1 100%);
+          background: var(--cta-gradient);
         }
 
         .swoop-entry {

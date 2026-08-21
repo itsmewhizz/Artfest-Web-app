@@ -1,8 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getProgrammes, getCategories, getAllResults, PROGRAMME_CATEGORIES } from '../supabase/queries'
-import { CheckCircle2, Hourglass, Eye, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, Hourglass, Eye, ArrowLeft, ChevronDown } from 'lucide-react'
 import ThemeToggle from '../components/ThemeToggle'
+
+const CATEGORY_COLORS = {
+  Minor: '#55EFC4',
+  HS: '#FF7675',
+  Premier: '#74B9FF',
+  'Sub Junior': '#A29BFE',
+  Junior: '#FDCB6E',
+  'General Cat-A': '#9CA3AF',
+  'General Cat-B': '#D1D5DB',
+}
 
 function gradeFrom(points) {
   const p = Number(points)
@@ -20,9 +30,19 @@ export default function Results() {
   const [orderedCategories, setOrderedCategories] = useState(PROGRAMME_CATEGORIES)
   const [category, setCategory] = useState('')
   const [unfinishedOnly, setUnfinishedOnly] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const containerRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setExpanded(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
     getProgrammes().then(setProgrammes)
     getCategories().then(({ programme }) => setOrderedCategories(programme))
     getAllResults().then(results => {
@@ -44,9 +64,10 @@ export default function Results() {
   ]
 
   const filtered = programmes.filter(p => {
-    const matchCat = category ? p.category === category : true
-    const matchUnfinished = unfinishedOnly ? !p.isFinished : true
-    return matchCat && matchUnfinished
+    if (unfinishedOnly) {
+      return !p.isFinished
+    }
+    return p.isFinished && (category ? p.category === category : true)
   })
 
   // Finished (resulted) programmes sort by result number, then pending ones.
@@ -94,22 +115,48 @@ export default function Results() {
         </div>
 
         {/* Filter pills */}
-        <div className="flex items-center gap-2 flex-wrap mb-8">
-          {categories.map(cat => (
+        <div className="flex items-center gap-2 flex-wrap mb-8" ref={containerRef}>
+          <div className="relative">
             <button
-              key={cat.value}
-              onClick={() => setCategory(cat.value)}
-              className={`filter-btn ${category === cat.value ? 'active' : ''}`}
+              onClick={() => setExpanded(!expanded)}
+              className={`filter-btn flex items-center gap-2 ${category === '' && !unfinishedOnly ? 'active' : ''}`}
             >
-              {cat.label}
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: category ? CATEGORY_COLORS[category] || '#9CA3AF' : '#9CA3AF' }}
+              />
+              {category || 'All Categories'}
+              <ChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
             </button>
-          ))}
+
+            {expanded && (
+              <div className="absolute top-full left-0 mt-2 p-2 bg-card border border-subtle rounded-2xl shadow-xl z-50 min-w-[200px] max-w-[300px] overflow-x-auto">
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={() => { setCategory(''); setExpanded(false); setUnfinishedOnly(false); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-mainText transition ${category === '' ? 'bg-accent-purple-soft' : 'hover:bg-black/5'}`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-gray-400" /> All Categories
+                  </button>
+                  {orderedCategories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => { setCategory(cat); setExpanded(false); setUnfinishedOnly(false); }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-mainText transition ${category === cat ? 'bg-accent-purple-soft' : 'hover:bg-black/5'}`}
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat] || '#9CA3AF' }} /> {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <span className="w-px h-6 bg-subtle mx-1 hidden sm:block" />
           <button
             onClick={() => setUnfinishedOnly(u => !u)}
-            className={`filter-btn ${unfinishedOnly ? 'active' : ''}`}
+            className={`filter-btn flex items-center gap-2 ${unfinishedOnly ? 'active' : ''}`}
           >
-            Unfinished
+            <Hourglass size={14} /> Unfinished
           </button>
         </div>
 

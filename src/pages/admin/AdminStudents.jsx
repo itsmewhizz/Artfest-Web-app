@@ -5,7 +5,7 @@ import { Plus, X, Pencil, Trash2, Upload } from 'lucide-react'
 import StudentAvatar from '../../components/StudentAvatar'
 import FilterDropdown from '../../components/FilterDropdown'
 import KebabMenu from '../../components/KebabMenu'
-import FileImportModal from '../../components/FileImportModal'
+import BulkImportModal from '../../components/BulkImportModal'
 import { rowField } from '../../utils/importParsers'
 import { useToast } from '../../components/Toast'
 
@@ -426,14 +426,13 @@ export default function AdminStudents() {
 
       {viewStudent && programmesModal(viewStudent)}
 
-      <FileImportModal
+      <BulkImportModal
         open={importOpen}
         title="Import Participants"
-        description="Bulk-add participants from a file. The file must contain a Name column; Category/Class and Team columns are mapped to existing categories and teams."
         onClose={() => setImportOpen(false)}
-        onImport={handleImport}
-        accept=".csv,.xlsx,.xls,.pdf,image/*"
-        hint="Expected columns: Name, Chest No (optional), Category/Class, Team. Team values are matched by team name or id."
+        existingStudents={students}
+        existingTeams={teams}
+        existingCategories={categories}
       />
     </div>
   )

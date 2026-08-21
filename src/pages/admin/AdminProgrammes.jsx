@@ -5,7 +5,7 @@ import { getProgrammes, getResultNoMap, getCategories, getTeams, PROGRAMME_CATEG
 import { Plus, X, Printer, Pencil, Trash2, Upload, Eraser } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import FilterDropdown from '../../components/FilterDropdown'
-import FileImportModal from '../../components/FileImportModal'
+import ProgrammeBulkImportModal from '../../components/ProgrammeBulkImportModal'
 import { rowField } from '../../utils/importParsers'
 import { CATEGORY_COLORS } from '../../components/TeamBreakdown'
 import { useToast } from '../../components/Toast'
@@ -531,14 +531,11 @@ export default function AdminProgrammes() {
       {/* View Participants Modal */}
       {viewProg && participantsModal(viewProg)}
 
-      <FileImportModal
+      <ProgrammeBulkImportModal
         open={importOpen}
         title="Import Programmes"
-        description="Bulk-add programmes from a file. The file must contain Name and Category columns; Type (On-stage/Off-stage), Participation (Individual/Group) and Result No are optional."
         onClose={() => setImportOpen(false)}
-        onImport={handleImport}
-        accept=".csv,.xlsx,.xls,.pdf,image/*"
-        hint="Expected columns: Name, Category, Type, Participation, Result No. Categories must match existing categories."
+        existingCategories={categories}
       />
     </div>
   )
