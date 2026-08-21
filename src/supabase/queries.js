@@ -141,7 +141,7 @@ export const getSpotlight = async () => {
 }
 
 export const getGalleryFooters = async () => {
-  const { data, error } = await supabase.from('gallery_footers').select('*').order('createdAt', { ascending: false })
+  const { data, error } = await supabase.from('gallery_footers').select('*').order('created_at', { ascending: false })
   if (error) console.error(error)
   return data || []
 }
