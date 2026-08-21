@@ -151,10 +151,10 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <img
-            src={heroLogo}
-            alt="Rendezvous 26"
-            className="w-full max-w-[280px] sm:max-w-md md:max-w-xl lg:max-w-2xl h-auto select-none mb-4"
+          <div
+            role="img"
+            aria-label="Rendezvous 26"
+            className="hero-logo-mask w-full max-w-[280px] sm:max-w-md md:max-w-xl lg:max-w-2xl h-16 sm:h-24 md:h-32 lg:h-40 select-none mb-4"
           />
           <p className="text-lg md:text-xl text-textMute font-display italic mb-10 max-w-xl">
             - Decoding Phytolore -
@@ -310,7 +310,7 @@ export default function Home() {
           <p className="text-lg md:text-xl font-semibold text-mutedText mb-6">
             Jamia Madeenathunnoor Life Festival
           </p>
-          <div className="max-w-2xl mx-auto px-2 sm:px-0 mb-8">
+          <div className="max-w-xl mx-auto px-2 sm:px-0 mb-8">
             <p className="text-mutedText text-sm sm:text-base leading-relaxed">
               Rendezvous'26, the 26th edition of Jamia Madeenathunnoor's Life Festival, stands as a landmark moment in the institution's long-standing commitment to shaping well-rounded students. What began as a purely artistic gathering has, over time, grown into a dynamic space where academic achievement and creative talent come together. The festival continues its mission to build a thoughtful, ethical appreciation for the arts — recognizing their essential part in shaping character, personal growth, and intellectual maturity. Across 26 remarkable years, Rendezvous has left its mark on generations of students, refining their talents with a strong sense of purpose and preparing them to carry its values into the world beyond campus.
             </p>
@@ -333,14 +333,6 @@ export default function Home() {
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg>
             </a>
-          </div>
-          <div className="mt-8">
-            <button
-              onClick={() => scrollTo(teamRef)}
-              className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-widest border border-accent/50 rounded-full px-6 py-2 hover:bg-accent-purple-soft transition"
-            >
-              OUR TEAM
-            </button>
           </div>
         </div>
 

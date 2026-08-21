@@ -1294,3 +1294,21 @@ body {
     opacity: 0;
   }
 }
+
+.hero-logo-mask {
+  mask-image: url('/src/assets/hero-logo.png');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: url('/src/assets/hero-logo.png');
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  background-color: rgb(17, 95, 50);
+  transition: background-color 0.2s ease;
+}
+
+[data-theme='dark'] .hero-logo-mask,
+.dark .hero-logo-mask {
+  background-color: rgb(142, 208, 108);
+}
