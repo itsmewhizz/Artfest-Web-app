@@ -44,7 +44,7 @@ export default function BulkImportModal({
     }
   }
 
-  const updateRow = (index, field, value) => {
+  const updateRow = async (index, field, value) => {
     const newRows = [...parsedRows]
     newRows[index].data[field] = value
     // Re-validate this row

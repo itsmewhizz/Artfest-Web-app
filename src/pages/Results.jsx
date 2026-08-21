@@ -43,6 +43,8 @@ export default function Results() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
     getProgrammes().then(setProgrammes)
     getCategories().then(({ programme }) => setOrderedCategories(programme))
     getAllResults().then(results => {
