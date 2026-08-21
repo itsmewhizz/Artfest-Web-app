@@ -22,6 +22,12 @@ CREATE TABLE IF NOT EXISTS public.gallery_footers (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- The trigger below keeps the active row stable during normal writes; this
+-- constraint also protects the single-active invariant during concurrent writes.
+CREATE UNIQUE INDEX IF NOT EXISTS gallery_footers_one_active_idx
+  ON public.gallery_footers (is_active)
+  WHERE is_active = true;
+
 -- ------------------------------------------------------------
 -- 2. RLS
 -- ------------------------------------------------------------
@@ -29,14 +35,18 @@ ALTER TABLE public.gallery_footers ENABLE ROW LEVEL SECURITY;
 
 -- Public read so the gallery page (anon) can discover the active footer
 -- and composited uploads can reference it.
+DROP POLICY IF EXISTS "public_read_gallery_footers" ON public.gallery_footers;
 CREATE POLICY "public_read_gallery_footers" ON public.gallery_footers
   FOR SELECT TO anon, authenticated USING (true);
 
 -- Admin (authenticated) write access, matching the spotlight pattern.
+DROP POLICY IF EXISTS "admin_write_gallery_footers" ON public.gallery_footers;
 CREATE POLICY "admin_write_gallery_footers" ON public.gallery_footers
   FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "admin_write_gallery_footers_update" ON public.gallery_footers;
 CREATE POLICY "admin_write_gallery_footers_update" ON public.gallery_footers
   FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "admin_write_gallery_footers_delete" ON public.gallery_footers;
 CREATE POLICY "admin_write_gallery_footers_delete" ON public.gallery_footers
   FOR DELETE TO authenticated USING (true);
 
