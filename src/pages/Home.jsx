@@ -342,7 +342,6 @@ export default function Home() {
             </button>
           </div>
         </div>
-        </div>
 
         {/* Our Team */}
         <div
