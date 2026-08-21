@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
 import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers } from 'lucide-react'
 import HeroAnimation from '../components/HeroAnimation'
+import heroLogo from '../assets/hero-logo.png'
 import useScrollReveal from '../hooks/useScrollReveal'
 import ThemeToggle from '../components/ThemeToggle'
 import LoginControl from '../components/LoginControl'
@@ -151,7 +152,7 @@ export default function Home() {
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
           <img
-            src="/src/assets/hero-logo.png"
+            src={heroLogo}
             alt="Rendezvous 26"
             className="w-full max-w-[280px] sm:max-w-md md:max-w-xl lg:max-w-2xl h-auto select-none mb-4"
           />
