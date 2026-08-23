@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { getProgrammes, getStudents, getTeams, getAllResults, getResultsForFinishedProgrammes } from '../../supabase/queries'
+import { getProgrammes, getStudents, getTeams, getAllResults, getResultsForFinishedProgrammes, getAllCodeAssignments } from '../../supabase/queries'
 import { ArrowLeft, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react'
 import FilterDropdown from '../../components/FilterDropdown'
 
@@ -40,6 +40,7 @@ export default function AdminPrint() {
   const [finishedResults, setFinishedResults] = useState([])
   const [students, setStudents] = useState([])
   const [teams, setTeams] = useState([])
+  const [codeAssignments, setCodeAssignments] = useState([])
   const [activeTab, setActiveTab] = useState('programmes')
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedSet, setSelectedSet] = useState(new Set())
@@ -54,6 +55,7 @@ export default function AdminPrint() {
     getTeams().then(setTeams)
     getAllResults().then(setAllResults)
     getResultsForFinishedProgrammes().then(setFinishedResults)
+    getAllCodeAssignments().then(d => setCodeAssignments(Array.isArray(d) ? d : []))
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
@@ -71,11 +73,14 @@ export default function AdminPrint() {
 
   const catOptions = [
     { value: '', label: 'All Categories', icon: <span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> },
-    ...CATEGORIES.map(cat => ({
-      value: cat,
-      label: cat,
-      icon: <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat]?.light || '#9CA3AF' }} />,
-    })),
+    ...CATEGORIES.map(cat => {
+      const count = programmes.filter(p => cat === 'General' ? p.category === 'General' : p.category === cat).length
+      return {
+        value: cat,
+        label: `${cat} (${count})`,
+        icon: <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat]?.light || '#9CA3AF' }} />,
+      }
+    }),
   ]
 
   const teamMap = {}
@@ -83,6 +88,33 @@ export default function AdminPrint() {
 
   const resultNoMap = {}
   allResults.forEach(r => { resultNoMap[r.programmeId] = r })
+
+  // Map: programme_id -> [ { code_letter, participant_id } ]
+  const codeMap = {}
+  ;(Array.isArray(codeAssignments) ? codeAssignments : []).forEach(a => {
+    if (!codeMap[a.programme_id]) codeMap[a.programme_id] = []
+    codeMap[a.programme_id].push(a)
+  })
+
+  // Read entries from a result, falling back to old first/second/third shape
+  const readResultEntries = (result) => {
+    if (result.entries && Array.isArray(result.entries) && result.entries.length > 0) {
+      return result.entries
+    }
+    const legacy = []
+    if (result.first) legacy.push(result.first)
+    if (result.second) legacy.push(result.second)
+    if (result.third) legacy.push(result.third)
+    return legacy
+  }
+
+  // Resolve a code letter to the actual student via code assignments
+  const resolveCodeToStudent = (code, programmeId) => {
+    const assignments = codeMap[programmeId] || []
+    const match = assignments.find(a => a.code_letter === code)
+    if (!match) return null
+    return students.find(s => s.id === match.participant_id) || null
+  }
 
   const showToast = (msg) => {
     setToastMsg(msg)
@@ -149,21 +181,34 @@ export default function AdminPrint() {
       const rows = []
       const addRow = (placement) => {
         if (!placement) return
-        const student = students.find(s => s.id === placement.studentId)
+        // If placement has a code letter, resolve to actual student via code assignments
+        let student = null
+        if (placement.code && res?.programmeId) {
+          student = resolveCodeToStudent(placement.code, res.programmeId)
+        } else if (placement.studentId) {
+          student = students.find(s => s.id === placement.studentId)
+        }
         rows.push({
-          key: `res-${id}-${placement.studentId || rows.length}`,
-          chestNo: student?.chestNo || '',
+          key: `res-${id}-${placement.code || placement.studentId || rows.length}`,
+          chestNo: student?.chestNo || placement.chestNo || '',
           name: placement.name || student?.name || '',
           team: teamMap[student?.team] || student?.team || '',
           grade: placement.grade || calcGrade(placement.points),
           price: placement.prize || '',
           point: placement.points ?? '',
+          code: placement.code || '',
         })
       }
       if (res) {
-        addRow(res.first)
-        addRow(res.second)
-        addRow(res.third)
+        const entries = readResultEntries(res)
+        if (entries.length > 0) {
+          entries.forEach(e => addRow(e))
+        } else {
+          // Fallback to old shape
+          addRow(res.first)
+          addRow(res.second)
+          addRow(res.third)
+        }
       }
       items.push({
         sheet: 'result',
@@ -274,7 +319,7 @@ export default function AdminPrint() {
             </tr>
           )}
           {item.sheet === 'result' && !item.warning && item.rows.map(row => (
-            <tr key={row.key}><td className="text-center">{row.chestNo}</td><td>{row.name}</td><td>{row.team}</td><td></td><td className="text-center">{row.grade}</td><td className="text-center">{row.price}</td><td className="text-center">{row.point}</td></tr>
+            <tr key={row.key}><td className="text-center">{row.chestNo}</td><td>{row.name}</td><td>{row.team}</td><td className="text-center">{row.code || ''}</td><td className="text-center">{row.grade}</td><td className="text-center">{row.price}</td><td className="text-center">{row.point}</td></tr>
           ))}
         </tbody>
       </table>

@@ -32,6 +32,8 @@ export default function AdminProgrammes() {
   const [progFilter, setProgFilter] = useState('')
   const [progTypeFilter, setProgTypeFilter] = useState('')
   const [partFilter, setPartFilter] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState('100')
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editCategory, setEditCategory] = useState('')
@@ -335,40 +337,111 @@ export default function AdminProgrammes() {
           className="flex-1"
         />
       </div>
-      <div className="flex flex-col gap-3">
-        {programmes
+      {(() => {
+        const filteredProgrammes = programmes
           .filter(p => (!progFilter || p.category === progFilter)
             && (!progTypeFilter || (p.programmeType || p.type || '') === progTypeFilter)
             && (!partFilter || (p.participationType || p.participation_type || '') === partFilter))
           .sort((a, b) => (resultNoMap[a.id] || Number.MAX_SAFE_INTEGER) - (resultNoMap[b.id] || Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
-          .map(prog => (
-          <div key={prog.id} className="bg-card rounded-xl p-4 flex justify-between items-center shadow-sm border border-secondary/30">
-            <div className="cursor-pointer flex-1 min-w-0" onClick={() => setViewProg(prog)}>
-              <p className="text-mainText font-medium text-sm sm:text-base truncate">
-                {resultNoMap[prog.id] ? <span className="text-accent font-bold text-base sm:text-lg mr-2">#{resultNoMap[prog.id]}</span> : null}
-                {prog.name}
-              </p>
-              <p className="text-mutedText text-xs sm:text-sm">{prog.category} · {(prog.programmeType || prog.type || 'Unspecified')} · {(prog.participationType || prog.participation_type || 'Unspecified')}</p>
+
+        const totalProgrammes = filteredProgrammes.length
+        const isAll = pageSize === 'all'
+        const numericSize = isAll ? totalProgrammes : Number(pageSize) || 100
+        const totalPages = isAll ? 1 : Math.ceil(totalProgrammes / numericSize) || 1
+        const activePage = Math.min(currentPage, totalPages)
+        const startRow = totalProgrammes === 0 ? 0 : isAll ? 1 : (activePage - 1) * numericSize + 1
+        const endRow = isAll ? totalProgrammes : Math.min(activePage * numericSize, totalProgrammes)
+        const displayedProgrammes = isAll ? filteredProgrammes : filteredProgrammes.slice(startRow - 1, endRow)
+
+        return (
+          <>
+            <div className="flex flex-col gap-3">
+              {displayedProgrammes.length === 0 && (
+                <div className="bg-card rounded-xl p-8 text-center text-mutedText border border-secondary/30">
+                  No programmes found.
+                </div>
+              )}
+              {displayedProgrammes.map(prog => (
+                <div key={prog.id} className="bg-card rounded-xl p-4 flex justify-between items-center shadow-sm border border-secondary/30">
+                  <div className="cursor-pointer flex-1 min-w-0" onClick={() => setViewProg(prog)}>
+                    <p className="text-mainText font-medium text-sm sm:text-base truncate">
+                      {resultNoMap[prog.id] ? <span className="text-accent font-bold text-base sm:text-lg mr-2">#{resultNoMap[prog.id]}</span> : null}
+                      {prog.name}
+                    </p>
+                    <p className="text-mutedText text-xs sm:text-sm">{prog.category} · {(prog.programmeType || prog.type || 'Unspecified')} · {(prog.participationType || prog.participation_type || 'Unspecified')}</p>
+                  </div>
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
+                    <button
+                      onClick={() => toggleFinished(prog)}
+                      className={`relative w-12 h-6 sm:w-14 sm:h-7 rounded-full transition-colors duration-300 ${prog.isFinished ? 'bg-green-500' : 'bg-white/20'}`}
+                      title={prog.isFinished ? 'Finished' : 'Not finished'}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full shadow transition-transform duration-300 ${prog.isFinished ? 'translate-x-5 sm:translate-x-7' : ''}`} />
+                    </button>
+                    <KebabMenu
+                      items={[
+                        { label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(prog) },
+                        { label: 'Clear Result', icon: <Eraser size={15} />, danger: true, onClick: () => handleClearResult(prog) },
+                        { label: 'Delete', icon: <Trash2 size={15} />, danger: true, onClick: () => handleDelete(prog) },
+                      ]}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
-              <button
-                onClick={() => toggleFinished(prog)}
-                className={`relative w-12 h-6 sm:w-14 sm:h-7 rounded-full transition-colors duration-300 ${prog.isFinished ? 'bg-green-500' : 'bg-white/20'}`}
-                title={prog.isFinished ? 'Finished' : 'Not finished'}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full shadow transition-transform duration-300 ${prog.isFinished ? 'translate-x-5 sm:translate-x-7' : ''}`} />
-              </button>
-              <KebabMenu
-                items={[
-                  { label: 'Edit', icon: <Pencil size={15} />, onClick: () => startEdit(prog) },
-                  { label: 'Clear Result', icon: <Eraser size={15} />, danger: true, onClick: () => handleClearResult(prog) },
-                  { label: 'Delete', icon: <Trash2 size={15} />, danger: true, onClick: () => handleDelete(prog) },
-                ]}
-              />
+
+            {/* Pagination Controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 bg-card rounded-xl p-4 border border-secondary/30 text-sm">
+              <div className="text-mutedText">
+                Showing <span className="font-semibold text-mainText">{startRow}–{endRow}</span> of <span className="font-semibold text-mainText">{totalProgrammes}</span> programmes
+              </div>
+              <div className="flex items-center gap-3 flex-wrap justify-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-mutedText text-xs">Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={e => { setPageSize(e.target.value); setCurrentPage(1) }}
+                    className="bg-black/20 text-mainText rounded-lg px-2.5 py-1 border border-secondary/40 outline-none text-xs sm:text-sm"
+                  >
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="all">All</option>
+                  </select>
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      disabled={activePage === 1}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className="px-3 py-1 rounded-lg border border-secondary/40 text-mainText text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setCurrentPage(p)}
+                        className={`px-3 py-1 rounded-lg text-xs sm:text-sm transition ${activePage === p ? 'bg-primary text-white font-bold' : 'text-mainText hover:bg-white/10'}`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <button
+                      disabled={activePage === totalPages}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className="px-3 py-1 rounded-lg border border-secondary/40 text-mainText text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          </>
+        )
+      })()}
 
       {/* Add Modal */}
       {showAdd && (

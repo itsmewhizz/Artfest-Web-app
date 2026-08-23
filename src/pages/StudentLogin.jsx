@@ -4,7 +4,7 @@ import { getStudentByCredentials, setStudentSession } from '../supabase/queries'
 import { Eye, EyeOff } from 'lucide-react'
 
 export default function StudentLogin() {
-  const [name, setName] = useState('')
+  const [chestNo, setChestNo] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -12,15 +12,15 @@ export default function StudentLogin() {
   const navigate = useNavigate()
 
   const handleLogin = async () => {
-    if (!name.trim() || !password) {
-      setError('Enter your name and password')
+    if (!chestNo.trim() || !password) {
+      setError('Enter your chest number and password')
       return
     }
     setLoading(true)
     setError('')
-    const result = await getStudentByCredentials(name, password)
+    const result = await getStudentByCredentials(chestNo, password)
     if (result?.error === 'not_found') {
-      setError('No participant found with that name. Check spelling or contact admin.')
+      setError('No participant found with that chest number. Check or contact admin.')
       setLoading(false)
       return
     }
@@ -40,7 +40,7 @@ export default function StudentLogin() {
       return
     }
     if (!result?.student) {
-      setError('Invalid name or password. Try again.')
+      setError('Invalid chest number or password. Try again.')
       setLoading(false)
       return
     }
@@ -60,11 +60,12 @@ export default function StudentLogin() {
 
         {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
 
+        <label className="text-mutedText text-xs sm:text-sm mb-1 block">Chest Number</label>
         <input
           className="w-full bg-black/20 text-mainText rounded-xl p-3 mb-4 outline-none border border-secondary/30 focus:border-mainText"
-          placeholder="Full name"
-          value={name}
-          onChange={e => setName(e.target.value.replace(/\b\w/g, c => c.toUpperCase()))}
+          placeholder="Enter your chest number"
+          value={chestNo}
+          onChange={e => setChestNo(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleLogin()}
         />
         <div className="relative mb-6">

@@ -10,6 +10,8 @@ export default function AdminResults() {
   const [results, setResults] = useState([])
   const [expandedResultId, setExpandedResultId] = useState(null)
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState('100')
 
   useEffect(() => {
     Promise.all([
@@ -48,6 +50,15 @@ export default function AdminResults() {
       return name.includes(q) || number.includes(q)
     })
   }, [results, programmeMap, search])
+
+  const totalResults = filteredResults.length
+  const isAll = pageSize === 'all'
+  const numericSize = isAll ? totalResults : Number(pageSize) || 100
+  const totalPages = isAll ? 1 : Math.ceil(totalResults / numericSize) || 1
+  const activePage = Math.min(currentPage, totalPages)
+  const startRow = totalResults === 0 ? 0 : isAll ? 1 : (activePage - 1) * numericSize + 1
+  const endRow = isAll ? totalResults : Math.min(activePage * numericSize, totalResults)
+  const displayedResults = isAll ? filteredResults : filteredResults.slice(startRow - 1, endRow)
 
   const buildPlacementRows = (result) => {
     const rows = []
@@ -97,7 +108,7 @@ export default function AdminResults() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1) }}
               placeholder="Search by programme name or result no"
               className="w-full bg-transparent text-mainText placeholder:text-mutedText outline-none"
             />
@@ -105,8 +116,8 @@ export default function AdminResults() {
         </div>
 
         <div className="space-y-3">
-          {filteredResults.length === 0 && <p className="text-mutedText text-center">No matching results found.</p>}
-          {filteredResults.map(result => {
+          {displayedResults.length === 0 && <p className="text-mutedText text-center py-6">No matching results found.</p>}
+          {displayedResults.map(result => {
             const prog = programmeMap[result.programmeId]
             const isExpanded = expandedResultId === result.id
             return (
@@ -150,6 +161,56 @@ export default function AdminResults() {
               </div>
             )
           })}
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 bg-card rounded-xl p-4 border border-secondary/30 text-sm">
+          <div className="text-mutedText">
+            Showing <span className="font-semibold text-mainText">{startRow}–{endRow}</span> of <span className="font-semibold text-mainText">{totalResults}</span> results
+          </div>
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <div className="flex items-center gap-1.5">
+              <span className="text-mutedText text-xs">Per page:</span>
+              <select
+                value={pageSize}
+                onChange={e => { setPageSize(e.target.value); setCurrentPage(1) }}
+                className="bg-black/20 text-mainText rounded-lg px-2.5 py-1 border border-secondary/40 outline-none text-xs sm:text-sm"
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  disabled={activePage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className="px-3 py-1 rounded-lg border border-secondary/40 text-mainText text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={`px-3 py-1 rounded-lg text-xs sm:text-sm transition ${activePage === p ? 'bg-primary text-white font-bold' : 'text-mainText hover:bg-white/10'}`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  disabled={activePage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className="px-3 py-1 rounded-lg border border-secondary/40 text-mainText text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/10 transition"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

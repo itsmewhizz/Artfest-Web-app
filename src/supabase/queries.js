@@ -57,10 +57,32 @@ const clearLocalSessionState = (studentId) => {
   localStorage.removeItem(`student_session_expires_${studentId}`)
 }
 
+// Helper to fetch all rows across PostgREST 1000-row pagination boundaries
+export const fetchAllRows = async (tableName, selectStr = '*', orderCol = null, ascending = true) => {
+  let allRows = []
+  let from = 0
+  const pageSize = 1000
+  while (true) {
+    let query = supabase.from(tableName).select(selectStr)
+    if (orderCol) {
+      query = query.order(orderCol, { ascending, nullsFirst: false })
+    }
+    query = query.range(from, from + pageSize - 1)
+    const { data, error } = await query
+    if (error) {
+      console.error(`fetchAllRows(${tableName}) error:`, error)
+      break
+    }
+    if (!data || data.length === 0) break
+    allRows = allRows.concat(data)
+    if (data.length < pageSize) break
+    from += pageSize
+  }
+  return allRows
+}
+
 export const getStudents = async () => {
-  const { data, error } = await supabase.from('students').select('*').order('createdAt', { ascending: false })
-  if (error) console.error(error)
-  return data || []
+  return fetchAllRows('students', '*', 'createdAt', false)
 }
 
 export const getStudentById = async (id) => {
@@ -70,17 +92,11 @@ export const getStudentById = async (id) => {
 }
 
 export const getProgrammes = async () => {
-  const { data, error } = await supabase.from('programmes').select('*').order('name', { ascending: true })
-  if (error) console.error(error)
-  return data || []
+  return fetchAllRows('programmes', '*', 'name', true)
 }
 
 export const getFinishedProgrammeIds = async () => {
-  const { data, error } = await supabase.from('programmes').select('id, isFinished')
-  if (error) {
-    console.error('getFinishedProgrammeIds error:', error)
-    return new Set()
-  }
+  const data = await fetchAllRows('programmes', 'id, isFinished')
   return new Set((data || []).filter(p => p.isFinished).map(p => p.id))
 }
 
@@ -89,11 +105,7 @@ export const getFinishedProgrammeIds = async () => {
 // incomplete result data never surfaces in result-reading views.
 export const getResultsForFinishedProgrammes = async () => {
   const finishedIds = await getFinishedProgrammeIds()
-  const { data, error } = await supabase.from('results').select('*')
-  if (error) {
-    console.error('getResultsForFinishedProgrammes error:', error)
-    return []
-  }
+  const data = await fetchAllRows('results', '*')
   const filtered = (data || []).filter(r => r.programmeId && finishedIds.has(r.programmeId))
   return latestPerProgramme(filtered).sort((a, b) => (b.resultNo || 0) - (a.resultNo || 0))
 }
@@ -122,16 +134,13 @@ export const getResultByProgrammeId = async (programmeId) => {
 }
 
 export const getAllResults = async () => {
-  const { data, error } = await supabase.from('results').select('*')
-  if (error) { console.error(error); return [] }
+  const data = await fetchAllRows('results', '*')
   const latest = latestPerProgramme(data || [])
   return latest.sort((a, b) => (b.resultNo || 0) - (a.resultNo || 0))
 }
 
 export const getTeams = async () => {
-  const { data, error } = await supabase.from('teams').select('*')
-  if (error) console.error(error)
-  return data || []
+  return fetchAllRows('teams', '*')
 }
 
 export const getSpotlight = async () => {
@@ -347,23 +356,23 @@ export const clearStudentSession = async (studentId, token) => {
 
 const COMMON_STUDENT_PASSWORD = 'israfest2026'
 
-export const getStudentByCredentials = async (name, password) => {
-  const trimmed = name.trim()
+export const getStudentByCredentials = async (chestNo, password) => {
+  const trimmed = String(chestNo).trim()
   let { data: students } = await supabase
     .from('students')
-    .select('id, name')
-    .ilike('name', trimmed)
+    .select('id, name, chestNo')
+    .ilike('chestNo', trimmed)
     .limit(1)
   if (!students || students.length === 0) {
-    const { data: fuzzy } = await supabase
+    const { data: exact } = await supabase
       .from('students')
-      .select('id, name')
-      .ilike('name', `%${trimmed}%`)
+      .select('id, name, chestNo')
+      .eq('chestNo', trimmed)
       .limit(1)
-    students = fuzzy
+    students = exact
   }
   if (!students || students.length === 0) {
-    console.warn('No student found with name:', trimmed)
+    console.warn('No student found with chest number:', trimmed)
     return { error: 'not_found' }
   }
 
@@ -400,6 +409,40 @@ export const getStudentByCredentials = async (name, password) => {
   }
 
   return { student }
+}
+
+export const getCodeAssignmentsForProgramme = async (programmeId) => {
+  const { data, error } = await supabase
+    .from('performance_code_assignments')
+    .select('*')
+    .eq('programme_id', programmeId)
+    .order('code_letter', { ascending: true })
+  if (error) console.error('getCodeAssignmentsForProgramme error:', error)
+  return data || []
+}
+
+export const upsertCodeAssignments = async (assignments) => {
+  const { data, error } = await supabase
+    .from('performance_code_assignments')
+    .upsert(assignments, { onConflict: 'programme_id,code_letter' })
+    .select('*')
+  return { data, error }
+}
+
+export const deleteCodeAssignmentsForProgramme = async (programmeId) => {
+  const { error } = await supabase
+    .from('performance_code_assignments')
+    .delete()
+    .eq('programme_id', programmeId)
+  return { error }
+}
+
+export const getAllCodeAssignments = async () => {
+  const { data, error } = await supabase
+    .from('performance_code_assignments')
+    .select('*')
+  if (error) console.error('getAllCodeAssignments error:', error)
+  return data || []
 }
 
 export const updateStudentProfile = async (id, updates) => {

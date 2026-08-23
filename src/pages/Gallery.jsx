@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getSpotlight, getActiveGalleryFooter } from '../supabase/queries'
 import { Download, Images, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useToast } from '../components/Toast'
-import GalleryFooterOverlay from '../components/GalleryFooterOverlay'
+import { getCompositedGalleryImage, downloadCompositedImage } from '../utils/imageCompositor'
 
 const FALLBACK_ALBUM = 'Spotlight'
 
@@ -27,6 +27,7 @@ export default function Gallery() {
   const [images, setImages] = useState([])
   const [activeFooter, setActiveFooter] = useState(null)
   const [lightbox, setLightbox] = useState(null)
+  const [compositeSrcs, setCompositeSrcs] = useState({})
   const toast = useToast()
 
   useEffect(() => {
@@ -34,19 +35,36 @@ export default function Gallery() {
     getActiveGalleryFooter().then(setActiveFooter)
   }, [])
 
+  // Compositing is async — resolve each image's display src when the footer is ready
+  useEffect(() => {
+    if (!activeFooter?.image_url) return
+    let cancelled = false
+    const run = async () => {
+      for (const img of images) {
+        const key = img.id
+        if (compositeSrcs[key]) continue
+        try {
+          const src = await getCompositedGalleryImage(img.imageURL, activeFooter.image_url)
+          if (!cancelled) setCompositeSrcs(prev => ({ ...prev, [key]: src }))
+        } catch { /* keep original imageURL on failure */ }
+      }
+    }
+    run()
+    return () => { cancelled = true }
+  }, [images, activeFooter])
+
   const albums = useMemo(() => groupByAlbum(images), [images])
   const flatImages = useMemo(() => albums.flatMap(a => a.imgs), [albums])
   const footerSrc = activeFooter?.image_url || ''
 
-  const handleDownloadImage = async (url, name) => {
+  const displaySrc = (img) => {
+    if (!footerSrc) return img.imageURL
+    return compositeSrcs[img.id] || img.imageURL
+  }
+
+  const handleDownloadImage = async (img) => {
     try {
-      const res = await fetch(url)
-      const blob = await res.blob()
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = name || 'spotlight.jpg'
-      a.click()
-      URL.revokeObjectURL(a.href)
+      await downloadCompositedImage(img.imageURL, footerSrc, `spotlight_${img.id}.jpg`)
     } catch {
       toast('Download failed, try again', 'error')
     }
@@ -97,15 +115,14 @@ export default function Gallery() {
                           className="relative overflow-hidden rounded-xl border border-secondary/30 cursor-pointer"
                         >
                           <img
-                            src={img.imageURL}
+                            src={displaySrc(img)}
                             alt={img.caption || ''}
                             className="w-full h-36 sm:h-48 md:h-56 object-cover transition-transform duration-500 group-hover:scale-105"
                           />
-                          <GalleryFooterOverlay src={footerSrc} />
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDownloadImage(img.imageURL, `spotlight_${img.id}.jpg`) }}
+                            onClick={(e) => { e.stopPropagation(); handleDownloadImage(img) }}
                             aria-label={`Download ${img.caption || 'image'}`}
-                            className={`absolute right-2 bg-black/60 hover:bg-black/80 p-1.5 sm:p-2 rounded-lg transition ${footerSrc ? 'bottom-[13%]' : 'bottom-2'}`}
+                            className="absolute right-2 bottom-2 bg-black/60 hover:bg-black/80 p-1.5 sm:p-2 rounded-lg transition"
                           >
                             <Download size={14} className="md:w-[18px] md:h-[18px]" color="white" />
                           </button>
@@ -150,11 +167,10 @@ export default function Gallery() {
             </button>
             <div className="relative inline-block max-w-[86vw]" onClick={e => e.stopPropagation()}>
               <img
-                src={img.imageURL}
+                src={displaySrc(img)}
                 alt={img.caption || ''}
                 className="max-w-[86vw] max-h-[78vh] object-contain rounded-lg"
               />
-              <GalleryFooterOverlay src={footerSrc} />
             </div>
             {img.caption && (
               <p className="text-white/80 text-sm mt-3 max-w-[86vw] text-center">{img.caption}</p>
