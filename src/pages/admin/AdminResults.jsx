@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, Search, Trophy, Layers2 } from 'lucide-react'
-import { getProgrammes, getStudents, getTeams, getResultsForFinishedProgrammes } from '../../supabase/queries'
+import { getProgrammes, getStudents, getTeams, getAllResults } from '../../supabase/queries'
 
 export default function AdminResults() {
   const [programmes, setProgrammes] = useState([])
@@ -18,7 +18,7 @@ export default function AdminResults() {
       getProgrammes(),
       getStudents(),
       getTeams(),
-      getResultsForFinishedProgrammes(),
+      getAllResults(),
     ]).then(([progData, studentData, teamData, resultData]) => {
       setProgrammes(progData)
       setStudents(studentData)
@@ -33,23 +33,30 @@ export default function AdminResults() {
     return map
   }, [teams])
 
-  const programmeMap = useMemo(() => {
+  const resultMap = useMemo(() => {
     const map = {}
-    programmes.forEach(prog => { map[prog.id] = prog })
+    results.forEach(r => { if (r.programmeId) map[r.programmeId] = r })
     return map
-  }, [programmes])
+  }, [results])
+
+  // Build a programme-centric list: every programme gets a row, with result data or dashes
+  const programmeRows = useMemo(() => {
+    return programmes.map(prog => ({
+      programme: prog,
+      result: resultMap[prog.id] || null,
+    }))
+  }, [programmes, resultMap])
 
   const filteredResults = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return results
+    if (!q) return programmeRows
 
-    return results.filter(result => {
-      const prog = programmeMap[result.programmeId]
-      const name = (result.name || prog?.name || '').toLowerCase()
-      const number = String(result.resultNo || '').toLowerCase()
+    return programmeRows.filter(({ programme, result }) => {
+      const name = (result?.name || programme.name || '').toLowerCase()
+      const number = String(result?.resultNo || '').toLowerCase()
       return name.includes(q) || number.includes(q)
     })
-  }, [results, programmeMap, search])
+  }, [programmeRows, search])
 
   const totalResults = filteredResults.length
   const isAll = pageSize === 'all'
@@ -61,6 +68,7 @@ export default function AdminResults() {
   const displayedResults = isAll ? filteredResults : filteredResults.slice(startRow - 1, endRow)
 
   const buildPlacementRows = (result) => {
+    if (!result) return []
     const rows = []
     const addPlacement = (key, placement) => {
       if (!placement) return
@@ -89,7 +97,12 @@ export default function AdminResults() {
             <Trophy size={22} className="text-accent" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Results (Read Only)</h2>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Results (Read Only)</h2>
+              <span className="bg-secondary/30 text-mainText text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                {search.trim() ? `${filteredResults.length} of ${programmeRows.length} programmes` : `${programmeRows.length} programmes`}
+              </span>
+            </div>
             <p className="text-mutedText text-sm">Admin preview only. Judges remain the only write path for results.</p>
           </div>
         </div>
@@ -117,43 +130,55 @@ export default function AdminResults() {
 
         <div className="space-y-3">
           {displayedResults.length === 0 && <p className="text-mutedText text-center py-6">No matching results found.</p>}
-          {displayedResults.map(result => {
-            const prog = programmeMap[result.programmeId]
-            const isExpanded = expandedResultId === result.id
+          {displayedResults.map(({ programme: prog, result }) => {
+            const isExpanded = expandedResultId === (result?.id || prog.id)
+            const placementRows = buildPlacementRows(result)
             return (
               <div
-                key={result.id}
-                onClick={() => setExpandedResultId(isExpanded ? null : result.id)}
+                key={prog.id}
+                onClick={() => setExpandedResultId(isExpanded ? null : (result?.id || prog.id))}
                 className={`bg-card rounded-xl p-4 cursor-pointer transition-all duration-300 ease-in-out hover:bg-white/10 shadow-sm border border-secondary/30 ${isExpanded ? 'ring-2 ring-mainText' : ''}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-mainText font-semibold">
-                      {result.resultNo ? <span className="text-accent font-bold text-lg mr-2">#{result.resultNo}</span> : null}
-                      {result.name || prog?.name || ''}
+                      {result?.resultNo ? <span className="text-accent font-bold text-lg mr-2">#{result.resultNo}</span> : null}
+                      {result?.name || prog.name || ''}
                     </p>
-                    <p className="text-mutedText text-sm">{prog?.category || ''}</p>
+                    <p className="text-mutedText text-sm">{prog.category || ''}</p>
                   </div>
                   <div className="flex items-center gap-2 text-mutedText text-xs font-semibold">
-                    <Eye size={15} /> {isExpanded ? 'Collapse' : 'Preview'}
+                    {result?.isFinished ? (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/40">
+                        <Eye size={13} /> Published
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-mutedText border border-secondary/40">
+                        No result
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'mt-4 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden">
                     <div className="bg-black/20 rounded-xl p-3 border border-secondary/40">
-                      <div className="space-y-3">
-                        {buildPlacementRows(result).map(row => (
-                          <div key={row.key} className="rounded-lg border border-secondary/40 bg-card p-3 shadow-sm">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-accent font-bold">{row.label}</span>
-                              <span className="text-mutedText">{row.points} pts • Grade {row.grade}</span>
+                      {placementRows.length === 0 ? (
+                        <p className="text-mutedText text-sm text-center py-2 italic">No placement data yet — awaiting judge submission.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {placementRows.map(row => (
+                            <div key={row.key} className="rounded-lg border border-secondary/40 bg-card p-3 shadow-sm">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-accent font-bold">{row.label}</span>
+                                <span className="text-mutedText">{row.points} pts · Grade {row.grade}</span>
+                              </div>
+                              <p className="text-mainText font-semibold mt-1">{row.chestNo ? <span className="text-accent font-bold mr-1.5">#{row.chestNo}</span> : null}{row.name}</p>
+                              <p className="text-mutedText text-xs">{row.team}</p>
                             </div>
-                            <p className="text-mainText font-semibold mt-1">{row.chestNo ? <span className="text-accent font-bold mr-1.5">#{row.chestNo}</span> : null}{row.name}</p>
-                            <p className="text-mutedText text-xs">{row.team}</p>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                       <p className="text-mutedText text-xs mt-4">This screen is preview-only. Any result submission or editing remains judge-controlled.</p>
                     </div>
                   </div>
@@ -166,7 +191,7 @@ export default function AdminResults() {
         {/* Pagination Controls */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 bg-card rounded-xl p-4 border border-secondary/30 text-sm">
           <div className="text-mutedText">
-            Showing <span className="font-semibold text-mainText">{startRow}–{endRow}</span> of <span className="font-semibold text-mainText">{totalResults}</span> results
+            Showing <span className="font-semibold text-mainText">{startRow}–{endRow}</span> of <span className="font-semibold text-mainText">{totalResults}</span> programmes
           </div>
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <div className="flex items-center gap-1.5">

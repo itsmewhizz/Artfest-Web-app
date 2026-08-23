@@ -1,11 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { canvasFor, FONT_FAMILY_CSS, elementText, elementRows } from '../utils/posterTemplates'
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max)
+const SNAP_THRESHOLD = 6
 
-// Renders a poster template with a data source at any scale. Every instance
-// keeps a natural-size, non-scaled copy offscreen (via `captureRef`) that
-// html2canvas uses for PNG export — the visible preview is a scaled clone.
 export default function PosterStage({
   template,
   source,
@@ -19,6 +17,7 @@ export default function PosterStage({
 }) {
   const previewWrapRef = useRef(null)
   const dragRef = useRef(null)
+  const [snapGuides, setSnapGuides] = useState({ x: null, y: null })
 
   if (!template) return null
 
@@ -62,6 +61,8 @@ export default function PosterStage({
       width: el.width,
       height: el.height,
       boxSizing: 'border-box',
+      transform: el.rotation ? `rotate(${el.rotation}deg)` : 'none',
+      transformOrigin: 'center center',
       ...(interactive ? { touchAction: 'none', cursor: 'move' } : {}),
     }
     const alignFlex = () => el.textAlign === 'center' ? 'center' : el.textAlign === 'right' ? 'flex-end' : 'flex-start'
@@ -203,10 +204,73 @@ export default function PosterStage({
     const dx = (e.clientX - d.startX) / scale
     const dy = (e.clientY - d.startY) / scale
     const patch = {}
+
     if (d.mode === 'move') {
-      patch.x = clamp(d.orig.x + dx, 0, W - d.orig.width)
-      patch.y = clamp(d.orig.y + dy, 0, H - d.orig.height)
+      let rawX = clamp(d.orig.x + dx, 0, W - d.orig.width)
+      let rawY = clamp(d.orig.y + dy, 0, H - d.orig.height)
+
+      let snapX = null
+      let snapY = null
+
+      // Build target alignment lines from canvas center & other elements
+      const targetXs = [W / 2]
+      const targetYs = [H / 2]
+
+      template.elements.forEach(other => {
+        if (other.id === d.elId) return
+        targetXs.push(other.x, other.x + other.width, other.x + other.width / 2)
+        targetYs.push(other.y, other.y + other.height, other.y + other.height / 2)
+      })
+
+      // Check X snap (left, center, right)
+      const myCenterX = rawX + d.orig.width / 2
+      const myRightX = rawX + d.orig.width
+
+      for (const tx of targetXs) {
+        if (Math.abs(rawX - tx) < SNAP_THRESHOLD) {
+          rawX = tx
+          snapX = tx
+          break
+        }
+        if (Math.abs(myCenterX - tx) < SNAP_THRESHOLD) {
+          rawX = tx - d.orig.width / 2
+          snapX = tx
+          break
+        }
+        if (Math.abs(myRightX - tx) < SNAP_THRESHOLD) {
+          rawX = tx - d.orig.width
+          snapX = tx
+          break
+        }
+      }
+
+      // Check Y snap (top, center, bottom)
+      const myCenterY = rawY + d.orig.height / 2
+      const myBottomY = rawY + d.orig.height
+
+      for (const ty of targetYs) {
+        if (Math.abs(rawY - ty) < SNAP_THRESHOLD) {
+          rawY = ty
+          snapY = ty
+          break
+        }
+        if (Math.abs(myCenterY - ty) < SNAP_THRESHOLD) {
+          rawY = ty - d.orig.height / 2
+          snapY = ty
+          break
+        }
+        if (Math.abs(myBottomY - ty) < SNAP_THRESHOLD) {
+          rawY = ty - d.orig.height
+          snapY = ty
+          break
+        }
+      }
+
+      setSnapGuides({ x: snapX, y: snapY })
+      patch.x = Math.round(rawX)
+      patch.y = Math.round(rawY)
     } else {
+      setSnapGuides({ x: null, y: null })
       patch.width = clamp(d.orig.width + dx, 24, W - d.orig.x)
       patch.height = clamp(d.orig.height + dy, 24, H - d.orig.y)
     }
@@ -215,6 +279,7 @@ export default function PosterStage({
 
   const endDrag = () => {
     dragRef.current = null
+    setSnapGuides({ x: null, y: null })
     unbindDrag()
   }
 
@@ -244,6 +309,36 @@ export default function PosterStage({
               />
             )}
             {template.elements.map((el, i) => renderElement(el, i, editable))}
+
+            {/* Snap Alignment Guides */}
+            {editable && snapGuides.x !== null && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  left: snapGuides.x,
+                  width: 1,
+                  background: '#7C4DFF',
+                  pointerEvents: 'none',
+                  zIndex: 99,
+                }}
+              />
+            )}
+            {editable && snapGuides.y !== null && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: snapGuides.y,
+                  height: 1,
+                  background: '#7C4DFF',
+                  pointerEvents: 'none',
+                  zIndex: 99,
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -387,14 +387,38 @@ function JudgesResults() {
 
     if (isFirstTime) {
       setSaving(true); setEditError('')
-      const { error } = await judgeClient.from('results').insert({
-        ...payload,
-        ...(resultNoMap[editProg.id] ? { resultNo: resultNoMap[editProg.id] } : {}),
-      })
-      if (error) {
-        setEditError(error?.message || 'Failed to submit the result. Please try again.')
-        setSaving(false)
-        return
+
+      // Find the existing placeholder result row for this programme
+      const existingResult = safeArr(savedResults).find(r => r.programmeId === editProg.id)
+
+      if (existingResult) {
+        // UPDATE the existing placeholder row
+        const { error } = await judgeClient.from('results').update({
+          first,
+          second,
+          third,
+          entries: resolvedEntries,
+          locked: true,
+          isFinished: true,
+          updatedAt: new Date().toISOString(),
+        }).eq('id', existingResult.id)
+        if (error) {
+          setEditError(error?.message || 'Failed to submit the result. Please try again.')
+          setSaving(false)
+          return
+        }
+      } else {
+        // Fallback: insert if no placeholder exists (shouldn't happen with proper sync)
+        const { error } = await judgeClient.from('results').insert({
+          ...payload,
+          isFinished: true,
+          ...(resultNoMap[editProg.id] ? { resultNo: resultNoMap[editProg.id] } : {}),
+        })
+        if (error) {
+          setEditError(error?.message || 'Failed to submit the result. Please try again.')
+          setSaving(false)
+          return
+        }
       }
       setSaving(false); closeEdit(); toast('Result saved and locked!'); loadResults()
       return

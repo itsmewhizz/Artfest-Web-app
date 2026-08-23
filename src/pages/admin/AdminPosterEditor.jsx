@@ -6,6 +6,7 @@ import {
   ArrowLeft, Save, Plus, Trash2, Download, Check, X, Type, Palette,
   Eye, Layers, SlidersHorizontal, Loader2, ImagePlus,
   Wand2, AlignLeft, AlignCenter, AlignRight, Grid3x3, ChevronDown, ChevronRight,
+  RotateCw, MoreVertical, Copy, RotateCcw,
 } from 'lucide-react'
 import PosterStage from '../../components/PosterStage'
 import { useToast } from '../../components/Toast'
@@ -23,7 +24,15 @@ const inputCls = 'w-full rounded-xl bg-black/10 dark:bg-black/20 border border-s
 const selectCls = inputCls + ' appearance-none cursor-pointer'
 const successRing = ' ring-2 ring-success border-success'
 
-// field.key → human label (e.g. "placement.{i}.name" → "Placement # · Name")
+// Layer categories for grouping in the Layers panel
+const LAYER_CATEGORIES = [
+  { id: 'programme', label: 'Programme Info', keys: ['programme.name', 'programme.category', 'result.resultNo', 'date'] },
+  { id: 'winner1', label: 'Winner Container & 1st Place', keys: ['placement.1.rank', 'placement.1.name', 'placement.1.points', 'placement.1.grade', 'placement.1.team', 'placement.1.chestNo'] },
+  { id: 'winner2', label: '2nd Place', keys: ['placement.2.rank', 'placement.2.name', 'placement.2.points', 'placement.2.grade', 'placement.2.team', 'placement.2.chestNo'] },
+  { id: 'winner3', label: '3rd Place', keys: ['placement.3.rank', 'placement.3.name', 'placement.3.points', 'placement.3.grade', 'placement.3.chestNo'] },
+  { id: 'custom', label: 'Other / Custom', keys: [] },
+]
+
 const FIELD_LABEL_MAP = {}
 Object.values(FIELD_GROUPS).forEach(groups =>
   groups.forEach(g => g.fields.forEach(f => { FIELD_LABEL_MAP[f.key] = f.label })),
@@ -48,19 +57,20 @@ const Panel = ({ title, children, className = '' }) => (
   </div>
 )
 
-// Build editable sample data for the "Example Poster Data for Preview" panel.
 const initSampleState = (type) => {
   const base = makeSampleSource(type)
   if (type === 'standings') {
     return {
-      title: base.standings?.title || '',
+      title: base.standings?.title || 'TEAM STANDINGS',
       teams: (base.teams || []).map(t => ({ name: t.name || '', points: t.points ?? '' })),
+      footerText: "RENDEZVOUS '26 ART FESTIVAL",
     }
   }
   return {
-    programmeName: base.programme?.name || '',
-    category: base.programme?.category || '',
-    resultNo: base.result?.resultNo || '',
+    programmeName: 'Group Song (Malayalam)',
+    category: 'General Cat-A',
+    resultNo: '#042',
+    footerText: "RENDEZVOUS '26 ART FESTIVAL",
     placements: (base.placements || []).map(p => ({ name: p.name || '', team: p.team || '' })),
   }
 }
@@ -74,15 +84,25 @@ export default function AdminPosterEditor() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
-  const [zoom, setZoom] = useState(0.5)
+  const [zoom, setZoom] = useState(0.6)
   const [grid, setGrid] = useState(false)
   const [sampleOpen, setSampleOpen] = useState(true)
   const [sampleState, setSampleState] = useState(null)
-  const [bgStatus, setBgStatus] = useState('idle') // idle | loading | ok | error
+  const [bgStatus, setBgStatus] = useState('idle')
   const [bgUrlDirty, setBgUrlDirty] = useState(false)
   const [pendingBg, setPendingBg] = useState(null)
   const [canvasHint, setCanvasHint] = useState('')
   const [saved, setSaved] = useState(false)
+  const [openLayerMenu, setOpenLayerMenu] = useState(null)
+
+  // Collapsible sections state for layers panel
+  const [openCategories, setOpenCategories] = useState({
+    programme: true,
+    winner1: true,
+    winner2: true,
+    winner3: true,
+    custom: true,
+  })
 
   // Export state
   const [exportOpen, setExportOpen] = useState(false)
@@ -95,9 +115,8 @@ export default function AdminPosterEditor() {
   const [downloading, setDownloading] = useState(false)
   const captureRef = useRef(null)
 
-  // Load the template being edited (matches route /admin/frames/templates/:id/edit)
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       const list = await loadTemplates()
       const found = list.find(t => t?.id === id)
       if (found) {
@@ -110,7 +129,6 @@ export default function AdminPosterEditor() {
       }
       setLoading(false)
     })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   useEffect(() => {
@@ -119,7 +137,6 @@ export default function AdminPosterEditor() {
     )
   }, [])
 
-  // (Re)build the editable sample source used by the preview.
   useEffect(() => {
     if (template?.id) setSampleState(initSampleState(template.type))
   }, [template?.id, template?.type])
@@ -143,8 +160,6 @@ export default function AdminPosterEditor() {
     setSaving(true)
     let final = template
     try {
-      // Upload a freshly-picked background to Supabase Storage now so the
-      // template record persists the public URL (not a huge data URL).
       if (pendingBg && final.background.kind === 'image') {
         const publicUrl = await uploadTemplateBackground(pendingBg, final.id)
         final = { ...final, background: { ...final.background, imageUrl: publicUrl, kind: 'image' } }
@@ -166,28 +181,61 @@ export default function AdminPosterEditor() {
     }
   }
 
-  const addElement = () => {
+  const addElement = (customType = 'text') => {
+    const defaultText = customType === 'footer' ? "RENDEZVOUS '26 ART FESTIVAL" : 'Your text'
     const el = {
       id: createId(),
       field: null,
-      text: 'Your text',
+      text: defaultText,
       prefix: '', suffix: '',
       repeat: false,
       x: 60, y: 60, width: 600, height: 50,
-      fontSize: 24, fontColor: '#1D192B', fontWeight: 600,
+      fontSize: 24, fontColor: '#FFFFFF', fontWeight: 600,
       fontFamily: 'Sora', textAlign: 'center', textTransform: 'none',
-      lineHeight: 1.15,
+      lineHeight: 1.15, rotation: 0,
     }
     setTemplate(prev => prev && ({ ...prev, elements: [...prev.elements, el] }))
     setSelectedId(el.id)
   }
 
-  const removeElement = (elId) => {
-    setTemplate(prev => prev && ({ ...prev, elements: prev.elements.filter(e => e.id !== elId) }))
-    setSelectedId(null)
+  const duplicateElement = (elId) => {
+    const target = template.elements.find(e => e.id === elId)
+    if (!target) return
+    const newEl = {
+      ...JSON.parse(JSON.stringify(target)),
+      id: createId(),
+      x: target.x + 20,
+      y: target.y + 20,
+    }
+    setTemplate(prev => prev && ({ ...prev, elements: [...prev.elements, newEl] }))
+    setSelectedId(newEl.id)
+    setOpenLayerMenu(null)
+    toast('Layer duplicated')
   }
 
-  // Sample-data driven preview source.
+  const resetElement = (elId) => {
+    patchElement(elId, {
+      x: 60,
+      y: 60,
+      width: 600,
+      height: 50,
+      fontSize: 24,
+      fontColor: '#FFFFFF',
+      fontWeight: 600,
+      fontFamily: 'Sora',
+      textAlign: 'center',
+      rotation: 0,
+    })
+    setOpenLayerMenu(null)
+    toast('Layer style reset')
+  }
+
+  const removeElement = (elId) => {
+    setTemplate(prev => prev && ({ ...prev, elements: prev.elements.filter(e => e.id !== elId) }))
+    if (selectedId === elId) setSelectedId(null)
+    setOpenLayerMenu(null)
+  }
+
   const editorSource = useMemo(() => {
     if (!template) return null
     const base = makeSampleSource(template.type)
@@ -219,7 +267,6 @@ export default function AdminPosterEditor() {
 
   const patchSample = (patch) => setSampleState(prev => (prev ? { ...prev, ...patch } : patch))
 
-  // ── Background image (instant preview + Supabase storage on save) ──
   const applyBackgroundImage = async (src) => {
     setBgStatus('loading')
     try {
@@ -242,7 +289,6 @@ export default function AdminPosterEditor() {
       const dataUrl = reader.result
       patchTemplate({ background: { ...template.background, imageUrl: dataUrl, kind: 'image' } })
       setBgStatus('ok')
-      // Auto-fit the canvas to the picked image's natural size (clamped).
       const probe = new Image()
       probe.onload = () => {
         const w = Math.round(Math.max(512, Math.min(2160, probe.naturalWidth || 1080)))
@@ -267,7 +313,6 @@ export default function AdminPosterEditor() {
 
   const showBgCheck = bgStatus === 'ok' && bg.kind === 'image' && bg.imageUrl
 
-  // ── Arrow-key nudging for the selected element (Shift = 10px steps) ──
   useEffect(() => {
     const onKey = (e) => {
       if (!selected) return
@@ -282,10 +327,8 @@ export default function AdminPosterEditor() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected])
 
-  // ── Export / download helpers ──
   const studentMap = useMemo(() => { const m = {}; students.forEach(s => { m[s.id] = s }); return m }, [students])
   const teamNameToId = useMemo(() => { const m = {}; teams.forEach(t => { m[t.name] = t.id }); return m }, [teams])
   const resultByProgramme = useMemo(() => { const m = {}; results.forEach(r => { if (r.programmeId) m[r.programmeId] = r }); return m }, [results])
@@ -323,12 +366,11 @@ export default function AdminPosterEditor() {
     if (!prog && stableProgrammes[0]) return buildPosterSource({ type: 'result', programme: stableProgrammes[0], result: resultByProgramme[stableProgrammes[0].id], studentMap, teamNameToId })
     if (!prog) return makeSampleSource('result')
     return buildPosterSource({ type: 'result', programme: prog, result: resultByProgramme[prog.id], studentMap, teamNameToId })
-  }, [template?.type, genProgrammeId, genTeamCount, programmes, results, teams, studentMap, teamNameToId, stableProgrammes]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [template?.type, genProgrammeId, genTeamCount, programmes, results, teams, studentMap, teamNameToId, stableProgrammes])
 
   useEffect(() => {
     if (!template || !exportOpen) return
     if (template.type === 'standings') setGenTeamCount(template.teamsToShow || 8)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exportOpen, template?.id, template?.type])
 
   const downloadPoster = async () => {
@@ -374,9 +416,38 @@ export default function AdminPosterEditor() {
     </div>
   )
 
+  // Categorize elements into collapsible layer sections
+  const getCategorizedElements = () => {
+    const groups = {
+      programme: [],
+      winner1: [],
+      winner2: [],
+      winner3: [],
+      custom: [],
+    }
+
+    template.elements.forEach(el => {
+      if (el.field && el.field.startsWith('placement.1')) {
+        groups.winner1.push(el)
+      } else if (el.field && el.field.startsWith('placement.2')) {
+        groups.winner2.push(el)
+      } else if (el.field && el.field.startsWith('placement.3')) {
+        groups.winner3.push(el)
+      } else if (el.field && (el.field.startsWith('programme') || el.field.startsWith('result') || el.field === 'date')) {
+        groups.programme.push(el)
+      } else {
+        groups.custom.push(el)
+      }
+    })
+
+    return groups
+  }
+
+  const categorizedElements = getCategorizedElements()
+
   return (
     <div className="max-w-[1400px] mx-auto">
-      {/* Sticky top bar: back arrow + duplicate Save */}
+      {/* Sticky top bar */}
       <div className="sticky top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 bg-card/90 backdrop-blur border-b border-secondary/30 mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <button onClick={() => navigate('/admin/frames/templates')} className="flex items-center gap-1.5 text-mainText hover:opacity-80 transition shrink-0">
@@ -404,54 +475,121 @@ export default function AdminPosterEditor() {
       </div>
 
       {/* 3-panel layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-4 items-start">
-        {/* LEFT: Layers */}
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_320px] gap-4 items-start">
+        {/* LEFT: Categorized Layer Library */}
         <div className="space-y-4 lg:sticky lg:top-20 order-1">
-          <Panel title={<span className="flex items-center gap-2"><Layers size={14} className="text-accent" /> Layers</span>}>
-            <div className="space-y-1.5 mb-3">
-              {template.elements.length === 0 && <p className="text-mutedText text-xs">No layers yet. Add a custom text field below.</p>}
-              {template.elements.map((el, i) => (
-                <button
-                  key={el.id}
-                  onClick={() => setSelectedId(el.id)}
-                  className={`w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition border ${selectedId === el.id ? 'border-success bg-success/10 text-mainText ring-1 ring-success/40' : 'border-secondary/30 bg-black/5 dark:bg-black/20 text-mutedText hover:text-mainText'}`}
-                >
-                  <Type size={13} className={`shrink-0 ${selectedId === el.id ? 'text-success' : ''}`} />
-                  <span className="truncate flex-1">{layerLabel(el)}</span>
-                  <span className="text-[10px] uppercase tracking-wide text-mutedText shrink-0">L{i + 1}</span>
-                </button>
-              ))}
+          <Panel title={<span className="flex items-center gap-2"><Layers size={14} className="text-accent" /> Layer Library</span>}>
+            <div className="space-y-3 mb-3">
+              {LAYER_CATEGORIES.map(cat => {
+                const els = categorizedElements[cat.id] || []
+                const isOpen = openCategories[cat.id]
+                return (
+                  <div key={cat.id} className="rounded-xl border border-secondary/30 bg-black/10 dark:bg-black/20 overflow-hidden">
+                    <button
+                      onClick={() => setOpenCategories(prev => ({ ...prev, [cat.id]: !prev[cat.id] }))}
+                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-mainText hover:bg-white/5 transition"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {isOpen ? <ChevronDown size={13} className="text-accent" /> : <ChevronRight size={13} className="text-accent" />}
+                        {cat.label}
+                      </span>
+                      <span className="text-[10px] text-mutedText bg-card px-1.5 py-0.5 rounded">{els.length}</span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="p-1.5 space-y-1 divide-y divide-secondary/20">
+                        {els.length === 0 && (
+                          <p className="text-mutedText text-[11px] px-2 py-1.5 italic">No layers in section</p>
+                        )}
+                        {els.map(el => (
+                          <div key={el.id} className="relative flex items-center gap-1 pt-1 first:pt-0">
+                            <button
+                              onClick={() => setSelectedId(el.id)}
+                              className={`flex-1 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition border ${selectedId === el.id ? 'border-success bg-success/15 text-mainText font-semibold' : 'border-transparent text-mutedText hover:text-mainText hover:bg-white/5'}`}
+                            >
+                              <Type size={12} className={`shrink-0 ${selectedId === el.id ? 'text-success' : ''}`} />
+                              <span className="truncate flex-1">{layerLabel(el)}</span>
+                            </button>
+                            {/* Layer Context Options Menu (⋮) */}
+                            <div className="relative">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setOpenLayerMenu(openLayerMenu === el.id ? null : el.id) }}
+                                className="p-1 text-mutedText hover:text-mainText rounded-md hover:bg-white/10 transition"
+                                title="Layer options"
+                              >
+                                <MoreVertical size={13} />
+                              </button>
+                              {openLayerMenu === el.id && (
+                                <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-secondary/40 rounded-xl shadow-2xl p-1 w-40 text-xs">
+                                  <button
+                                    onClick={() => duplicateElement(el.id)}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-mainText hover:bg-white/10 transition text-left"
+                                  >
+                                    <Copy size={12} /> Duplicate
+                                  </button>
+                                  <button
+                                    onClick={() => resetElement(el.id)}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-mainText hover:bg-white/10 transition text-left"
+                                  >
+                                    <RotateCcw size={12} /> Reset Style
+                                  </button>
+                                  <button
+                                    onClick={() => removeElement(el.id)}
+                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition text-left"
+                                  >
+                                    <Trash2 size={12} /> Delete Layer
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-            <button onClick={addElement} className="flex items-center gap-2 w-full justify-center rounded-xl border border-dashed border-secondary/50 text-mutedText hover:text-mainText hover:border-primary py-2.5 text-sm transition">
-              <Plus size={15} /> Add custom text field
-            </button>
-            {selected && (
-              <button onClick={() => removeElement(selected.id)} className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-red-500/40 text-red-500 hover:bg-red-500/10 py-2 text-sm font-semibold transition">
-                <Trash2 size={14} /> Delete layer
+
+            <div className="space-y-1.5">
+              <button onClick={() => addElement('text')} className="flex items-center gap-2 w-full justify-center rounded-xl border border-dashed border-secondary/50 text-mutedText hover:text-mainText hover:border-primary py-2 text-xs font-semibold transition">
+                <Plus size={14} /> Add custom text field
               </button>
-            )}
+              <button onClick={() => addElement('footer')} className="flex items-center gap-2 w-full justify-center rounded-xl border border-dashed border-secondary/50 text-mutedText hover:text-mainText hover:border-primary py-2 text-xs font-semibold transition">
+                <Plus size={14} /> Add Festival Footer Text
+              </button>
+            </div>
           </Panel>
         </div>
 
         {/* CENTER: Live preview */}
         <div className="lg:sticky lg:top-20 order-2">
           <Panel title={<span className="flex items-center gap-2"><Eye size={14} className="text-accent" /> Live Preview</span>} className="flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-3 self-end">
-              <span className="text-mutedText text-xs font-semibold">Zoom</span>
-              <button onClick={() => setZoom(z => Math.max(0.2, +(z - 0.05).toFixed(2)))} className="p-1.5 rounded-lg border border-secondary/40 text-mutedText hover:text-mainText transition">−</button>
-              <span className="text-mainText text-xs font-semibold w-10 text-center">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom(z => Math.min(1.5, +(z + 0.05).toFixed(2)))} className="p-1.5 rounded-lg border border-secondary/40 text-mutedText hover:text-mainText transition">+</button>
+            {/* Zoom Presets Bar */}
+            <div className="flex items-center gap-1.5 mb-3 self-end flex-wrap justify-end">
+              <span className="text-mutedText text-xs font-semibold mr-1">Zoom</span>
+              {[0.25, 0.45, 0.60, 0.75, 1.0].map(z => (
+                <button
+                  key={z}
+                  onClick={() => setZoom(z)}
+                  className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${zoom === z ? 'bg-primary text-white font-bold' : 'bg-black/10 dark:bg-black/20 text-mutedText border border-secondary/40 hover:text-mainText'}`}
+                >
+                  {Math.round(z * 100)}%
+                </button>
+              ))}
               <span className="w-px h-5 bg-secondary/40 mx-1" />
               <button
                 onClick={() => setGrid(g => !g)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border ${grid ? 'bg-primary text-white border-primary' : 'bg-black/10 dark:bg-black/20 text-mutedText border-secondary/40'}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition border ${grid ? 'bg-primary text-white border-primary' : 'bg-black/10 dark:bg-black/20 text-mutedText border-secondary/40'}`}
               >
                 <Grid3x3 size={13} /> Grid
               </button>
             </div>
+
             {previewShell(editorSource, zoom, true)}
+
             <p className="text-mutedText text-[11px] mt-3 text-center">
-              Drag layers to move · drag the corner handle to resize · arrow keys nudge (Shift = 10px).
+              Drag layers on canvas to position · snap guides align automatically · corner handle resizes.
             </p>
 
             {/* Example Poster Data for Preview */}
@@ -545,6 +683,8 @@ export default function AdminPosterEditor() {
               </div>
               {canvasHint && <p className="text-success text-[11px] font-semibold">✓ {canvasHint}</p>}
             </Field>
+
+            {/* Background Presets: Solid | Gradient | Image */}
             <Field label="Background">
               <div className="flex gap-1.5 mb-2">
                 {['solid', 'gradient', 'image'].map(k => (
@@ -581,10 +721,12 @@ export default function AdminPosterEditor() {
                     <button
                       key={g.label}
                       onClick={() => patchTemplate({ background: { ...bg, gradient: g.css } })}
-                      className={`rounded-lg h-10 border border-white/40 transition ${bg.gradient === g.css ? successRing : ''}`}
+                      className={`rounded-lg h-10 border border-white/40 transition flex items-end p-1 text-[10px] text-white font-bold drop-shadow ${bg.gradient === g.css ? successRing : ''}`}
                       style={{ background: g.css }}
                       title={g.label}
-                    />
+                    >
+                      {g.label}
+                    </button>
                   ))}
                 </div>
               )}
@@ -652,11 +794,11 @@ export default function AdminPosterEditor() {
         <div className="rounded-2xl bg-card border border-secondary/40 backdrop-blur px-4 py-3 shadow-xl space-y-3">
           {!selected ? (
             <div className="flex items-center gap-2 text-mutedText text-xs py-1">
-              <SlidersHorizontal size={16} /> Select a layer to edit its content, formatting (Prefix, Font, Color, Line Height…) and position (Width, X, Y).
+              <SlidersHorizontal size={16} /> Select a layer to edit its content, formatting (Font, Rotation, Color, Alignment…) and position (X, Y, Width).
             </div>
           ) : (
             <>
-              {/* Content */}
+              {/* Content Row */}
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-mutedText text-[11px] font-semibold uppercase tracking-wide">Content</span>
                 <Field label="Data field">
@@ -690,29 +832,31 @@ export default function AdminPosterEditor() {
                     </button>
                   </Field>
                 )}
-                <Field label="Prefix"><input className={inputCls + ' w-20'} value={selected.prefix} onChange={e => patchElement(selected.id, { prefix: e.target.value })} placeholder="e.g. #" /></Field>
-                <Field label="Suffix"><input className={inputCls + ' w-20'} value={selected.suffix} onChange={e => patchElement(selected.id, { suffix: e.target.value })} placeholder="e.g. pts" /></Field>
+                <Field label="Prefix"><input className={inputCls + ' w-20'} value={selected.prefix || ''} onChange={e => patchElement(selected.id, { prefix: e.target.value })} placeholder="e.g. #" /></Field>
+                <Field label="Suffix"><input className={inputCls + ' w-20'} value={selected.suffix || ''} onChange={e => patchElement(selected.id, { suffix: e.target.value })} placeholder="e.g. pts" /></Field>
                 {!selected.field && (
-                  <Field label="Text"><input className={inputCls + ' min-w-[160px]'} value={selected.text} onChange={e => patchElement(selected.id, { text: e.target.value })} /></Field>
+                  <Field label="Text"><input className={inputCls + ' min-w-[180px]'} value={selected.text || ''} onChange={e => patchElement(selected.id, { text: e.target.value })} /></Field>
                 )}
               </div>
 
-              {/* Format */}
+              {/* Formatting Row: Font Family, Size, Weight, Alignment, Rotation, Color */}
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-mutedText text-[11px] font-semibold uppercase tracking-wide">Format</span>
                 <Field label="Font Family">
-                  <select value={selected.fontFamily} onChange={e => patchElement(selected.id, { fontFamily: e.target.value })} className={selectCls + ' w-auto min-w-[130px]'}>
+                  <select value={selected.fontFamily || 'Sora'} onChange={e => patchElement(selected.id, { fontFamily: e.target.value })} className={selectCls + ' w-auto min-w-[130px]'}>
                     {FONT_FAMILIES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                   </select>
                 </Field>
                 <Field label="Font Size">
-                  <input type="number" min="8" max="200" value={selected.fontSize} onChange={e => patchElement(selected.id, { fontSize: Number(e.target.value) || 12 })} className={inputCls + ' w-20'} />
+                  <input type="number" min="8" max="200" value={selected.fontSize || 24} onChange={e => patchElement(selected.id, { fontSize: Number(e.target.value) || 12 })} className={inputCls + ' w-20'} />
                 </Field>
                 <Field label="Font Weight">
-                  <select value={selected.fontWeight} onChange={e => patchElement(selected.id, { fontWeight: Number(e.target.value) })} className={selectCls + ' w-auto min-w-[70px]'}>
+                  <select value={selected.fontWeight || 600} onChange={e => patchElement(selected.id, { fontWeight: Number(e.target.value) })} className={selectCls + ' w-auto min-w-[70px]'}>
                     {[400, 500, 600, 700, 800].map(w => <option key={w} value={w}>{w}</option>)}
                   </select>
                 </Field>
+
+                {/* Alignment Icon Buttons */}
                 <Field label="Alignment">
                   <div className="flex gap-1">
                     {[{ v: 'left', I: AlignLeft }, { v: 'center', I: AlignCenter }, { v: 'right', I: AlignRight }].map(a => (
@@ -722,15 +866,31 @@ export default function AdminPosterEditor() {
                     ))}
                   </div>
                 </Field>
+
+                {/* Rotate Control */}
+                <Field label="Rotate (deg)">
+                  <div className="flex items-center gap-1.5">
+                    <RotateCw size={14} className="text-mutedText shrink-0" />
+                    <input
+                      type="number"
+                      min="-180"
+                      max="180"
+                      value={selected.rotation || 0}
+                      onChange={e => patchElement(selected.id, { rotation: Number(e.target.value) || 0 })}
+                      className={inputCls + ' w-20'}
+                    />
+                  </div>
+                </Field>
+
                 <Field label="Color">
-                  <input type="color" value={selected.fontColor} onChange={e => patchElement(selected.id, { fontColor: e.target.value })} className="w-9 h-9 rounded-lg bg-transparent border border-secondary/40 cursor-pointer" />
+                  <input type="color" value={selected.fontColor || '#FFFFFF'} onChange={e => patchElement(selected.id, { fontColor: e.target.value })} className="w-9 h-9 rounded-lg bg-transparent border border-secondary/40 cursor-pointer" />
                 </Field>
                 <Field label="Line Height">
                   <input type="number" min="0.6" max="3" step="0.05" value={selected.lineHeight ?? 1.15} onChange={e => patchElement(selected.id, { lineHeight: Number(e.target.value) || 1.15 })} className={inputCls + ' w-20'} />
                 </Field>
               </div>
 
-              {/* Position / size */}
+              {/* Position / Size Row */}
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-mutedText text-[11px] font-semibold uppercase tracking-wide">Position</span>
                 {['width', 'height', 'x', 'y'].map(k => (
@@ -739,10 +899,16 @@ export default function AdminPosterEditor() {
                   </Field>
                 ))}
                 <button
+                  onClick={() => duplicateElement(selected.id)}
+                  className="flex items-center gap-1.5 rounded-xl border border-secondary/40 bg-black/10 dark:bg-black/20 text-mainText hover:bg-white/10 px-3 py-2 text-xs font-semibold transition"
+                >
+                  <Copy size={13} /> Duplicate
+                </button>
+                <button
                   onClick={() => removeElement(selected.id)}
                   className="flex items-center gap-1.5 rounded-xl border border-red-500/40 text-red-500 hover:bg-red-500/10 px-3 py-2 text-xs font-semibold transition"
                 >
-                  <Trash2 size={14} /> Delete layer
+                  <Trash2 size={13} /> Delete layer
                 </button>
               </div>
             </>

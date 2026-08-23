@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
-import { getProgrammes, getResultNoMap, getCategories, getTeams, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES } from '../../supabase/queries'
+import { getProgrammes, getResultNoMap, getCategories, getTeams, PROGRAMME_CATEGORIES, PROGRAMME_TYPES, PARTICIPATION_TYPES, createPlaceholderResultForProgramme } from '../../supabase/queries'
 import { Plus, X, Printer, Pencil, Trash2, Upload, Eraser } from 'lucide-react'
 import KebabMenu from '../../components/KebabMenu'
 import FilterDropdown from '../../components/FilterDropdown'
@@ -46,19 +46,28 @@ export default function AdminProgrammes() {
   const navigate = useNavigate()
   const toast = useToast()
 
+  const hasProgFilter = Boolean(progFilter || progTypeFilter || partFilter)
+  const filteredProgrammes = useMemo(() => {
+    return programmes
+      .filter(p => (!progFilter || p.category === progFilter)
+        && (!progTypeFilter || (p.programmeType || p.type || '') === progTypeFilter)
+        && (!partFilter || (p.participationType || p.participation_type || '') === partFilter))
+      .sort((a, b) => (resultNoMap[a.id] || Number.MAX_SAFE_INTEGER) - (resultNoMap[b.id] || Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
+  }, [programmes, progFilter, progTypeFilter, partFilter, resultNoMap])
+
   const deleteResultsForProgramme = async (progId) => {
     const { data, error } = await supabase.rpc('admin_delete_results_for_programme', { p_programme_id: progId })
     if (error) {
-      console.error('Delete results failed:', error)
-      return { error }
+      console.warn('RPC admin_delete_results_for_programme failed, falling back to direct delete:', error)
+      return supabase.from('results').delete().eq('programmeId', progId)
     }
-    return { data }
+    return { data, error }
   }
 
   const loadData = () => {
     getProgrammes().then(setProgrammes)
     getResultNoMap().then(setResultNoMap)
-    getCategories().then(({ programme }) => setCategories(programme))
+    getCategories().then(setCategories)
     getTeams().then(setTeams)
     supabase.from('students').select('id, name, team, programmeIds').then(({ data }) => setStudents(data || []))
   }
@@ -73,6 +82,7 @@ export default function AdminProgrammes() {
       return toast('Failed to add programme: ' + (progErr?.message || 'the database rejected the insert (permission denied).'), 'error')
     }
     const addedId = newProg[0].id
+    await createPlaceholderResultForProgramme(addedId, name)
     if (addResultNo) {
       const { data: rpcData, error: noErr } = await supabase.rpc('admin_set_result_no', {
         p_programme_id: addedId,
@@ -89,16 +99,18 @@ export default function AdminProgrammes() {
 
   const toggleFinished = async (prog) => {
     const originalStatus = prog.isFinished
-    setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: !originalStatus } : p))
+    const newStatus = !originalStatus
+    setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: newStatus } : p))
 
     try {
-      if (originalStatus) {
-        const del = await deleteResultsForProgramme(prog.id)
-        if (del.error) throw new Error(del.error.message)
-      }
-      const { data: updated, error } = await supabase.from('programmes').update({ isFinished: !originalStatus }).eq('id', prog.id).select('id')
+      // Update programme isFinished
+      const { data: updated, error } = await supabase.from('programmes').update({ isFinished: newStatus }).eq('id', prog.id).select('id')
       if (error) throw error
       if (!updated || updated.length === 0) throw new Error('the database rejected the update (permission denied)')
+
+      // Also sync the result row's isFinished flag (keep the row, don't delete)
+      const { error: resErr } = await supabase.from('results').update({ isFinished: newStatus }).eq('programmeId', prog.id)
+      if (resErr) console.warn('Failed to sync result isFinished:', resErr)
     } catch (err) {
       setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: originalStatus } : p))
       toast('Failed to update status: ' + err.message, 'error')
@@ -118,12 +130,23 @@ export default function AdminProgrammes() {
   }
 
   const handleClearResult = async (prog) => {
-    if (!window.confirm(`Clear the result for "${prog.name}"? Its result rows will be deleted and the programme will be marked as not finished.`)) return
-    const del = await deleteResultsForProgramme(prog.id)
-    if (del.error) {
-      console.error('Clear result failed:', del.error)
-      return toast('Failed to clear result: ' + del.error.message, 'error')
+    if (!window.confirm(`Clear the result for "${prog.name}"? Placements will be removed and the programme will be marked as not finished.`)) return
+
+    // Reset the result row instead of deleting it
+    const { error: resErr } = await supabase.from('results').update({
+      first: null,
+      second: null,
+      third: null,
+      entries: null,
+      isFinished: false,
+      locked: false,
+      updatedAt: new Date().toISOString(),
+    }).eq('programmeId', prog.id)
+    if (resErr) {
+      console.error('Clear result failed:', resErr)
+      return toast('Failed to clear result: ' + resErr.message, 'error')
     }
+
     await supabase.from('programmes').update({ isFinished: false }).eq('id', prog.id).select('id')
     toast('Result cleared!')
     loadData()
@@ -165,6 +188,8 @@ export default function AdminProgrammes() {
         failed.push(name)
         continue
       }
+
+      await createPlaceholderResultForProgramme(newProg[0].id, name)
 
       if (resultNo && Number(resultNo)) {
         const { data: rpcData, error: noErr } = await supabase.rpc('admin_set_result_no', {
@@ -220,10 +245,19 @@ export default function AdminProgrammes() {
     }
 
     if (turningOff) {
-      const del = await deleteResultsForProgramme(editingId)
-      if (del.error) {
-        console.error('Result cleanup on unfinish failed:', del.error)
-        return toast('Programme updated but result cleanup failed: ' + del.error.message, 'error')
+      // Reset the result row instead of deleting it
+      const { error: resErr } = await supabase.from('results').update({
+        first: null,
+        second: null,
+        third: null,
+        entries: null,
+        isFinished: false,
+        locked: false,
+        updatedAt: new Date().toISOString(),
+      }).eq('programmeId', editingId)
+      if (resErr) {
+        console.error('Result cleanup on unfinish failed:', resErr)
+        return toast('Programme updated but result cleanup failed: ' + resErr.message, 'error')
       }
     }
 
@@ -297,7 +331,14 @@ export default function AdminProgrammes() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Programmes</h2>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h2 className="text-xl sm:text-2xl font-poppins font-bold text-mainText">Programmes</h2>
+          <span className="bg-secondary/30 text-mainText text-xs font-semibold px-2.5 py-1 rounded-full">
+            {hasProgFilter
+              ? `${filteredProgrammes.length} of ${programmes.length} programmes`
+              : `${programmes.length} programmes`}
+          </span>
+        </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <button onClick={() => setImportOpen(true)} className="flex items-center gap-2 bg-card hover:bg-white/10 border border-secondary/40 text-mainText px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-sm sm:text-base">
             <Upload size={16} className="sm:w-[18px] sm:h-[18px]" /> Import File
@@ -338,12 +379,6 @@ export default function AdminProgrammes() {
         />
       </div>
       {(() => {
-        const filteredProgrammes = programmes
-          .filter(p => (!progFilter || p.category === progFilter)
-            && (!progTypeFilter || (p.programmeType || p.type || '') === progTypeFilter)
-            && (!partFilter || (p.participationType || p.participation_type || '') === partFilter))
-          .sort((a, b) => (resultNoMap[a.id] || Number.MAX_SAFE_INTEGER) - (resultNoMap[b.id] || Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name))
-
         const totalProgrammes = filteredProgrammes.length
         const isAll = pageSize === 'all'
         const numericSize = isAll ? totalProgrammes : Number(pageSize) || 100

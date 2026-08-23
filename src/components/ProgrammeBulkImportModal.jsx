@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Upload, CheckCircle2, AlertCircle, Save } from 'lucide-react'
 import { supabase } from '../supabase/client'
+import { createPlaceholderResultForProgramme } from '../supabase/queries'
 import { useToast } from './Toast'
 
 export default function ProgrammeBulkImportModal({
@@ -74,6 +75,9 @@ export default function ProgrammeBulkImportModal({
           console.error('Insert error:', error)
           errorsCount++
         } else {
+          if (data && data[0]) {
+            await createPlaceholderResultForProgramme(data[0].id, data[0].name)
+          }
           imported++
         }
       }

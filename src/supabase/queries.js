@@ -100,13 +100,42 @@ export const getFinishedProgrammeIds = async () => {
   return new Set((data || []).filter(p => p.isFinished).map(p => p.id))
 }
 
+export const createPlaceholderResultForProgramme = async (programmeId, programmeName) => {
+  if (!programmeId) return null
+  const { data: existing } = await supabase
+    .from('results')
+    .select('id')
+    .eq('programmeId', String(programmeId))
+    .maybeSingle()
+
+  if (existing) return existing
+
+  const { data, error } = await supabase.from('results').insert({
+    programmeId: String(programmeId),
+    name: programmeName || '',
+    first: null,
+    second: null,
+    third: null,
+    entries: null,
+    isFinished: false,
+    locked: false,
+    updatedAt: new Date().toISOString(),
+  }).select('*').maybeSingle()
+
+  if (error) {
+    console.error('Error creating placeholder result:', error)
+    return null
+  }
+  return data
+}
+
 // Latest result row per programme, restricted to programmes that are
 // marked as finished. Unfinished programmes are excluded so stale or
 // incomplete result data never surfaces in result-reading views.
 export const getResultsForFinishedProgrammes = async () => {
   const finishedIds = await getFinishedProgrammeIds()
   const data = await fetchAllRows('results', '*')
-  const filtered = (data || []).filter(r => r.programmeId && finishedIds.has(r.programmeId))
+  const filtered = (data || []).filter(r => r.programmeId && finishedIds.has(r.programmeId) && (r.isFinished === true || r.first || r.second || r.third || (r.entries && r.entries.length > 0)))
   return latestPerProgramme(filtered).sort((a, b) => (b.resultNo || 0) - (a.resultNo || 0))
 }
 

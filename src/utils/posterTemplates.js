@@ -107,19 +107,23 @@ export const templateIndexLabel = (list, id) => {
 
 // ── Fonts available to poster text elements ──
 export const FONT_FAMILIES = [
-  { value: 'Sora', label: 'Sora (Brand)' },
-  { value: 'CSGENERAL', label: 'CSGeneral (Corvion)' },
-  { value: 'Georgia', label: 'Georgia (Serif)' },
-  { value: 'Arial', label: 'Arial' },
-  { value: 'monospace', label: 'Monospace' },
+  { value: 'Sora', label: 'Sora' },
+  { value: 'Montserrat', label: 'Montserrat' },
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Serif', label: 'Serif' },
+  { value: 'Monospace', label: 'Monospace' },
+  { value: 'CSGENERAL', label: 'CSGeneral' },
 ]
 
 export const FONT_FAMILY_CSS = {
   Sora: 'Sora, "Segoe UI", sans-serif',
+  Montserrat: 'Montserrat, "Segoe UI", sans-serif',
+  Inter: 'Inter, "Segoe UI", sans-serif',
+  Roboto: 'Roboto, "Segoe UI", sans-serif',
+  Serif: 'Georgia, "Times New Roman", serif',
+  Monospace: '"Courier New", monospace',
   CSGENERAL: 'CSGENERAL-REGULAR_DEMO, sans-serif',
-  Georgia: 'Georgia, "Times New Roman", serif',
-  Arial: 'Arial, Helvetica, sans-serif',
-  monospace: '"Courier New", monospace',
 }
 
 // ── Colour themes for the event-poster design ──
@@ -150,13 +154,15 @@ export const paletteFor = (theme) => PALETTES[theme] || PALETTES.light
 export const BG_PRESETS = {
   solid: ['#5E35B1', '#7C4DFF', '#0B0F19', '#112E81', '#0F766E', '#B91C1C', '#FFFFFF'],
   gradient: [
+    { label: 'Dark Emerald', css: 'linear-gradient(135deg, #061A0D 0%, #115F32 100%)' },
+    { label: 'Forest Teal', css: 'linear-gradient(135deg, #042914 0%, #0F766E 100%)' },
+    { label: 'Deep Pine', css: 'linear-gradient(135deg, #0A1F1C 0%, #1D5C42 100%)' },
+    { label: 'Jade Velvet', css: 'linear-gradient(135deg, #00120B 0%, #054A29 100%)' },
+    { label: 'Moss Green', css: 'linear-gradient(135deg, #0D2619 0%, #257048 100%)' },
     { label: 'Pastel Frame', css: PALETTES.light.bg },
     { label: 'Luminous Glow', css: PALETTES.dark.bg },
     { label: 'Purple Night', css: 'linear-gradient(160deg, #5E35B1 0%, #3E1F8E 55%, #1D192B 100%)' },
     { label: 'Ocean', css: 'linear-gradient(160deg, #0F2A3D 0%, #2872A1 60%, #5C93AA 100%)' },
-    { label: 'Sunset', css: 'linear-gradient(160deg, #B91C1C 0%, #E8845C 55%, #FFD54F 120%)' },
-    { label: 'Emerald', css: 'linear-gradient(160deg, #064E3B 0%, #0F766E 55%, #34D399 120%)' },
-    { label: 'Midnight', css: 'linear-gradient(160deg, #0B0F19 0%, #1B1927 55%, #334155 120%)' },
   ],
 }
 
