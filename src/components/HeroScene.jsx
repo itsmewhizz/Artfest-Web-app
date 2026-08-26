@@ -20,7 +20,7 @@ const OBJECTS = [
     entranceStep: 4,
     position: [-2.2, 1.2, 0],
     scale: 2.0,
-    rotation: [0, 0, -0.21],
+    rotation: [0, 0, 0],
     parallax: 0.35,
   },
   {
@@ -29,7 +29,7 @@ const OBJECTS = [
     entranceStep: 5,
     position: [2.2, 1.2, 0],
     scale: 2.0,
-    rotation: [0, 0, 0.26],
+    rotation: [0, 0, 0],
     parallax: 0.28,
   },
   {
@@ -38,7 +38,7 @@ const OBJECTS = [
     entranceStep: 6,
     position: [-1.8, -1.0, 0],
     scale: 1.5,
-    rotation: [0.5, 0, -0.4],
+    rotation: [0, 0, 0],
     parallax: 0.22,
   },
   {
@@ -47,7 +47,7 @@ const OBJECTS = [
     entranceStep: 7,
     position: [2.2, -1.2, 0],
     scale: 2.0,
-    rotation: [0, 0, 0.1],
+    rotation: [0, 0, 0],
     parallax: 0.25,
   },
   {
@@ -56,7 +56,7 @@ const OBJECTS = [
     entranceStep: 8,
     position: [1.8, 0.1, -1],
     scale: 1.5,
-    rotation: [-0.5, 0, 0.4],
+    rotation: [0, 0, 0],
     parallax: 0.45,
   },
 ]
@@ -76,9 +76,9 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
     clonedScene.traverse((child) => {
       if (child.isMesh) {
         child.material = child.material.clone()
-        child.material.transparent = true
-        child.material.depthWrite = false
-        child.material.blending = THREE.AdditiveBlending
+        child.material.transparent = false
+        child.material.depthWrite = true
+        child.material.blending = THREE.NormalBlending
         child.material.color = new THREE.Color(1, 1, 1)
       }
     })
@@ -181,10 +181,12 @@ export default function HeroScene({ entranceStep, mousePos }) {
         style={{ background: 'transparent' }}
         dpr={[1, 2]}
       >
-        <ambientLight intensity={0.3} />
+        <ambientLight intensity={0.6} />
+        <hemisphereLight intensity={0.5} color="#ffffff" groundColor="#000000" />
+        <directionalLight position={[0, 0, 5]} intensity={1.0} color="#ffffff" />
         <directionalLight position={[5, 5, 5]} intensity={0.8} color="#ffffff" />
         <directionalLight position={[-3, 2, 4]} intensity={0.4} color="#01B998" />
-        <pointLight position={[0, 0, 3]} intensity={0.5} color="#AEE515" />
+        <pointLight position={[0, 0, 3]} intensity={0.8} color="#AEE515" />
 
         <Suspense fallback={<LoadingFallback />}>
           {OBJECTS.map((obj) => (
