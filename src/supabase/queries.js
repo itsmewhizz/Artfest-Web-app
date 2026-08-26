@@ -574,7 +574,7 @@ export const getCodeAssignmentsForProgramme = async (programmeId) => {
     .eq('programme_id', programmeId)
     .order('code_letter', { ascending: true })
   if (error) console.error('getCodeAssignmentsForProgramme error:', error)
-  return data || []
+  return Array.isArray(data) ? data : []
 }
 
 export const upsertCodeAssignments = async (assignments) => {
@@ -598,7 +598,7 @@ export const getAllCodeAssignments = async () => {
     .from('performance_code_assignments')
     .select('*')
   if (error) console.error('getAllCodeAssignments error:', error)
-  return data || []
+  return Array.isArray(data) ? data : []
 }
 
 export const updateStudentProfile = async (id, updates) => {
