@@ -18,7 +18,7 @@ const OBJECTS = [
     name: 'leaf',
     model: MODELS.leaf,
     entranceStep: 4,
-    position: [-0.65, 0.35, 0],
+    position: [-0.7, 0.4, 0],
     scale: 1.8,
     rotation: [0, 0, -0.21],
     parallax: 0.35,
@@ -27,8 +27,8 @@ const OBJECTS = [
     name: 'seedPod',
     model: MODELS.seedPod,
     entranceStep: 5,
-    position: [0.65, 0.4, 0],
-    scale: 1.2,
+    position: [0.7, 0.4, 0],
+    scale: 1.8,
     rotation: [0, 0, 0.26],
     parallax: 0.28,
   },
@@ -36,17 +36,17 @@ const OBJECTS = [
     name: 'treeSlice',
     model: MODELS.treeSlice,
     entranceStep: 6,
-    position: [-0.55, -0.4, 0],
-    scale: 1.1,
-    rotation: [0, 0, -0.14],
+    position: [-0.6, -0.3, 0],
+    scale: 1.2,
+    rotation: [-0.4, 0, -0.2],
     parallax: 0.22,
   },
   {
     name: 'herbarium',
     model: MODELS.herbarium,
     entranceStep: 7,
-    position: [0.6, -0.35, 0],
-    scale: 1.3,
+    position: [0.6, -0.4, 0],
+    scale: 1.8,
     rotation: [0, 0, 0.1],
     parallax: 0.25,
   },
@@ -54,9 +54,9 @@ const OBJECTS = [
     name: 'lens',
     model: MODELS.lens,
     entranceStep: 8,
-    position: [-0.4, 0.15, 2],
-    scale: 1.1,
-    rotation: [0, 0, -0.31],
+    position: [0.4, 0.1, -1],
+    scale: 1.2,
+    rotation: [0.4, 0, 0.2],
     parallax: 0.45,
   },
 ]
@@ -66,6 +66,11 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
   const ref = useRef()
   const opacityRef = useRef(0)
   const clonedScene = useMemo(() => scene.clone(), [scene])
+
+  // Interaction state
+  const isDragging = useRef(false)
+  const rotationVelocity = useRef(0)
+  const lastPointerX = useRef(0)
 
   useEffect(() => {
     clonedScene.traverse((child) => {
@@ -78,6 +83,32 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
       }
     })
   }, [clonedScene])
+
+  const handlePointerDown = (e) => {
+    e.stopPropagation()
+    isDragging.current = true
+    lastPointerX.current = e.clientX
+
+    const handleMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - lastPointerX.current
+      const sensitivity = 0.005
+
+      if (ref.current) {
+        ref.current.rotation.y += deltaX * sensitivity
+        rotationVelocity.current = deltaX * sensitivity
+      }
+      lastPointerX.current = moveEvent.clientX
+    }
+
+    const handleUp = () => {
+      isDragging.current = false
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+    }
+
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+  }
 
   useFrame(() => {
     if (!ref.current) return
@@ -99,6 +130,18 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
 
     ref.current.rotation.z = rotation[2] + mousePos.targetX * parallax * 0.03
 
+    // Turntable Rotation Logic
+    if (!isDragging.current) {
+      // Apply momentum
+      ref.current.rotation.y += rotationVelocity.current
+      rotationVelocity.current *= 0.95 // Damping
+
+      // Subtle auto-rotation when almost still
+      if (Math.abs(rotationVelocity.current) < 0.001) {
+        ref.current.rotation.y += 0.002
+      }
+    }
+
     ref.current.traverse((child) => {
       if (child.isMesh && child.material) {
         child.material.opacity = opacityRef.current
@@ -113,6 +156,10 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
       position={position}
       rotation={rotation}
       scale={[scale, scale, scale]}
+      onPointerDown={handlePointerDown}
+      // Ensure the primitive is interactive
+      onPointerOver={() => (document.body.style.cursor = 'grab')}
+      onPointerOut={() => (document.body.style.cursor = 'auto')}
     />
   )
 }
@@ -135,7 +182,7 @@ function LoadingFallback() {
 
 export default function HeroScene({ entranceStep, mousePos }) {
   return (
-    <div className="absolute inset-0 z-10 pointer-events-none">
+    <div className="absolute inset-0 z-10 pointer-events-auto">
       <Canvas
         camera={{ position: [0, 0, 4], fov: 50 }}
         gl={{ alpha: true, antialias: true, toneMapping: THREE.NoToneMapping }}
