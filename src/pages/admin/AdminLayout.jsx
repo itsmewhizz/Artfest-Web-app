@@ -54,12 +54,17 @@ export default function AdminLayout() {
       to="/"
       onClick={() => setOpen(false)}
       aria-label="ISRA Life Festival home"
-      className={`flex items-center justify-center select-none ${small ? '' : 'w-full'}`}
+      className={`flex items-center gap-2.5 select-none ${small ? '' : 'w-full justify-center'}`}
     >
+      <img
+        src="/favicon.png"
+        alt=""
+        className={`${small ? 'h-5 w-5' : 'h-7 w-7'} object-contain rounded-sm shrink-0`}
+      />
       <img
         src="/rendezvous-hero-logo.png"
         alt="Rendezvous'26"
-        className={`${small ? 'h-6 sm:h-7' : 'h-12 sm:h-14'} w-auto max-w-[240px] object-contain`}
+        className={`${small ? 'h-5 sm:h-6' : 'h-8 sm:h-10'} w-auto max-w-[200px] object-contain`}
         style={{ filter: 'brightness(0) invert(1)', opacity: 1, mixBlendMode: 'normal', background: 'transparent' }}
       />
     </Link>
