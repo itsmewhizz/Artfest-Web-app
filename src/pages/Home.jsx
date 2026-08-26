@@ -149,7 +149,7 @@ export default function Home() {
       <PhytoloreHero onScrollToAbout={() => scrollTo(aboutRef)} />
 
       {/* ── Content Below Hero ── */}
-      <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto relative z-20">
+      <div className="pt-0 px-4 pb-4 md:px-8 md:pb-8 lg:px-12 lg:pb-12 max-w-7xl mx-auto relative z-20 overflow-hidden">
 
         {/* Team Standings — ranked list only */}
         <div
