@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-
-// Photorealistic 3D Specimen Assets
-import leafImg from '../assets/hero/leaf.jpg'
-import lensImg from '../assets/hero/lens.jpg'
-import seedPodImg from '../assets/hero/seed_pod.jpg'
-import treeSliceImg from '../assets/hero/tree_slice.jpg'
-import herbariumImg from '../assets/hero/herbarium.jpg'
+import HeroScene from './HeroScene'
 
 // Official Rendezvous'26 Gradient Palette
 const RENDEZVOUS_GRADIENT_STOPS = [
@@ -230,55 +224,7 @@ export default function PhytoloreHero({ onScrollToAbout }) {
       }
 
       // ── 3. OPTICAL DECODE EFFECT (Luminous Vein Glow inside Lens over Leaf) ──
-      if (entranceStep >= 8 && revealIntensity > 0) {
-        ctx.save()
-        const lensRadius = Math.min(width * 0.16, 130)
-
-        ctx.beginPath()
-        ctx.arc(lensX, lensY, lensRadius, 0, Math.PI * 2)
-        ctx.clip()
-
-        // Luminous radial glow inside lens
-        const lensGlow = ctx.createRadialGradient(lensX, lensY, 0, lensX, lensY, lensRadius)
-        lensGlow.addColorStop(0, 'rgba(226, 250, 4, 0.28)')
-        lensGlow.addColorStop(0.65, 'rgba(174, 229, 21, 0.15)')
-        lensGlow.addColorStop(1, 'rgba(1, 185, 152, 0)')
-        ctx.fillStyle = lensGlow
-        ctx.fillRect(lensX - lensRadius, lensY - lensRadius, lensRadius * 2, lensRadius * 2)
-
-        // Draw luminous sharp leaf vein network inside lens region
-        ctx.translate(leafCenterX, leafCenterY)
-        const leafScale = Math.min(width, height) * 0.35
-
-        ctx.beginPath()
-        ctx.moveTo(-leafScale * 0.2, -leafScale * 0.6)
-        ctx.lineTo(leafScale * 0.2, leafScale * 0.6)
-        ctx.strokeStyle = '#E2FA04'
-        ctx.lineWidth = 3.5
-        ctx.shadowColor = '#AEE515'
-        ctx.shadowBlur = 16
-        ctx.stroke()
-
-        const veinCount = 8
-        for (let v = 1; v <= veinCount; v++) {
-          const vy = -leafScale * 0.5 + (v * leafScale) / (veinCount + 1)
-          ctx.beginPath()
-          ctx.moveTo(0, vy)
-          ctx.quadraticCurveTo(-leafScale * 0.3, vy - 20, -leafScale * 0.45, vy - 35)
-          ctx.strokeStyle = '#AEE515'
-          ctx.lineWidth = 2
-          ctx.stroke()
-
-          ctx.beginPath()
-          ctx.moveTo(0, vy)
-          ctx.quadraticCurveTo(leafScale * 0.3, vy - 20, leafScale * 0.45, vy - 35)
-          ctx.strokeStyle = '#AEE515'
-          ctx.lineWidth = 2
-          ctx.stroke()
-        }
-
-        ctx.restore()
-      }
+      // Removed redundant 2D decode effect as it is now replaced by 3D GLB models in HeroScene
 
       // ── 4. FLOATING SPORE PARTICLES ──
       if (entranceStep >= 4) {
@@ -363,107 +309,8 @@ export default function PhytoloreHero({ onScrollToAbout }) {
         </span>
       </div>
 
-      {/* ── 3D PHOTOREALISTIC SPECIMEN OBJECTS LAYER ── */}
-
-      {/* 🍃 OBJECT 01 — LARGE REALISTIC LEAF (Observation - Top Left) */}
-      <div
-        className="absolute z-10 pointer-events-none transition-all duration-1000 origin-top-left"
-        style={{
-          top: '12%',
-          left: '4%',
-          width: 'clamp(280px, 32vw, 520px)',
-          ...layerTransform(0.35),
-          opacity: entranceStep >= 4 ? 1 : 0,
-          transform: `${layerTransform(0.35).transform || ''} scale(${entranceStep >= 4 ? 1 : 0.85}) rotate(-12deg)`,
-          filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.8)) drop-shadow(0 0 25px rgba(1,185,152,0.3))'
-        }}
-      >
-        <img
-          src={leafImg}
-          alt="Realistic Botanical Leaf Specimen"
-          className="w-full h-auto rounded-3xl object-contain mix-blend-screen"
-        />
-      </div>
-
-      {/* 🌰 OBJECT 03 — REALISTIC SEED POD (Hidden Potential - Top Right) */}
-      <div
-        className="absolute z-10 pointer-events-none transition-all duration-1000 origin-top-right"
-        style={{
-          top: '10%',
-          right: '5%',
-          width: 'clamp(200px, 22vw, 360px)',
-          ...layerTransform(0.28),
-          opacity: entranceStep >= 5 ? 1 : 0,
-          transform: `${layerTransform(0.28).transform || ''} scale(${entranceStep >= 5 ? 1 : 0.8}) rotate(15deg)`,
-          filter: 'drop-shadow(0 20px 35px rgba(0,0,0,0.85)) drop-shadow(0 0 20px rgba(100,212,49,0.35))'
-        }}
-      >
-        <img
-          src={seedPodImg}
-          alt="Realistic Seed Pod Specimen"
-          className="w-full h-auto rounded-3xl object-contain mix-blend-screen"
-        />
-      </div>
-
-      {/* 🌳 OBJECT 04 — REALISTIC TREE CROSS-SECTION (Growth/Memory/Time - Lower Left) */}
-      <div
-        className="absolute z-10 pointer-events-none transition-all duration-1000 origin-bottom-left"
-        style={{
-          bottom: '12%',
-          left: '6%',
-          width: 'clamp(180px, 20vw, 320px)',
-          ...layerTransform(0.22),
-          opacity: entranceStep >= 6 ? 1 : 0,
-          transform: `${layerTransform(0.22).transform || ''} scale(${entranceStep >= 6 ? 1 : 0.85}) rotate(-8deg)`,
-          filter: 'drop-shadow(0 25px 40px rgba(0,0,0,0.9)) drop-shadow(0 0 20px rgba(1,185,152,0.25))'
-        }}
-      >
-        <img
-          src={treeSliceImg}
-          alt="Realistic Tree Cross-Section Specimen"
-          className="w-full h-auto rounded-full object-contain mix-blend-screen"
-        />
-      </div>
-
-      {/* 📜 OBJECT 05 — REALISTIC HERBARIUM SPECIMEN (Recorded Knowledge - Lower Right) */}
-      <div
-        className="absolute z-10 pointer-events-none transition-all duration-1000 origin-bottom-right"
-        style={{
-          bottom: '10%',
-          right: '6%',
-          width: 'clamp(220px, 24vw, 380px)',
-          ...layerTransform(0.25),
-          opacity: entranceStep >= 7 ? 1 : 0,
-          transform: `${layerTransform(0.25).transform || ''} scale(${entranceStep >= 7 ? 1 : 0.85}) rotate(6deg)`,
-          filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.85)) drop-shadow(0 0 20px rgba(174,229,21,0.2))'
-        }}
-      >
-        <img
-          src={herbariumImg}
-          alt="Realistic Herbarium Specimen Sheet"
-          className="w-full h-auto rounded-2xl object-contain border border-[#01B998]/30 shadow-2xl"
-        />
-      </div>
-
-      {/* 🔍 OBJECT 02 — REALISTIC PHYSICAL MAGNIFYING LENS (Focus/Decode - Interactive) */}
-      <div
-        className="absolute z-20 pointer-events-none transition-all duration-700 ease-out"
-        style={{
-          top: '22%',
-          left: '16%',
-          width: 'clamp(180px, 20vw, 320px)',
-          ...layerTransform(0.45),
-          opacity: entranceStep >= 8 ? 1 : 0,
-          transform: `${layerTransform(0.45).transform || ''} scale(${entranceStep >= 8 ? 1 : 0.8}) rotate(-18deg)`,
-          filter: 'drop-shadow(0 25px 45px rgba(0,0,0,0.9)) drop-shadow(0 0 30px rgba(226,250,4,0.35))'
-        }}
-      >
-        <img
-          src={lensImg}
-          alt="Realistic Physical Magnifying Lens Specimen"
-          className="w-full h-auto object-contain mix-blend-screen"
-        />
-      </div>
+      {/* ── 3D GLB SPECIMEN OBJECTS LAYER ── */}
+      <HeroScene entranceStep={entranceStep} mousePos={mousePos} />
 
       {/* ── CENTRAL DOMINANT EDITORIAL TYPOGRAPHY & BRANDING ── */}
       <div className="relative z-30 flex-1 flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto w-full">
