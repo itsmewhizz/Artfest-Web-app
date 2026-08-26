@@ -113,30 +113,23 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
   useFrame(() => {
     if (!ref.current) return
 
+    // Fixed entrance logic: Use a simpler visibility check
     const visible = entranceProgress >= entranceStep
     const target = visible ? 1 : 0
-    opacityRef.current += (target - opacityRef.current) * 0.04
+    opacityRef.current += (target - opacityRef.current) * 0.05
 
-    const scaleVal = visible ? scale : scale * 0.85
-    const currentScale = ref.current.scale.x
-    const newScale = currentScale + (scaleVal - currentScale) * 0.04
+    // Parallax: Apply offset to the position relative to the base slot position
+    const px = position[0] + mousePos.targetX * parallax * 0.15
+    const py = position[1] - mousePos.targetY * parallax * 0.12
 
-    ref.current.scale.set(newScale, newScale, newScale)
-
-    const px = position[0] + mousePos.targetX * parallax * 0.08
-    const py = position[1] - mousePos.targetY * parallax * 0.06
-    ref.current.position.x += (px - ref.current.position.x) * 0.05
-    ref.current.position.y += (py - ref.current.position.y) * 0.05
+    ref.current.position.set(px, py, position[2])
 
     ref.current.rotation.z = rotation[2] + mousePos.targetX * parallax * 0.03
 
     // Turntable Rotation Logic
     if (!isDragging.current) {
-      // Apply momentum
       ref.current.rotation.y += rotationVelocity.current
-      rotationVelocity.current *= 0.95 // Damping
-
-      // Subtle auto-rotation when almost still
+      rotationVelocity.current *= 0.95
       if (Math.abs(rotationVelocity.current) < 0.001) {
         ref.current.rotation.y += 0.002
       }
@@ -157,7 +150,6 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
       rotation={rotation}
       scale={[scale, scale, scale]}
       onPointerDown={handlePointerDown}
-      // Ensure the primitive is interactive
       onPointerOver={() => (document.body.style.cursor = 'grab')}
       onPointerOut={() => (document.body.style.cursor = 'auto')}
     />

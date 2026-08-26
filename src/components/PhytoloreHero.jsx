@@ -20,7 +20,7 @@ export default function PhytoloreHero({ onScrollToAbout }) {
   const navigate = useNavigate()
 
   // 11-step entrance sequence state (1 to 11)
-  const [entranceStep, setEntranceStep] = useState(1)
+  const [entranceStep, setEntranceStep] = useState(11)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0, targetX: 0, targetY: 0, canvasX: 0, canvasY: 0 })
   const [isHovered, setIsHovered] = useState(false)
 
