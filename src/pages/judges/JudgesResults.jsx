@@ -170,6 +170,7 @@ function JudgesResults() {
 
   // Read entries from a result, falling back to old first/second/third shape
   const readResultEntries = (result) => {
+    if (!result) return []
     if (result.entries && safeArr(result.entries).length > 0) {
       return safeArr(result.entries)
     }
@@ -216,8 +217,8 @@ function JudgesResults() {
     setVCaptcha('')
   }
 
-  const loadCaptcha = async ({ retries = 2, delayMs = 450 } = {}) => {
-    setVError('')
+  const loadCaptcha = async ({ retries = 2, delayMs = 450, preserveError = false } = {}) => {
+    if (!preserveError) setVError('')
     setCaptchaLoading(true)
 
     const sessionResp = await judgeClient.auth.getSession()
@@ -298,8 +299,8 @@ function JudgesResults() {
 
   const handleVerify = async () => {
     setVError('')
-    if (!captchaId) { setVError('Security code session expired. Generating a new code now.'); await loadCaptcha(); return }
-    if (vCaptcha.trim().toUpperCase() !== captcha) { setVError('Incorrect CAPTCHA. Please try again.'); setVCaptcha(''); await loadCaptcha(); return }
+    if (!captchaId) { setVError('Security code session expired. Generating a new code now.'); await loadCaptcha({ preserveError: true }); return }
+    if (vCaptcha.trim().toUpperCase() !== captcha) { setVError('Incorrect CAPTCHA. Please try again.'); setVCaptcha(''); await loadCaptcha({ preserveError: true }); return }
     if (!vName.trim() || !vPassword) { setVError('Please enter both judge email and password.'); return }
 
     setVLoading(true)
@@ -309,12 +310,19 @@ function JudgesResults() {
     if (error || !data?.user || role !== 'judge') {
       setVError(error?.message || 'Invalid judge name or password.')
       setVCaptcha('')
-      await loadCaptcha()
+      await loadCaptcha({ preserveError: true })
       return
     }
 
+    const progToEdit = editProg
     setVerifyOpen(false)
-    openEdit(editProg)
+    try {
+      await openEdit(progToEdit)
+    } catch (err) {
+      console.error('Failed to open editor after verification:', err)
+      setVError('Verification succeeded but the editor failed to open. Please try again.')
+      setVerifyOpen(true)
+    }
   }
 
   const openEdit = async (prog, preserveFields = false) => {
