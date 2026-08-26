@@ -6,7 +6,7 @@ const LOGIN_OPTIONS = [
   { label: 'Participant', path: '/student/login', icon: User },
   { label: 'Judges', path: '/judges/login', icon: Gavel },
   { label: 'Admin', path: '/admin/login', icon: ShieldCheck },
-  { label: 'Lots', path: '/lots', icon: Map },
+  { label: 'Green Room', path: '/lots', icon: Map },
 ]
 
 export default function LoginControl() {
@@ -70,9 +70,8 @@ export default function LoginControl() {
       <div
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}
-        className={`absolute right-0 mt-2 w-48 rounded-2xl bg-card border border-subtle shadow-xl overflow-hidden z-50 backdrop-blur-sm origin-top-right transition-all duration-200 ease-out ${
-          open ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-1 scale-95 pointer-events-none'
-        }`}
+        className={`absolute right-0 mt-2 w-48 rounded-2xl bg-card border border-subtle shadow-xl overflow-hidden z-50 backdrop-blur-sm origin-top-right transition-all duration-200 ease-out ${open ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-1 scale-95 pointer-events-none'
+          }`}
       >
         <div className="py-1">
           {LOGIN_OPTIONS.map(opt => (
