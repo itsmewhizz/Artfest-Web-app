@@ -54,13 +54,19 @@ export default function AdminLayout() {
       to="/"
       onClick={() => setOpen(false)}
       aria-label="ISRA Life Festival home"
-      className={`flex items-center gap-2 tracking-tight select-none font-sora shrink-0 ${small ? 'gap-1.5' : 'gap-2'}`}
+      className={`flex items-center gap-2.5 shrink-0 ${small ? '' : 'justify-center'}`}
     >
-      <span className={`font-bold leading-none uppercase text-inherit ${small ? 'text-xl' : 'text-2xl'}`}>ISRA</span>
-      <div className={`flex flex-col leading-tight uppercase tracking-wider text-inherit font-semibold ${small ? 'text-[9px]' : 'text-[10px]'} border-l-0`}>
-        <span>LIFE</span>
-        <span>FESTIVAL</span>
-      </div>
+      <img
+        src="/favicon.png"
+        alt=""
+        className={`${small ? 'h-6 w-6' : 'h-8 w-8'} object-contain rounded-sm`}
+      />
+      <span
+        className="font-sora font-extrabold uppercase tracking-[0.18em] text-white leading-none"
+        style={{ fontSize: small ? '0.7rem' : '0.95rem' }}
+      >
+        RENDEZVOUS
+      </span>
     </Link>
   )
 
@@ -88,7 +94,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-mainBackground text-mainText">
+    <div className="min-h-screen admin-main-content text-mainText">
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-primary/95 backdrop-blur border-b border-white/10">
         <button onClick={() => setOpen(true)} aria-label="Open navigation" className="p-1.5 text-mainText">

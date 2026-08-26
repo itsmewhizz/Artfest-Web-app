@@ -285,7 +285,8 @@ export default function PhytoloreHero({ onScrollToAbout }) {
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-screen overflow-hidden bg-[#02090D] select-none flex flex-col justify-between"
+      className="relative w-full h-screen overflow-hidden select-none flex flex-col justify-between"
+      style={{ backgroundColor: 'var(--hero-bg-color)' }}
     >
       {/* Background Interactive WebGL/Canvas (Atmosphere, Ribbon, Pollen & Optical Decode) */}
       <canvas
@@ -324,15 +325,34 @@ export default function PhytoloreHero({ onScrollToAbout }) {
             transform: `${layerTransform(0.12).transform || ''} scale(${entranceStep >= 9 ? 1 : 0.92})`,
           }}
         >
-          <div
-            role="img"
-            aria-label="ISRA Rendezvous'26 logo"
-            className="hero-logo-mask w-full max-w-[260px] sm:max-w-md md:max-w-lg lg:max-w-xl h-14 sm:h-22 md:h-28 lg:h-36 mx-auto select-none"
-            style={{
-              backgroundColor: '#AEE515',
-              filter: 'drop-shadow(0 0 18px rgba(100, 212, 49, 0.4))'
-            }}
+          <img
+            src="/rendezvous-hero-logo.png"
+            alt="RENDEZVOUS 26"
+            className="w-full max-w-[260px] sm:max-w-md md:max-w-lg lg:max-w-xl h-auto mx-auto select-none"
           />
+        </div>
+
+        {/* 1b. RENDEZVOUS 26 plain text label (Step 09) */}
+        <div
+          className="mb-2 sm:mb-3 transition-all duration-1000 pointer-events-none"
+          style={{
+            ...layerTransform(0.14),
+            opacity: entranceStep >= 9 ? 1 : 0,
+          }}
+        >
+          <span
+            className="font-sora font-extrabold uppercase tracking-[0.25em] leading-none pointer-events-none select-none"
+            style={{
+              fontSize: 'clamp(0.65rem, 1.6vw, 1.1rem)',
+              background: 'linear-gradient(90deg, #01B998, #64D431, #AEE515)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              filter: 'drop-shadow(0 0 18px rgba(100,212,49,0.35))',
+            }}
+          >
+            RENDEZVOUS 26
+          </span>
         </div>
 
         {/* 2. Primary Concept Title: DECODING PHYTOLORE (Step 10 & 11) */}

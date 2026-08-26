@@ -1,4 +1,4 @@
-import { useRef, useEffect, Suspense, useMemo, useState } from 'react'
+import { useRef, useEffect, Suspense, useMemo, useState, Component } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -171,12 +171,54 @@ function CameraController({ mousePos }) {
   return null
 }
 
+class CanvasErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="text-center px-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#01B998]/20 flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#64D431" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <p className="text-[#64D431]/70 text-sm font-mono">3D scene unavailable</p>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export default function HeroScene({ entranceStep, mousePos }) {
   const [debugMode, setDebugMode] = useState(false)
   const [debugIndex, setDebugIndex] = useState(0)
+  const containerRef = useRef(null)
+  const glRef = useRef(null)
+
+  const handleCreated = ({ gl, scene, camera }) => {
+    glRef.current = gl
+    gl.domElement.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault()
+    }, { passive: false })
+    gl.domElement.addEventListener('webglcontextrestored', () => {
+      gl.setClearColor(0x000000, 0)
+      gl.render(scene, camera)
+    }, { passive: true })
+  }
 
   return (
-    <div className="absolute inset-0 z-10 pointer-events-auto">
+    <div ref={containerRef} className="absolute inset-0 z-10 pointer-events-auto w-full h-full">
       {debugMode && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4 bg-black/80 p-4 rounded-xl text-white font-mono text-xs border border-white/20">
           <p className="font-bold text-sm uppercase tracking-widest text-[#AEE515]">Debug Mode: Model Orientation</p>
@@ -196,60 +238,70 @@ export default function HeroScene({ entranceStep, mousePos }) {
         </div>
       )}
 
-      <Canvas
-        camera={{ position: [0, 0, 4], fov: 50 }}
-        gl={{ alpha: true, antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
-        style={{ background: 'transparent' }}
-        dpr={[1, 2]}
-      >
-        {/* STUDIO LIGHTING SETUP */}
-        <ambientLight intensity={1.0} />
-        <hemisphereLight intensity={0.8} color="#ffffff" groundColor="#000000" />
-        <directionalLight position={[0, 0, 10]} intensity={2.0} color="#ffffff" />
-        <directionalLight position={[10, 10, 10]} intensity={1.0} color="#ffffff" />
-        <directionalLight position={[-10, 10, 10]} intensity={1.0} color="#ffffff" />
-        <directionalLight position={[0, 10, 0]} intensity={0.5} color="#ffffff" />
-        <pointLight position={[0, 0, 5]} intensity={1.5} color="#AEE515" />
+      <CanvasErrorBoundary>
+        <Canvas
+          camera={{ position: [0, 0, 4], fov: 50 }}
+          gl={{
+            alpha: true,
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            powerPreference: 'high-performance',
+            failIfMajorPerformanceCaveat: false,
+          }}
+          style={{ background: 'transparent', width: '100%', height: '100%' }}
+          dpr={Math.min(window.devicePixelRatio || 1, 2)}
+          onCreated={handleCreated}
+          resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
+        >
+          {/* STUDIO LIGHTING SETUP */}
+          <ambientLight intensity={1.0} />
+          <hemisphereLight intensity={0.8} color="#ffffff" groundColor="#000000" />
+          <directionalLight position={[0, 0, 10]} intensity={2.0} color="#ffffff" />
+          <directionalLight position={[10, 10, 10]} intensity={1.0} color="#ffffff" />
+          <directionalLight position={[-10, 10, 10]} intensity={1.0} color="#ffffff" />
+          <directionalLight position={[0, 10, 0]} intensity={0.5} color="#ffffff" />
+          <pointLight position={[0, 0, 5]} intensity={1.5} color="#AEE515" />
 
-        <Suspense fallback={null}>
-          {debugMode ? (
-            <>
-              <GLBModel
-                name={OBJECTS[debugIndex].name}
-                modelPath={OBJECTS[debugIndex].model}
-                entranceStep={0}
-                position={[0, 0, 0]}
-                scale={2}
-                rotation={OBJECTS[debugIndex].rotation}
-                parallax={0}
-                entranceProgress={11}
-                mousePos={mousePos}
-                debugMode={true}
-                debugIndex={debugIndex}
-              />
-              <OrbitControls enablePan={false} enableZoom={true} />
-            </>
-          ) : (
-            OBJECTS.map((obj) => (
-              <GLBModel
-                key={obj.name}
-                name={obj.name}
-                modelPath={obj.model}
-                entranceStep={obj.entranceStep}
-                position={obj.position}
-                scale={obj.scale}
-                rotation={obj.rotation}
-                parallax={obj.parallax}
-                entranceProgress={entranceStep}
-                mousePos={mousePos}
-                debugMode={false}
-                debugIndex={0}
-              />
-            ))
-          )}
-        </Suspense>
-        {!debugMode && <CameraController mousePos={mousePos} />}
-      </Canvas>
+          <Suspense fallback={null}>
+            {debugMode ? (
+              <>
+                <GLBModel
+                  name={OBJECTS[debugIndex].name}
+                  modelPath={OBJECTS[debugIndex].model}
+                  entranceStep={0}
+                  position={[0, 0, 0]}
+                  scale={2}
+                  rotation={OBJECTS[debugIndex].rotation}
+                  parallax={0}
+                  entranceProgress={11}
+                  mousePos={mousePos}
+                  debugMode={true}
+                  debugIndex={debugIndex}
+                />
+                <OrbitControls enablePan={false} enableZoom={true} />
+              </>
+            ) : (
+              OBJECTS.map((obj) => (
+                <GLBModel
+                  key={obj.name}
+                  name={obj.name}
+                  modelPath={obj.model}
+                  entranceStep={obj.entranceStep}
+                  position={obj.position}
+                  scale={obj.scale}
+                  rotation={obj.rotation}
+                  parallax={obj.parallax}
+                  entranceProgress={entranceStep}
+                  mousePos={mousePos}
+                  debugMode={false}
+                  debugIndex={0}
+                />
+              ))
+            )}
+          </Suspense>
+          {!debugMode && <CameraController mousePos={mousePos} />}
+        </Canvas>
+      </CanvasErrorBoundary>
 
       <button
         onClick={() => setDebugMode(true)}

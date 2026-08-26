@@ -64,6 +64,7 @@ body {
   --btn-navy-hover: #228C22;
   --radius-pill: 999px;
   --radius-card: 24px;
+  --hero-bg-color: #E4F7DA;
   --hero-glow: radial-gradient(circle at 50% 0%, #e4f7da 0%, #f5faf3 70%);
   --cta-gradient: linear-gradient(135deg, #115f32 0%, #228c22 100%);
   --cursor-glow: radial-gradient(circle, rgba(78, 186, 22, 0.16) 0%, rgba(17, 95, 50, 0.04) 50%, transparent 70%);
@@ -71,6 +72,11 @@ body {
   --lot-card-back-bg: #115F32;
   --lot-card-front-text: #115F32;
   --lot-card-back-text: #FFFFFF;
+
+  /* Admin Specific Theme Colors (Light) */
+  --admin-sidebar-bg: #011E11;
+  --admin-main-bg: #FFFFFF;
+  --admin-sidebar-text: #FFFFFF;
 
   /* Legacy triplet tokens re-pointed to the new light palette so every
      existing Tailwind utility (bg-primary, text-accent, bg-card, …) adapts. */
@@ -104,11 +110,17 @@ body {
   --border-subtle: rgba(17, 95, 50, 0.4);
   --btn-result-navy: #115F32;
   --btn-navy-hover: #228C22;
+  --hero-bg-color: #011E11;
   --hero-glow: radial-gradient(circle at 50% 0%, #115f32 0%, #061a0d 80%);
   --lot-card-front-bg: #FFFFFF;
   --lot-card-back-bg: #061A0D;
   --lot-card-front-text: #115F32;
   --lot-card-back-text: #FFFFFF;
+
+  /* Admin Specific Theme Colors (Dark) */
+  --admin-sidebar-bg: #0a0a0a;
+  --admin-main-bg: #011E11;
+  --admin-sidebar-text: #FFFFFF;
 
   --main-background: 6 26 13;    /* #061A0D */
   --primary: 17 95 50;           /* #115F32 */
@@ -460,16 +472,20 @@ body {
 }
 
 .admin-sidebar {
-  background: #1d192b;
-  color: white;
+  background: var(--admin-sidebar-bg);
+  color: var(--admin-sidebar-text);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-theme='dark'] .admin-sidebar,
 .dark .admin-sidebar {
-  background: white;
-  color: black;
+  background: var(--admin-sidebar-bg);
+  color: var(--admin-sidebar-text);
   border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.admin-main-content {
+  background-color: var(--admin-main-bg);
 }
 
 /* Leaderboard rows — 1st gold / 2nd silver / 3rd bronze */
