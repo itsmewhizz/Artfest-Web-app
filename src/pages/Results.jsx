@@ -77,9 +77,9 @@ export default function Results() {
 
   const filtered = programmes.filter(p => {
     if (unfinishedOnly) {
-      return !p.isFinished
+      return !p.isPublished
     }
-    return p.isFinished && (category ? p.category === category : true)
+    return p.isPublished && (category ? p.category === category : true)
   })
 
   // Finished (resulted) programmes sort by result number, then pending ones.
@@ -168,7 +168,7 @@ export default function Results() {
             onClick={() => setUnfinishedOnly(u => !u)}
             className={`filter-btn flex items-center gap-2 ${unfinishedOnly ? 'active' : ''}`}
           >
-            <Hourglass size={14} /> Unfinished
+            <Hourglass size={14} /> Unpublished
           </button>
         </div>
 
@@ -179,8 +179,8 @@ export default function Results() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {sorted.map(prog => {
               const no = resultNoMap[prog.id]
-              const hasResult = prog.isFinished && hasResultData[prog.id]
-              const awaitingResult = prog.isFinished && !hasResultData[prog.id]
+              const hasResult = prog.isPublished && hasResultData[prog.id]
+              const awaitingResult = prog.isPublished && !hasResultData[prog.id]
               return (
                 <div key={prog.id} className="postergen-card flex flex-col">
                   <div className="preview-box px-5 py-4 flex items-center justify-between border-b border-subtle">

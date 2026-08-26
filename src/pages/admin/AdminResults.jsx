@@ -148,9 +148,13 @@ export default function AdminResults() {
                     <p className="text-mutedText text-sm">{prog.category || ''}</p>
                   </div>
                   <div className="flex items-center gap-2 text-mutedText text-xs font-semibold">
-                    {result?.isFinished ? (
+                    {prog.isPublished ? (
                       <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/40">
                         <Eye size={13} /> Published
+                      </span>
+                    ) : result?.locked ? (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/40">
+                        Awaiting Publish
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-mutedText border border-secondary/40">

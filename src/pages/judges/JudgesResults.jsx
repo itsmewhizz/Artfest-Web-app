@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { judgeClient, verifyJudgeClient } from '../../supabase/client'
 import {
   getProgrammes, getStudents, getAllResults, getCategories,
-  getFinishedProgrammeIds, PROGRAMME_CATEGORIES,
+  PROGRAMME_CATEGORIES,
   getCodeAssignmentsForProgramme, getAllCodeAssignments,
 } from '../../supabase/queries'
 import { ArrowLeft, LogOut, Lock, ChevronDown, ChevronUp, Pencil, Eye, EyeOff, Plus, X, RefreshCw } from 'lucide-react'
@@ -55,7 +55,6 @@ function JudgesResults() {
   const [programmes, setProgrammes] = useState([])
   const [students, setStudents] = useState([])
   const [savedResults, setSavedResults] = useState([])
-  const [finishedIds, setFinishedIds] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [categories, setCategories] = useState(PROGRAMME_CATEGORIES)
   const [expandedId, setExpandedId] = useState(null)
@@ -88,9 +87,8 @@ function JudgesResults() {
   const toast = useToast()
 
   const loadResults = () => {
-    Promise.all([getAllResults(), getFinishedProgrammeIds(), getAllCodeAssignments()]).then(([data, ids, codes]) => {
+    Promise.all([getAllResults(), getAllCodeAssignments()]).then(([data, codes]) => {
       setSavedResults(safeArr(data))
-      setFinishedIds(ids)
       setAllCodeAssignments(safeArr(codes))
     }).catch(err => {
       console.error('Failed to load results:', err)
@@ -160,7 +158,9 @@ function JudgesResults() {
     .filter(p => !lockedProgrammeIds.has(p.id))
     .sort((a, b) => (resultNoMap[a.id] || 999) - (resultNoMap[b.id] || 999) || a.name.localeCompare(b.name))
 
-  const lockedResults = safeArr(savedResults).filter(r => r.locked && finishedIds?.has(r.programmeId))
+  // "Submitted Results" = result row exists with locked=true (judge has submitted).
+  // Does NOT require programme.isFinished — judge submission is independent of admin publication.
+  const lockedResults = safeArr(savedResults).filter(r => r.locked)
   const filteredLockedResults = categoryFilter
     ? lockedResults.filter(r => {
         const prog = safeArr(programmes).find(p => p.id === r.programmeId)

@@ -38,7 +38,7 @@ export default function ResultDetail() {
   useEffect(() => {
     getProgrammeById(id).then(async (p) => {
       setProgramme(p)
-      if (p?.isFinished) {
+      if (p?.isPublished) {
         const r = await getResultByProgrammeId(id)
         if (r) {
           const ids = [r.first?.studentId, r.second?.studentId, r.third?.studentId].filter(Boolean)
@@ -91,21 +91,21 @@ export default function ResultDetail() {
               {(programme.participationType || programme.participation_type) ? ` · ${programme.participationType || programme.participation_type}` : ''}
             </p>
           </div>
-          <span className={`mt-1 inline-block text-xs px-3 py-1 rounded-full ${programme.isFinished ? 'bg-accent-purple-soft text-accent-purple-deep' : 'bg-card-lavender text-textMute'}`}>
-            {programme.isFinished ? 'Finished' : 'Pending'}
+          <span className={`mt-1 inline-block text-xs px-3 py-1 rounded-full ${programme.isPublished ? 'bg-accent-purple-soft text-accent-purple-deep' : 'bg-card-lavender text-textMute'}`}>
+            {programme.isPublished ? 'Published' : 'Not Published'}
           </span>
         </div>
       </div>
 
-      {!programme.isFinished && (
-        <p className="text-textMute text-center">Results will be available after the programme is conducted.</p>
+      {!programme.isPublished && (
+        <p className="text-textMute text-center">This result has not been published yet.</p>
       )}
 
-      {programme.isFinished && !result && (
-        <p className="text-textMute text-center">This programme has finished. Awaiting result assignment by judges.</p>
+      {programme.isPublished && !result && (
+        <p className="text-textMute text-center">Awaiting result assignment by judges.</p>
       )}
 
-      {programme.isFinished && result && (
+      {programme.isPublished && result && (
         <div className="flex flex-col gap-4">
           <h3 className="text-base sm:text-lg font-display font-bold text-mainText flex items-center gap-2">
             <Trophy size={18} color="var(--accent-purple)" /> Results

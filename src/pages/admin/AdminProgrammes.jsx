@@ -41,6 +41,7 @@ export default function AdminProgrammes() {
   const [editParticipationType, setEditParticipationType] = useState('')
   const [editResultNo, setEditResultNo] = useState('')
   const [editFinished, setEditFinished] = useState(false)
+  const [editPublished, setEditPublished] = useState(false)
   const [viewProg, setViewProg] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
   const navigate = useNavigate()
@@ -104,22 +105,20 @@ export default function AdminProgrammes() {
     loadData()
   }
 
-  const toggleFinished = async (prog) => {
-    const originalStatus = prog.isFinished
+  // Toggle PUBLIC RESULT VISIBILITY (isPublished).
+  // This is SEPARATE from programme finished state.
+  const togglePublished = async (prog) => {
+    const originalStatus = prog.isPublished
     const newStatus = !originalStatus
-    setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: newStatus } : p))
+    setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isPublished: newStatus } : p))
 
     try {
-      // Update programme isFinished — this ONLY affects the programme's
-      // finished state, NOT the result. "Programme finished" and "result
-      // assigned" are two independent states. The result.isFinished flag
-      // is set exclusively by judge submission.
-      const { data: updated, error } = await supabase.from('programmes').update({ isFinished: newStatus }).eq('id', prog.id).select('id')
+      const { data: updated, error } = await supabase.from('programmes').update({ isPublished: newStatus }).eq('id', prog.id).select('id')
       if (error) throw error
       if (!updated || updated.length === 0) throw new Error('the database rejected the update (permission denied)')
     } catch (err) {
-      setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: originalStatus } : p))
-      toast('Failed to update status: ' + err.message, 'error')
+      setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isPublished: originalStatus } : p))
+      toast('Failed to update publish status: ' + err.message, 'error')
     }
   }
 
@@ -136,7 +135,7 @@ export default function AdminProgrammes() {
   }
 
   const handleClearResult = async (prog) => {
-    if (!window.confirm(`Clear the result for "${prog.name}"? Placements will be removed and the programme will be marked as not finished.`)) return
+    if (!window.confirm(`Clear the result for "${prog.name}"? Placements will be removed and the programme will be marked as not finished/unpublished.`)) return
 
     // Reset the result row instead of deleting it
     const { error: resErr } = await supabase.from('results').update({
@@ -153,7 +152,8 @@ export default function AdminProgrammes() {
       return toast('Failed to clear result: ' + resErr.message, 'error')
     }
 
-    await supabase.from('programmes').update({ isFinished: false }).eq('id', prog.id).select('id')
+    // Reset both finished and published states
+    await supabase.from('programmes').update({ isFinished: false, isPublished: false }).eq('id', prog.id).select('id')
     toast('Result cleared!')
     loadData()
   }
@@ -230,20 +230,21 @@ export default function AdminProgrammes() {
     setEditProgrammeType(prog.programmeType || prog.type || '')
     setEditParticipationType(prog.participationType || prog.participation_type || '')
     setEditFinished(prog.isFinished)
+    setEditPublished(prog.isPublished || false)
     setEditResultNo(resultNoMap[prog.id] || '')
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setEditName(''); setEditCategory(''); setEditProgrammeType(''); setEditParticipationType(''); setEditResultNo(''); setEditFinished(false)
+    setEditName(''); setEditCategory(''); setEditProgrammeType(''); setEditParticipationType(''); setEditResultNo(''); setEditFinished(false); setEditPublished(false)
   }
 
   const handleEditSave = async () => {
     if (!editName || !editCategory || !editProgrammeType || !editParticipationType) return toast('Fill all fields', 'error')
     const originalProg = programmes.find(p => p.id === editingId)
-    const turningOff = Boolean(originalProg?.isFinished) && !editFinished
+    const turningOff = Boolean(originalProg?.isPublished) && !editPublished
     const { data: updated, error: progErr } = await supabase.from('programmes').update({
-      name: editName, category: editCategory, programmeType: editProgrammeType, participationType: editParticipationType, isFinished: editFinished,
+      name: editName, category: editCategory, programmeType: editProgrammeType, participationType: editParticipationType, isFinished: editFinished, isPublished: editPublished,
     }).eq('id', editingId).select('id')
     if (progErr || !updated || updated.length === 0) {
       console.error('Programme update failed:', progErr || { message: 'Update returned no rows (RLS).' })
@@ -262,7 +263,7 @@ export default function AdminProgrammes() {
         updatedAt: new Date().toISOString(),
       }).eq('programmeId', editingId)
       if (resErr) {
-        console.error('Result cleanup on unfinish failed:', resErr)
+        console.error('Result cleanup on unpublish failed:', resErr)
         return toast('Programme updated but result cleanup failed: ' + resErr.message, 'error')
       }
     }
@@ -413,11 +414,11 @@ export default function AdminProgrammes() {
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
                     <button
-                      onClick={() => toggleFinished(prog)}
-                      className={`relative w-12 h-6 sm:w-14 sm:h-7 rounded-full transition-colors duration-300 ${prog.isFinished ? 'bg-green-500' : 'bg-white/20'}`}
-                      title={prog.isFinished ? 'Finished' : 'Not finished'}
+                      onClick={() => togglePublished(prog)}
+                      className={`relative w-12 h-6 sm:w-14 sm:h-7 rounded-full transition-colors duration-300 ${prog.isPublished ? 'bg-green-500' : 'bg-white/20'}`}
+                      title={prog.isPublished ? 'Published (result visible publicly)' : 'Not published'}
                     >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full shadow transition-transform duration-300 ${prog.isFinished ? 'translate-x-5 sm:translate-x-7' : ''}`} />
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full shadow transition-transform duration-300 ${prog.isPublished ? 'translate-x-5 sm:translate-x-7' : ''}`} />
                     </button>
                     <KebabMenu
                       items={[
@@ -622,14 +623,24 @@ export default function AdminProgrammes() {
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleEditSave() } }}
             />
 
-            <label className="flex items-center gap-3 text-black mb-4 cursor-pointer">
+            <label className="flex items-center gap-3 text-black mb-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={editFinished}
                 onChange={e => setEditFinished(e.target.checked)}
                 className="accent-secondary w-4 h-4"
               />
-              Finished
+              Finished (event completed)
+            </label>
+
+            <label className="flex items-center gap-3 text-black mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editPublished}
+                onChange={e => setEditPublished(e.target.checked)}
+                className="accent-secondary w-4 h-4"
+              />
+              Published (show result publicly)
             </label>
 
             <button

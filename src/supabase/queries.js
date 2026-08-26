@@ -100,6 +100,13 @@ export const getFinishedProgrammeIds = async () => {
   return new Set((data || []).filter(p => p.isFinished).map(p => p.id))
 }
 
+// Programme IDs where admin has published the result for public viewing.
+// This is the gate for ALL public result visibility.
+export const getPublishedProgrammeIds = async () => {
+  const data = await fetchAllRows('programmes', 'id, isPublished')
+  return new Set((data || []).filter(p => p.isPublished).map(p => p.id))
+}
+
 export const createPlaceholderResultForProgramme = async (programmeId, programmeName) => {
   if (!programmeId) return null
   const { data: existing } = await supabase
@@ -129,13 +136,13 @@ export const createPlaceholderResultForProgramme = async (programmeId, programme
   return data
 }
 
-// Latest result row per programme, restricted to programmes that are
-// marked as finished. Unfinished programmes are excluded so stale or
-// incomplete result data never surfaces in result-reading views.
+// Latest result row per programme, restricted to PUBLISHED programmes.
+// Public result visibility requires: admin has published (isPublished)
+// AND a result with actual data exists (locked + placements).
 export const getResultsForFinishedProgrammes = async () => {
-  const finishedIds = await getFinishedProgrammeIds()
+  const publishedIds = await getPublishedProgrammeIds()
   const data = await fetchAllRows('results', '*')
-  const filtered = (data || []).filter(r => r.programmeId && finishedIds.has(r.programmeId) && (r.isFinished === true || r.first || r.second || r.third || (r.entries && r.entries.length > 0)))
+  const filtered = (data || []).filter(r => r.programmeId && publishedIds.has(r.programmeId) && (r.locked || r.first || r.second || r.third || (r.entries && r.entries.length > 0)))
   return latestPerProgramme(filtered).sort((a, b) => (b.resultNo || 0) - (a.resultNo || 0))
 }
 
@@ -638,7 +645,7 @@ export const getTeamCategoryPoints = async () => {
 
   for (const result of Object.values(latestPerProg)) {
     const prog = progMap[result.programmeId]
-    if (prog && prog.isFinished) {
+    if (prog && prog.isPublished) {
       totalPublishedResults += 1
       afterPublishedResults += 1
     }
@@ -650,7 +657,7 @@ export const getTeamCategoryPoints = async () => {
 
     for (const result of Object.values(latestPerProg)) {
       const prog = progMap[result.programmeId]
-      if (!prog || !prog.isFinished) continue
+      if (!prog || !prog.isPublished) continue
 
       const catName = prog.category === 'General' ? 'General Cat-A' : prog.category
 
@@ -713,7 +720,7 @@ export const getIndividualCategoryPoints = async () => {
 
   for (const result of Object.values(latestPerProg)) {
     const prog = progMap[result.programmeId]
-    if (!prog || !prog.isFinished) continue
+    if (!prog || !prog.isPublished) continue
 
     totalPublishedResults += 1
 
