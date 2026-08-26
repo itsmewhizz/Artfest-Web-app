@@ -110,14 +110,13 @@ export default function AdminProgrammes() {
     setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: newStatus } : p))
 
     try {
-      // Update programme isFinished
+      // Update programme isFinished — this ONLY affects the programme's
+      // finished state, NOT the result. "Programme finished" and "result
+      // assigned" are two independent states. The result.isFinished flag
+      // is set exclusively by judge submission.
       const { data: updated, error } = await supabase.from('programmes').update({ isFinished: newStatus }).eq('id', prog.id).select('id')
       if (error) throw error
       if (!updated || updated.length === 0) throw new Error('the database rejected the update (permission denied)')
-
-      // Also sync the result row's isFinished flag (keep the row, don't delete)
-      const { error: resErr } = await supabase.from('results').update({ isFinished: newStatus }).eq('programmeId', prog.id)
-      if (resErr) console.warn('Failed to sync result isFinished:', resErr)
     } catch (err) {
       setProgrammes(prev => prev.map(p => p.id === prog.id ? { ...p, isFinished: originalStatus } : p))
       toast('Failed to update status: ' + err.message, 'error')

@@ -27,6 +27,7 @@ export default function Results() {
   const [programmes, setProgrammes] = useState([])
   const [resultNoMap, setResultNoMap] = useState({})
   const [gradeMap, setGradeMap] = useState({})
+  const [hasResultData, setHasResultData] = useState({})
   const [orderedCategories, setOrderedCategories] = useState(PROGRAMME_CATEGORIES)
   const [category, setCategory] = useState('')
   const [unfinishedOnly, setUnfinishedOnly] = useState(false)
@@ -50,13 +51,22 @@ export default function Results() {
     getAllResults().then(results => {
       const noMap = {}
       const gMap = {}
+      const dataMap = {}
       results.forEach(r => {
-        if (r.programmeId) noMap[r.programmeId] = r.resultNo
+        if (r.programmeId) {
+          noMap[r.programmeId] = r.resultNo
+          const hasData = Boolean(
+            r.first || r.second || r.third ||
+            (Array.isArray(r.entries) && r.entries.length > 0)
+          )
+          dataMap[r.programmeId] = hasData
+        }
         const points = r.first?.points
         gMap[r.programmeId] = points != null ? gradeFrom(points) : '-'
       })
       setResultNoMap(noMap)
       setGradeMap(gMap)
+      setHasResultData(dataMap)
     })
   }, [])
 
@@ -169,14 +179,16 @@ export default function Results() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {sorted.map(prog => {
               const no = resultNoMap[prog.id]
+              const hasResult = prog.isFinished && hasResultData[prog.id]
+              const awaitingResult = prog.isFinished && !hasResultData[prog.id]
               return (
                 <div key={prog.id} className="postergen-card flex flex-col">
                   <div className="preview-box px-5 py-4 flex items-center justify-between border-b border-subtle">
                     <span className="text-[10px] uppercase tracking-[0.24em] text-textMute">
-                      {prog.isFinished ? 'Result' : 'Pending'}
+                      {hasResult ? 'Result' : awaitingResult ? 'Awaiting Result' : 'Pending'}
                     </span>
                     <span className="font-display font-extrabold text-2xl text-resultNavy leading-none">
-                      {prog.isFinished && no ? `#${no}` : '—'}
+                      {hasResult && no ? `#${no}` : '—'}
                     </span>
                   </div>
 
@@ -190,14 +202,20 @@ export default function Results() {
                       </span>
                       <span
                         className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                          prog.isFinished
+                          hasResult
                             ? 'bg-accent-purple-soft text-accent-purple-deep'
-                            : 'bg-card-lavender text-text-muted'
+                            : awaitingResult
+                              ? 'bg-yellow-500/15 text-yellow-400'
+                              : 'bg-card-lavender text-text-muted'
                         }`}
                       >
-                        {prog.isFinished ? (
+                        {hasResult ? (
                           <>
                             <CheckCircle2 size={12} /> Grade {gradeMap[prog.id] || '-'}
+                          </>
+                        ) : awaitingResult ? (
+                          <>
+                            <Hourglass size={12} /> Awaiting Result
                           </>
                         ) : (
                           <>
@@ -210,7 +228,7 @@ export default function Results() {
                       onClick={() => navigate(`/results/${prog.id}`)}
                       className="btn-result w-full"
                     >
-                      {prog.isFinished ? (
+                      {hasResult ? (
                         <>
                           <Eye size={16} /> Preview &amp; Download
                         </>

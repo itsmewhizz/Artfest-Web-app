@@ -101,6 +101,10 @@ export default function ResultDetail() {
         <p className="text-textMute text-center">Results will be available after the programme is conducted.</p>
       )}
 
+      {programme.isFinished && !result && (
+        <p className="text-textMute text-center">This programme has finished. Awaiting result assignment by judges.</p>
+      )}
+
       {programme.isFinished && result && (
         <div className="flex flex-col gap-4">
           <h3 className="text-base sm:text-lg font-display font-bold text-mainText flex items-center gap-2">
