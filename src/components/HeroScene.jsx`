@@ -75,6 +75,7 @@ function GLBModel({ name, modelPath, entranceStep, position, scale, rotation, pa
     clonedScene.traverse((child) => {
       if (child.isMesh) {
         // FORCE HIGH-VISIBILITY MATERIALS
+        // Use MeshStandardMaterial to ensure lighting reacts correctly and avoids "silhouette" look
         child.material = new THREE.MeshStandardMaterial({
           color: child.material.color || new THREE.Color(0xffffff),
           map: child.material.map,
@@ -233,7 +234,7 @@ export default function HeroScene({ entranceStep, mousePos }) {
             OBJECTS.map((obj) => (
               <GLBModel
                 key={obj.name}
-                name={obj.name}
+                name={obj.// Fixed: passed modelPath
                 modelPath={obj.model}
                 entranceStep={obj.entranceStep}
                 position={obj.position}
