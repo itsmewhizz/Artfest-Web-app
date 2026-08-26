@@ -64,12 +64,19 @@ export default function AdminProgrammes() {
     return { data, error }
   }
 
-  const loadData = () => {
-    getProgrammes().then(setProgrammes)
-    getResultNoMap().then(setResultNoMap)
-    getCategories().then(setCategories)
-    getTeams().then(setTeams)
-    supabase.from('students').select('id, name, team, programmeIds').then(({ data }) => setStudents(data || []))
+  const loadData = async () => {
+    const [progs, rMap, catObj, teamData] = await Promise.all([
+      getProgrammes(),
+      getResultNoMap(),
+      getCategories(),
+      getTeams(),
+    ])
+    setProgrammes(progs)
+    setResultNoMap(rMap)
+    setCategories(catObj?.programme || PROGRAMME_CATEGORIES)
+    setTeams(teamData)
+    const { data } = await supabase.from('students').select('id, name, team, programmeIds')
+    setStudents(data || [])
   }
 
   useEffect(() => { loadData() }, [])
