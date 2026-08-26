@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getSpotlight, getActiveGalleryFooter } from '../supabase/queries'
-import { Download, Images, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Download, Images, ChevronLeft, X } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import { getCompositedGalleryImage, downloadCompositedImage } from '../utils/imageCompositor'
 
@@ -23,11 +23,74 @@ const groupByAlbum = (images) => {
     .sort((a, b) => b.newest - a.newest)
 }
 
+function GalleryCardItem({ img, activeFooterUrl, onClick, onDownload }) {
+  const [displayUrl, setDisplayUrl] = useState(img.imageURL)
+
+  useEffect(() => {
+    let isMounted = true
+    if (activeFooterUrl) {
+      getCompositedGalleryImage(img.imageURL, activeFooterUrl).then(url => {
+        if (isMounted) setDisplayUrl(url)
+      })
+    } else {
+      setDisplayUrl(img.imageURL)
+    }
+    return () => { isMounted = false }
+  }, [img.imageURL, activeFooterUrl])
+
+  return (
+    <div className="group relative cursor-pointer" onClick={onClick}>
+      <div className="relative overflow-hidden rounded-xl border border-secondary/30">
+        <img
+          src={displayUrl}
+          alt={img.caption || ''}
+          className="w-full h-36 sm:h-48 md:h-56 object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDownload(img.imageURL, `spotlight_${img.id}.jpg`)
+          }}
+          aria-label={`Download ${img.caption || 'image'}`}
+          className="absolute bottom-2 right-2 z-20 bg-black/60 hover:bg-black/80 p-1.5 sm:p-2 rounded-lg transition shadow-md"
+        >
+          <Download size={14} className="md:w-[18px] md:h-[18px]" color="white" />
+        </button>
+      </div>
+      {img.caption && (
+        <p className="text-mutedText text-xs sm:text-sm mt-1.5 truncate">{img.caption}</p>
+      )}
+    </div>
+  )
+}
+
+function LightboxImage({ photo, activeFooterUrl }) {
+  const [displayUrl, setDisplayUrl] = useState(photo.imageURL)
+
+  useEffect(() => {
+    let isMounted = true
+    if (activeFooterUrl) {
+      getCompositedGalleryImage(photo.imageURL, activeFooterUrl).then(url => {
+        if (isMounted) setDisplayUrl(url)
+      })
+    } else {
+      setDisplayUrl(photo.imageURL)
+    }
+    return () => { isMounted = false }
+  }, [photo.imageURL, activeFooterUrl])
+
+  return (
+    <img
+      src={displayUrl}
+      alt={photo.caption || 'Gallery Photo'}
+      className="max-h-[80vh] max-w-full object-contain rounded-2xl"
+    />
+  )
+}
 export default function Gallery() {
   const [images, setImages] = useState([])
   const [activeFooter, setActiveFooter] = useState(null)
-  const [lightbox, setLightbox] = useState(null)
-  const [compositeSrcs, setCompositeSrcs] = useState({})
+  const [selectedPhoto, setSelectedPhoto] = useState(null)
   const toast = useToast()
 
   useEffect(() => {
@@ -35,36 +98,11 @@ export default function Gallery() {
     getActiveGalleryFooter().then(setActiveFooter)
   }, [])
 
-  // Compositing is async — resolve each image's display src when the footer is ready
-  useEffect(() => {
-    if (!activeFooter?.image_url) return
-    let cancelled = false
-    const run = async () => {
-      for (const img of images) {
-        const key = img.id
-        if (compositeSrcs[key]) continue
-        try {
-          const src = await getCompositedGalleryImage(img.imageURL, activeFooter.image_url)
-          if (!cancelled) setCompositeSrcs(prev => ({ ...prev, [key]: src }))
-        } catch { /* keep original imageURL on failure */ }
-      }
-    }
-    run()
-    return () => { cancelled = true }
-  }, [images, activeFooter])
-
   const albums = useMemo(() => groupByAlbum(images), [images])
-  const flatImages = useMemo(() => albums.flatMap(a => a.imgs), [albums])
-  const footerSrc = activeFooter?.image_url || ''
 
-  const displaySrc = (img) => {
-    if (!footerSrc) return img.imageURL
-    return compositeSrcs[img.id] || img.imageURL
-  }
-
-  const handleDownloadImage = async (img) => {
+  const handleDownloadImage = async (url, name) => {
     try {
-      await downloadCompositedImage(img.imageURL, footerSrc, `spotlight_${img.id}.jpg`)
+      await downloadCompositedImage(url, activeFooter?.image_url, name || 'spotlight.jpg')
     } catch {
       toast('Download failed, try again', 'error')
     }
@@ -73,11 +111,11 @@ export default function Gallery() {
   return (
     <div className="min-h-screen">
       {/* Transparent Top Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-8 lg:px-16 py-4 lg:py-5">
+      <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 sm:px-8 lg:px-16 py-4 lg:py-5 pointer-events-none">
         <div className="flex items-center gap-2 tracking-tight select-none focus:outline-none" />
         <Link
           to="/"
-          className="flex items-center gap-1 px-4 py-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-mainText text-xs sm:text-sm font-semibold hover:bg-white/20 transition"
+          className="flex items-center gap-1 px-4 py-2 rounded-full bg-card border border-subtle text-mainText text-xs sm:text-sm font-semibold hover:bg-lavender transition pointer-events-auto shadow-md"
         >
           <ChevronLeft size={16} /> Home
         </Link>
@@ -105,34 +143,16 @@ export default function Gallery() {
                   <h2 className="text-xl sm:text-2xl font-display font-bold text-mainText">{album.name}</h2>
                   <span className="text-mutedText text-xs font-semibold">({album.imgs.length})</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-                  {album.imgs.map(img => {
-                    const idx = flatImages.indexOf(img)
-                    return (
-                      <div key={img.id} className="group relative">
-                        <div
-                          onClick={() => idx >= 0 && setLightbox(idx)}
-                          className="relative overflow-hidden rounded-xl border border-secondary/30 cursor-pointer"
-                        >
-                          <img
-                            src={displaySrc(img)}
-                            alt={img.caption || ''}
-                            className="w-full h-36 sm:h-48 md:h-56 object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDownloadImage(img) }}
-                            aria-label={`Download ${img.caption || 'image'}`}
-                            className="absolute right-2 bottom-2 bg-black/60 hover:bg-black/80 p-1.5 sm:p-2 rounded-lg transition"
-                          >
-                            <Download size={14} className="md:w-[18px] md:h-[18px]" color="white" />
-                          </button>
-                        </div>
-                        {img.caption && (
-                          <p className="text-mutedText text-xs sm:text-sm mt-1.5 truncate">{img.caption}</p>
-                        )}
-                      </div>
-                    )
-                  })}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 stagger-grid">
+                  {album.imgs.map(img => (
+                    <GalleryCardItem
+                      key={img.id}
+                      img={img}
+                      activeFooterUrl={activeFooter?.image_url}
+                      onClick={() => setSelectedPhoto(img)}
+                      onDownload={handleDownloadImage}
+                    />
+                  ))}
                 </div>
               </section>
             ))}
@@ -140,44 +160,42 @@ export default function Gallery() {
         )}
       </div>
 
-      {/* Lightbox / fullscreen view */}
-      {lightbox != null && flatImages[lightbox] && (() => {
-        const img = flatImages[lightbox]
-        return (
-          <div className="fixed inset-0 z-[80] bg-black/95 flex flex-col items-center justify-center p-4" onClick={() => setLightbox(null)}>
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <span className="text-white/60 text-xs font-semibold">{lightbox + 1} / {flatImages.length}</span>
-              <button onClick={() => setLightbox(null)} aria-label="Close" className="text-white/80 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition">
-                <X size={20} />
+      {/* Lightbox Modal */}
+      {selectedPhoto && (
+        <div
+          className="fixed inset-0 z-[120] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <div className="relative max-w-5xl max-h-[90vh] flex flex-col items-center" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedPhoto(null)}
+              className="absolute -top-10 right-0 p-2 text-white hover:text-accent transition"
+            >
+              <X size={26} />
+            </button>
+
+            {/* Photo Container */}
+            <div className="relative overflow-hidden rounded-2xl border border-white/20 shadow-2xl flex items-center justify-center bg-black max-h-[80vh]">
+              <LightboxImage photo={selectedPhoto} activeFooterUrl={activeFooter?.image_url} />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDownloadImage(selectedPhoto.imageURL, `spotlight_${selectedPhoto.id}.jpg`)
+                }}
+                className="absolute bottom-3 right-3 z-30 bg-black/70 hover:bg-black/90 p-2 rounded-xl text-white transition flex items-center gap-2 text-xs sm:text-sm font-semibold border border-white/20"
+              >
+                <Download size={16} /> Download Photo
               </button>
             </div>
-            <button
-              aria-label="Previous image"
-              onClick={(e) => { e.stopPropagation(); setLightbox((lightbox - 1 + flatImages.length) % flatImages.length) }}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition"
-            >
-              <ChevronLeft size={24} />
-            </button>
-            <button
-              aria-label="Next image"
-              onClick={(e) => { e.stopPropagation(); setLightbox((lightbox + 1) % flatImages.length) }}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition"
-            >
-              <ChevronRight size={24} />
-            </button>
-            <div className="relative inline-block max-w-[86vw]" onClick={e => e.stopPropagation()}>
-              <img
-                src={displaySrc(img)}
-                alt={img.caption || ''}
-                className="max-w-[86vw] max-h-[78vh] object-contain rounded-lg"
-              />
-            </div>
-            {img.caption && (
-              <p className="text-white/80 text-sm mt-3 max-w-[86vw] text-center">{img.caption}</p>
+
+            {selectedPhoto.caption && (
+              <p className="text-white text-sm sm:text-base font-semibold mt-3 text-center">
+                {selectedPhoto.caption}
+              </p>
             )}
           </div>
-        )
-      })()}
+        </div>
+      )}
     </div>
   )
 }

@@ -11,6 +11,7 @@ import {
   FileText,
   Printer,
   Layers,
+  Image,
   LogOut,
   Menu,
   X,
@@ -27,6 +28,7 @@ const navItems = [
   { label: 'Participants', path: '/admin/students', icon: Users },
   { label: 'Spotlight / Gallery', path: '/admin/spotlight', icon: GalleryHorizontalEnd },
   { label: 'Results', path: '/admin/results', icon: FileText },
+  { label: 'Result Poster', path: '/admin/result-poster', icon: Image },
   { label: 'Print', path: '/admin/print', icon: Printer },
 ]
 

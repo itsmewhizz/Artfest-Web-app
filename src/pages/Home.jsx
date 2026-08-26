@@ -1,16 +1,12 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
-import { getFeaturedSpotlight, getSpotlight, getTeamCategoryPoints } from '../supabase/queries'
+import { getSpotlight, getTeamCategoryPoints, getActiveGalleryFooter } from '../supabase/queries'
+import { getCompositedGalleryImage } from '../utils/imageCompositor'
 import { ArrowRight, ExternalLink, Users, CalendarDays, UserCheck, Layers } from 'lucide-react'
-import HeroAnimation from '../components/HeroAnimation'
-import heroLogo from '../assets/hero-logo.png'
+import PhytoloreHero from '../components/PhytoloreHero'
 import useScrollReveal from '../hooks/useScrollReveal'
 import ThemeToggle from '../components/ThemeToggle'
 import LoginControl from '../components/LoginControl'
-
-// Toggle for the hero background photo-flash card animation.
-// Set to true to re-enable it (no other changes needed).
-const HERO_ANIMATION_ENABLED = false
 
 const stats = [
   { value: '3', label: 'Teams', icon: Users },
@@ -20,41 +16,55 @@ const stats = [
 ]
 
 const teamMembers = [
-  { name: 'Anwar Ahmed', role: 'Festival Chairman', initials: 'AA', tint: 'from-[#6366F1] to-[#7BEAFE]', photo: '/team/Anwar.jpg' },
-  { name: 'Muhammed AbdulQadar', role: 'Festival Convenor', initials: 'MA', tint: 'from-[#7BEAFE] to-[#FFDA63]', photo: '/team/Mohammed.jpeg' },
-  { name: 'Sayyid Mueenudheen', role: 'Finance Convenor', initials: 'SM', tint: 'from-[#FFDA63] to-[#6366F1]', photo: '/team/Moinu.jpeg' },
-  { name: 'Shammas Mujeeb', role: 'Vice Chairman', initials: 'SM', tint: 'from-[#6366F1] to-[#A78BFA]', photo: '/team/Shammas.jpeg' },
-  { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#A78BFA] to-[#7BEAFE]', photo: '/team/midlaj moideen.jpg' },
-  { name: 'Afsal Sharafudheen', role: 'Joint Convenor', initials: 'AS', tint: 'from-[#7BEAFE] to-[#94A3B8]', photo: '/team/Afsal.jpg' },
-  { name: 'Vahid', role: 'Joint Convenor', initials: 'v', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/vahid.jpg' },
-  { name: 'Farhan Musthafa', role: 'Software Developer', initials: 'FM', tint: 'from-[#FFDA63] to-[#A78BFA]', photo: '/team/faruuunn.jpg' }
+  { name: 'Anwar Ahmed', role: 'Festival Chairman', initials: 'AA', tint: 'from-[#115F32] to-[#228C22]', photo: '/team/Anwar.jpg' },
+  { name: 'Muhammed AbdulQadar', role: 'Festival Convenor', initials: 'MA', tint: 'from-[#228C22] to-[#4EBA16]', photo: '/team/Mohammed.jpeg' },
+  { name: 'Sayyid Mueenudheen', role: 'Finance Convenor', initials: 'SM', tint: 'from-[#4EBA16] to-[#71C247]', photo: '/team/Moinu.jpeg' },
+  { name: 'Shammas Mujeeb', role: 'Vice Chairman', initials: 'SM', tint: 'from-[#115F32] to-[#4EBA16]', photo: '/team/Shammas.jpeg' },
+  { name: 'Midlaj Moideen', role: 'Vice Chairman', initials: 'MM', tint: 'from-[#228C22] to-[#71C247]', photo: '/team/midlaj moideen.jpg' },
+  { name: 'Afsal Sharafudheen', role: 'Joint Convenor', initials: 'AS', tint: 'from-[#4EBA16] to-[#8ED06C]', photo: '/team/Afsal.jpg' },
+  { name: 'Vahid', role: 'Joint Convenor', initials: 'v', tint: 'from-[#71C247] to-[#D4FFB8]', photo: '/team/vahid.jpg' },
+  { name: 'Farhan Musthafa', role: 'Software Developer', initials: 'FM', tint: 'from-[#115F32] to-[#71C247]', photo: '/team/faruuunn.jpg' }
 ]
 
+function HomeGalleryCard({ img, activeFooterUrl }) {
+  const [displayUrl, setDisplayUrl] = useState(img.imageURL)
+
+  useEffect(() => {
+    let isMounted = true
+    if (activeFooterUrl) {
+      getCompositedGalleryImage(img.imageURL, activeFooterUrl).then(url => {
+        if (isMounted) setDisplayUrl(url)
+      })
+    } else {
+      setDisplayUrl(img.imageURL)
+    }
+    return () => { isMounted = false }
+  }, [img.imageURL, activeFooterUrl])
+
+  return (
+    <div className="relative overflow-hidden rounded-xl aspect-[4/3]">
+      <img
+        src={displayUrl}
+        alt={img.caption || ''}
+        className="w-full h-full object-cover transition-transform duration-300 ease-out hover:scale-105"
+      />
+    </div>
+  )
+}
+
 export default function Home() {
-  const [featured, setFeatured] = useState([])
   const [allImages, setAllImages] = useState([])
+  const [activeFooter, setActiveFooter] = useState(null)
   const [teamData, setTeamData] = useState([])
+  const [scrollY, setScrollY] = useState(0)
   const location = useLocation()
   const navigate = useNavigate()
   const aboutRef = useRef(null)
-  const teamRef = useRef(null)
   const teamsReveal = useScrollReveal()
   const statsReveal = useScrollReveal()
   const galleryReveal = useScrollReveal()
   const aboutReveal = useScrollReveal()
   const teamReveal = useScrollReveal()
-
-  const sparkles = useMemo(
-    () =>
-      Array.from({ length: 18 }, (_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        size: Math.random() * 4 + 2,
-        duration: Math.random() * 10 + 8,
-        delay: Math.random() * 12,
-      })),
-    []
-  )
 
   const embers = useMemo(
     () =>
@@ -69,12 +79,25 @@ export default function Home() {
   )
 
   useEffect(() => {
-    getFeaturedSpotlight().then(setFeatured)
     getSpotlight().then(setAllImages)
+    getActiveGalleryFooter().then(setActiveFooter)
     getTeamCategoryPoints().then(({ teamData: data }) => {
       const sorted = [...data].sort((a, b) => b.totalPoints - a.totalPoints)
       setTeamData(sorted)
     })
+  }, [])
+
+  useEffect(() => {
+    let raf = 0
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => setScrollY(window.scrollY))
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', onScroll)
+    }
   }, [])
 
   useEffect(() => {
@@ -91,8 +114,8 @@ export default function Home() {
     <div className="min-h-screen">
 
       {/* ── Floating Top Nav ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-3 sm:px-8 pt-4">
-        <div className="floating-nav relative flex items-center w-full max-w-3xl px-3 py-2 sm:px-5 gap-2 sm:gap-3">
+      <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center px-3 sm:px-8 pt-3 sm:pt-4 pointer-events-none">
+        <div className={`floating-nav pointer-events-auto flex items-center justify-between sm:grid sm:grid-cols-[1fr_auto_1fr] w-full max-w-3xl px-3 py-2 sm:px-5 ${scrollY > 20 ? 'scrolled-nav' : ''}`}>
           <Link
             to="/"
             aria-label="Go to the festival home"
@@ -106,7 +129,7 @@ export default function Home() {
             </div>
           </Link>
 
-          <nav className="hidden sm:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          <nav className="hidden sm:flex items-center gap-1">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="nav-link active">
               Home
             </button>
@@ -115,66 +138,15 @@ export default function Home() {
             </button>
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          <div className="flex items-center gap-1.5 sm:gap-3 justify-self-end shrink-0">
             <LoginControl />
             <ThemeToggle />
           </div>
         </div>
       </header>
 
-      {/* ── Full-Viewport Hero ── */}
-      <section className="relative h-screen w-full overflow-hidden">
-        {HERO_ANIMATION_ENABLED && (
-          <HeroAnimation spotlightImages={featured.length > 0 ? featured : allImages} />
-        )}
-
-        <div className="aurora-layer">
-          <div className="aurora-blob aurora-a" />
-          <div className="aurora-blob aurora-b" />
-          <div className="aurora-blob aurora-c" />
-        </div>
-
-        <div className="sparkle-field">
-          {sparkles.map(s => (
-            <span
-              key={s.id}
-              className="sparkle"
-              style={{
-                left: `${s.left}%`,
-                width: s.size,
-                height: s.size,
-                animationDuration: `${s.duration}s`,
-                animationDelay: `${s.delay}s`,
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <div
-            role="img"
-            aria-label="Rendezvous 26"
-            className="hero-logo-mask w-full max-w-[280px] sm:max-w-md md:max-w-xl lg:max-w-2xl h-16 sm:h-24 md:h-32 lg:h-40 select-none mb-4"
-          />
-          <p className="text-lg md:text-xl text-textMute font-display italic mb-10 max-w-xl">
-            - Decoding Phytolore -
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => navigate('/results')}
-              className="cta-gradient px-8 py-3 font-semibold font-inter"
-            >
-              Results
-            </button>
-            <button
-              onClick={() => scrollTo(aboutRef)}
-              className="px-8 py-3 bg-card border border-subtle text-mainText rounded-full font-semibold font-inter hover:bg-lavender transition"
-            >
-              About
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* ── Full-Viewport Phytolore Hero ── */}
+      <PhytoloreHero onScrollToAbout={() => scrollTo(aboutRef)} />
 
       {/* ── Content Below Hero ── */}
       <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto relative z-20">
@@ -281,15 +253,9 @@ export default function Home() {
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 stagger-grid">
               {allImages.slice(0, 8).map(img => (
-                <div key={img.id} className="relative overflow-hidden rounded-xl aspect-[4/3]">
-                  <img
-                    src={img.imageURL}
-                    alt={img.caption || ''}
-                    className="w-full h-full object-cover transition-transform duration-300 ease-out hover:scale-105"
-                  />
-                </div>
+                <HomeGalleryCard key={img.id} img={img} activeFooterUrl={activeFooter?.image_url} />
               ))}
             </div>
           </div>
@@ -302,14 +268,17 @@ export default function Home() {
             aboutReveal.ref(el)
           }}
           id="about"
-          className={`mb-12 text-center mx-auto max-w-5xl scroll-mt-24 reveal ${aboutReveal.visible ? 'reveal-visible' : ''}`}
+          className={`mb-16 scroll-mt-24 reveal ${aboutReveal.visible ? 'reveal-visible' : ''}`}
         >
-          <h3 className="text-4xl md:text-5xl font-display font-bold text-mainText mb-3">
-            Rendezvous'26
-          </h3>
-          <p className="text-lg md:text-xl font-semibold text-mutedText mb-6">
-            Jamia Madeenathunnoor Life Festival
-          </p>
+          {/* Main Title & Subtitle */}
+          <div className="text-center mb-8 sm:mb-10 px-4">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-display font-extrabold text-mainText opacity-100 tracking-tight mb-2 sm:mb-3">
+              Rendezvous'26
+            </h2>
+            <p className="text-lg sm:text-xl md:text-2xl font-semibold text-mainText opacity-100 tracking-wide">
+              Jamia Madeenathunnoor Life Festival
+            </p>
+          </div>
           <div className="max-w-4xl lg:max-w-5xl mx-auto px-5 sm:px-8 mb-8">
             <p className="text-base sm:text-lg md:text-xl font-normal text-[#115F32] dark:text-[#D4FFB8] opacity-100 not-italic leading-relaxed sm:leading-loose text-left md:text-justify">
               Rendezvous'26, the 26th edition of Jamia Madeenathunnoor's Life Festival, stands as a landmark moment in the institution's long-standing commitment to shaping well-rounded students. What began as a purely artistic gathering has, over time, grown into a dynamic space where academic achievement and creative talent come together. The festival continues its mission to build a thoughtful, ethical appreciation for the arts — recognizing their essential part in shaping character, personal growth, and intellectual maturity. Across 26 remarkable years, Rendezvous has left its mark on generations of students, refining their talents with a strong sense of purpose and preparing them to carry its values into the world beyond campus.
@@ -338,31 +307,28 @@ export default function Home() {
 
         {/* Our Team */}
         <div
-          ref={(el) => {
-            teamRef.current = el
-            teamReveal.ref(el)
-          }}
+          ref={teamReveal.ref}
           className={`mb-12 text-center reveal ${teamReveal.visible ? 'reveal-visible' : ''}`}
         >
-          <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5">
+          <span className="inline-block text-accent text-xs md:text-sm font-semibold uppercase tracking-[0.28em] border border-accent/50 rounded-full px-4 py-1.5 mb-5 opacity-100">
             Our Team
           </span>
-          <h3 className="corvion-name text-3xl sm:text-4xl md:text-5xl mb-4">
+          <h3 className="corvion-name text-3xl sm:text-4xl md:text-5xl mb-4 text-mainText opacity-100">
             Corvion
           </h3>
-          <p className="max-w-2xl mx-auto text-mutedText text-sm sm:text-base italic leading-loose mb-12 px-2">
+          <p className="max-w-2xl mx-auto text-mutedText text-sm sm:text-base leading-loose mb-12 px-2 opacity-100">
             A passionate crew of organizers, coordinators, and volunteers who bring the festival
             to life — from Stage lights to score sheets.
           </p>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-x-6 md:gap-y-10 place-items-center max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-8 sm:gap-y-10 place-items-center max-w-6xl mx-auto px-4 stagger-grid">
             {teamMembers.map(member => (
-              <div key={member.name} className="w-full max-w-[301px] text-center">
+              <div key={member.name} className="w-full max-w-[301px] text-center flex flex-col items-center">
                 {member.photo ? (
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="mx-auto mb-4 aspect-[301/280] w-full max-w-[301px] rounded-2xl md:rounded-[24px] object-cover object-top shadow-lg"
+                    className="mx-auto mb-3 sm:mb-4 aspect-[301/280] w-full max-w-[301px] rounded-[18px] sm:rounded-[24px] object-cover object-top shadow-lg"
                   />
                 ) : (
                   <div
@@ -371,8 +337,8 @@ export default function Home() {
                     {member.initials}
                   </div>
                 )}
-                <p className="team-profile-name text-center">{member.name}</p>
-                <p className="team-profile-role text-center">{member.role}</p>
+                <p className="team-profile-name text-center w-full">{member.name}</p>
+                <p className="team-profile-role text-center w-full">{member.role}</p>
               </div>
             ))}
           </div>
@@ -388,7 +354,7 @@ export default function Home() {
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram"
-              className="hover:text-purple transition"
+              className="hover:text-accent transition"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
             </a>
@@ -397,7 +363,7 @@ export default function Home() {
               target="_blank"
               rel="noreferrer"
               aria-label="YouTube"
-              className="hover:text-purple transition"
+              className="hover:text-accent transition"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
             </a>

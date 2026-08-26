@@ -145,6 +145,83 @@ export const getProgrammeById = async (id) => {
   return data
 }
 
+export const ensureResultMasterRow = async (programmeId, programmeName) => {
+  if (!programmeId) return null
+  const { data: existing } = await supabase.from('results').select('*').eq('programmeId', programmeId).maybeSingle()
+  if (existing) return existing
+
+  const now = new Date().toISOString()
+  const payload = {
+    programmeId,
+    name: programmeName || '',
+    entries: [],
+    first: null,
+    second: null,
+    third: null,
+    locked: false,
+    updatedAt: now,
+  }
+  const { data: inserted, error } = await supabase.from('results').insert(payload).select().maybeSingle()
+  if (error) console.error('ensureResultMasterRow error:', error)
+  return inserted
+}
+
+export const attachTeamNamesToResults = async (resultsList) => {
+  if (!resultsList) return resultsList
+  const isSingle = !Array.isArray(resultsList)
+  const list = isSingle ? [resultsList] : resultsList
+  if (list.length === 0) return resultsList
+
+  try {
+    const [students, teams] = await Promise.all([
+      fetchAllRows('students', 'id, team, chestNo, name'),
+      getTeams(),
+    ])
+
+    const studentMap = {}
+    students.forEach(s => { studentMap[s.id] = s })
+
+    const teamMap = {}
+    teams.forEach(t => { teamMap[t.id] = t.name; teamMap[t.name] = t.name })
+
+    const formatEntry = (e) => {
+      if (!e) return e
+      const s = studentMap[e.studentId || e.candidateId]
+      const teamId = s?.team || e.teamId || e.team
+      const teamName = teamMap[teamId] || teamId || e.teamName || e.team || ''
+      const chestNo = s?.chestNo || e.chestNo || ''
+      return {
+        ...e,
+        team: teamName,
+        teamName: teamName,
+        teamId: teamId,
+        chestNo: chestNo,
+      }
+    }
+
+    const processed = list.map(r => {
+      if (!r) return r
+      const entries = Array.isArray(r.entries) ? r.entries.map(formatEntry) : []
+      const first = formatEntry(r.first || entries[0] || null)
+      const second = formatEntry(r.second || entries[1] || null)
+      const third = formatEntry(r.third || entries[2] || null)
+
+      return {
+        ...r,
+        entries,
+        first,
+        second,
+        third,
+      }
+    })
+
+    return isSingle ? processed[0] : processed
+  } catch (err) {
+    console.warn('attachTeamNamesToResults error:', err)
+    return resultsList
+  }
+}
+
 function latestPerProgramme(results) {
   const map = {}
   for (const r of results) {
@@ -159,13 +236,44 @@ function latestPerProgramme(results) {
 export const getResultByProgrammeId = async (programmeId) => {
   const { data, error } = await supabase.from('results').select('*').eq('programmeId', programmeId).order('updatedAt', { ascending: false, nullsFirst: false }).limit(1)
   if (error) { console.error('getResultByProgrammeId error:', error); return null }
-  return data?.[0] || null
+  return await attachTeamNamesToResults(data?.[0] || null)
 }
 
 export const getAllResults = async () => {
   const data = await fetchAllRows('results', '*')
   const latest = latestPerProgramme(data || [])
-  return latest.sort((a, b) => (b.resultNo || 0) - (a.resultNo || 0))
+  const sorted = latest.sort((a, b) => (b.resultNo || 0) - (a.resultNo || 0))
+  return await attachTeamNamesToResults(sorted)
+}
+
+export const getAllMasterResultsForAdmin = async () => {
+  const [results, progs] = await Promise.all([
+    fetchAllRows('results', '*'),
+    fetchAllRows('programmes', '*', 'name'),
+  ])
+
+  const resultMap = {}
+  results.forEach(r => {
+    if (r.programmeId) resultMap[r.programmeId] = r
+  })
+
+  const masterResults = progs.map(prog => {
+    const res = resultMap[prog.id]
+    if (res) return res
+    return {
+      id: `temp-${prog.id}`,
+      programmeId: prog.id,
+      name: prog.name,
+      entries: [],
+      first: null,
+      second: null,
+      third: null,
+      locked: false,
+      updatedAt: new Date().toISOString(),
+    }
+  })
+
+  return await attachTeamNamesToResults(masterResults)
 }
 
 export const getTeams = async () => {
@@ -297,21 +405,40 @@ export async function getStudentResults(studentId) {
   const unique = await getResultsForFinishedProgrammes()
   const studentResults = []
   for (const result of unique) {
-    const placement = [result.first, result.second, result.third].find(p => p?.studentId === studentId)
-    if (placement) {
-      studentResults.push({ ...result, placement: { ...placement, rank: result.first?.studentId === studentId ? 'first' : result.second?.studentId === studentId ? 'second' : 'third' } })
+    if (Array.isArray(result.entries) && result.entries.length > 0) {
+      const entry = result.entries.find(e => e?.studentId === studentId)
+      if (entry) {
+        studentResults.push({
+          ...result,
+          placement: {
+            ...entry,
+            rank: entry.place || entry.label || 'Participant',
+          },
+        })
+      }
+    } else {
+      const placement = [result.first, result.second, result.third].find(p => p?.studentId === studentId)
+      if (placement) {
+        studentResults.push({
+          ...result,
+          placement: {
+            ...placement,
+            rank: result.first?.studentId === studentId ? '1st Place' : result.second?.studentId === studentId ? '2nd Place' : '3rd Place',
+          },
+        })
+      }
     }
   }
   return studentResults
 }
 
 export async function getStudentPoints(studentId) {
-  const unique = await getResultsForFinishedProgrammes()
+  const studentResults = await getStudentResults(studentId)
   let total = 0
-  for (const r of unique) {
-    if (r.first?.studentId === studentId) total += (r.first.points || 0)
-    if (r.second?.studentId === studentId) total += (r.second.points || 0)
-    if (r.third?.studentId === studentId) total += (r.third.points || 0)
+  for (const r of studentResults) {
+    if (r.placement?.points != null) {
+      total += (Number(r.placement.points) || 0)
+    }
   }
   return total
 }
@@ -506,21 +633,34 @@ export const getTeamCategoryPoints = async () => {
   const teamNameToId = {}
   teams.forEach(t => { teamNameToId[t.name] = t.id })
 
+  let totalPublishedResults = 0
+  let afterPublishedResults = 0
+
+  for (const result of Object.values(latestPerProg)) {
+    const prog = progMap[result.programmeId]
+    if (prog && prog.isFinished) {
+      totalPublishedResults += 1
+      afterPublishedResults += 1
+    }
+  }
+
   const teamData = teams.map(team => {
     const catPoints = {}
     categories.forEach(c => { catPoints[c] = 0 })
 
     for (const result of Object.values(latestPerProg)) {
       const prog = progMap[result.programmeId]
-      if (!prog) continue
+      if (!prog || !prog.isFinished) continue
 
       const catName = prog.category === 'General' ? 'General Cat-A' : prog.category
 
-      const placements = [
-        result.first && { studentId: result.first.studentId, points: Number(result.first.points) || 0 },
-        result.second && { studentId: result.second.studentId, points: Number(result.second.points) || 0 },
-        result.third && { studentId: result.third.studentId, points: Number(result.third.points) || 0 },
-      ]
+      const placements = Array.isArray(result.entries) && result.entries.length > 0
+        ? result.entries.map(e => ({ studentId: e.studentId, points: Number(e.points) || 0 }))
+        : [
+          result.first && { studentId: result.first.studentId, points: Number(result.first.points) || 0 },
+          result.second && { studentId: result.second.studentId, points: Number(result.second.points) || 0 },
+          result.third && { studentId: result.third.studentId, points: Number(result.third.points) || 0 },
+        ]
 
       for (const p of placements) {
         if (!p?.studentId) continue
@@ -538,5 +678,124 @@ export const getTeamCategoryPoints = async () => {
     return { ...team, catPoints, totalPoints: total }
   })
 
-  return { teamData, categories }
+  return { teamData, categories, totalPublishedResults, afterPublishedResults }
+}
+
+export const getIndividualCategoryPoints = async () => {
+  const [students, programmes, allResults, teams] = await Promise.all([
+    supabase.from('students').select('*').then(r => r.data || []),
+    supabase.from('programmes').select('*').then(r => r.data || []),
+    supabase.from('results').select('*').then(r => r.data || []),
+    supabase.from('teams').select('*').then(r => r.data || []),
+  ])
+
+  const latestPerProg = {}
+  for (const r of allResults) {
+    if (!r.updatedAt) continue
+    if (!latestPerProg[r.programmeId] || r.updatedAt > latestPerProg[r.programmeId].updatedAt) {
+      latestPerProg[r.programmeId] = r
+    }
+  }
+
+  const progMap = {}
+  programmes.forEach(p => { progMap[p.id] = p })
+
+  const studentMap = {}
+  students.forEach(s => { studentMap[s.id] = s })
+
+  const teamMap = {}
+  teams.forEach(t => { teamMap[t.id] = t })
+
+  const eligibleCategories = DEFAULT_STUDENT_CATEGORIES
+  const studentPointsMap = {}
+  let totalPublishedResults = 0
+  let afterPublishedResults = 0
+
+  for (const result of Object.values(latestPerProg)) {
+    const prog = progMap[result.programmeId]
+    if (!prog || !prog.isFinished) continue
+
+    totalPublishedResults += 1
+
+    const partType = (prog.participationType || prog.participation_type || '').toLowerCase()
+    if (partType !== 'individual') continue
+
+    const cat = prog.category
+    if (!cat || !eligibleCategories.includes(cat)) continue
+
+    afterPublishedResults += 1
+
+    const placements = Array.isArray(result.entries) && result.entries.length > 0
+      ? result.entries.map(e => ({ studentId: e.studentId, points: Number(e.points) || 0 }))
+      : [
+        result.first && { studentId: result.first.studentId, points: Number(result.first.points) || 0 },
+        result.second && { studentId: result.second.studentId, points: Number(result.second.points) || 0 },
+        result.third && { studentId: result.third.studentId, points: Number(result.third.points) || 0 },
+      ]
+
+    for (const p of placements) {
+      if (!p?.studentId) continue
+      const student = studentMap[p.studentId]
+      if (student) {
+        studentPointsMap[student.id] = (studentPointsMap[student.id] || 0) + p.points
+      }
+    }
+  }
+
+  const leaderboardByCategory = {}
+  eligibleCategories.forEach(cat => {
+    const catStudents = students
+      .filter(s => s.class === cat)
+      .map(s => {
+        const teamObj = teamMap[s.team] || teams.find(t => t.name === s.team)
+        return {
+          id: s.id,
+          name: s.name,
+          chestNo: s.chestNo,
+          category: s.class,
+          team: teamObj ? teamObj.name : (s.team || 'Unassigned'),
+          teamColor: teamObj ? teamObj.color : '#2872A1',
+          totalPoints: studentPointsMap[s.id] || 0,
+        }
+      })
+      .filter(s => s.totalPoints > 0)
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .slice(0, 10)
+      .map((s, idx) => ({ ...s, rank: idx + 1 }))
+
+    leaderboardByCategory[cat] = catStudents
+  })
+
+  return {
+    leaderboardByCategory,
+    eligibleCategories,
+    totalPublishedResults,
+    afterPublishedResults
+  }
+}
+
+export const uploadFrameImage = async (file, folder = 'frames') => {
+  const ext = file.name.split('.').pop()
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+
+  try {
+    const { error } = await supabase.storage
+      .from('photos')
+      .upload(fileName, file, { cacheControl: '3600', upsert: true })
+
+    if (error) throw error
+
+    const { data: pubUrlData } = supabase.storage
+      .from('photos')
+      .getPublicUrl(fileName)
+
+    return pubUrlData?.publicUrl || null
+  } catch (e) {
+    console.warn('uploadFrameImage Supabase storage upload error:', e)
+    return new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result)
+      reader.readAsDataURL(file)
+    })
+  }
 }
