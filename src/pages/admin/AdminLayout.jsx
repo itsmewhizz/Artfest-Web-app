@@ -63,7 +63,14 @@ export default function AdminLayout() {
       />
       <span
         className="font-sora font-extrabold uppercase tracking-[0.18em] leading-none"
-        style={{ fontSize: small ? '0.7rem' : '0.95rem', color: '#FFFFFF !important', WebkitTextFillColor: '#FFFFFF' }}
+        style={{
+          fontSize: small ? '0.7rem' : '0.95rem',
+          color: '#FFFFFF',
+          WebkitTextFillColor: '#FFFFFF',
+          opacity: 1,
+          WebkitColorAdjust: 'none',
+          colorAdjust: 'none',
+        }}
       >
         RENDEZVOUS
       </span>
