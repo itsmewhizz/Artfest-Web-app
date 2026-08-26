@@ -15,8 +15,8 @@ const MODELS = {
 // Object definitions with refined forward-facing rotations
 const OBJECTS = [
   {
-    name: 'leaf',
-    model: MODELS.leaf,
+    name: 'treeSlice',
+    model: MODELS.treeSlice,
     entranceStep: 4,
     position: [-2.2, 1.2, 0],
     scale: 2.0,
@@ -33,8 +33,8 @@ const OBJECTS = [
     parallax: 0.28,
   },
   {
-    name: 'treeSlice',
-    model: MODELS.treeSlice,
+    name: 'lens',
+    model: MODELS.lens,
     entranceStep: 6,
     position: [-1.8, -1.0, 0],
     scale: 1.5,
@@ -51,8 +51,8 @@ const OBJECTS = [
     parallax: 0.25,
   },
   {
-    name: 'lens',
-    model: MODELS.lens,
+    name: 'leaf',
+    model: MODELS.leaf,
     entranceStep: 8,
     position: [1.8, 0.1, -1],
     scale: 1.5,
