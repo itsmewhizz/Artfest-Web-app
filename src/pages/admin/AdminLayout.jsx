@@ -62,8 +62,8 @@ export default function AdminLayout() {
         className={`${small ? 'h-6 w-6' : 'h-8 w-8'} object-contain rounded-sm`}
       />
       <span
-        className="font-sora font-extrabold uppercase tracking-[0.18em] text-white leading-none"
-        style={{ fontSize: small ? '0.7rem' : '0.95rem' }}
+        className="font-sora font-extrabold uppercase tracking-[0.18em] leading-none"
+        style={{ fontSize: small ? '0.7rem' : '0.95rem', color: '#FFFFFF !important', WebkitTextFillColor: '#FFFFFF' }}
       >
         RENDEZVOUS
       </span>

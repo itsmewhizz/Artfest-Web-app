@@ -180,6 +180,8 @@ export default function PhytoloreHero({ onScrollToAbout }) {
       ctx.clearRect(0, 0, width, height)
 
       // ── 1. CINEMATIC DARK BOTANICAL ATMOSPHERE (Layer 01) ──
+      // NOTE: The section background (var(--hero-bg-color)) provides the base color.
+      // The canvas draws a transparent radial glow on top, NOT an opaque fill.
       const bgGrad = ctx.createRadialGradient(
         width * 0.5 + lerpX * 20,
         height * 0.4 + lerpY * 15,
@@ -188,9 +190,9 @@ export default function PhytoloreHero({ onScrollToAbout }) {
         height * 0.5,
         width * 0.85
       )
-      bgGrad.addColorStop(0, '#031D28')
-      bgGrad.addColorStop(0.5, '#011724')
-      bgGrad.addColorStop(1, '#02090D')
+      bgGrad.addColorStop(0, 'rgba(3, 29, 40, 0.45)')
+      bgGrad.addColorStop(0.5, 'rgba(1, 23, 36, 0.3)')
+      bgGrad.addColorStop(1, 'rgba(2, 9, 13, 0.15)')
       ctx.fillStyle = bgGrad
       ctx.fillRect(0, 0, width, height)
 
@@ -298,7 +300,7 @@ export default function PhytoloreHero({ onScrollToAbout }) {
       <div
         className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-1000"
         style={{
-          background: 'radial-gradient(circle at 50% 45%, rgba(1, 125, 139, 0.18) 0%, rgba(2, 9, 13, 0.88) 75%)',
+          background: 'radial-gradient(circle at 50% 45%, rgba(1, 125, 139, 0.12) 0%, rgba(2, 9, 13, 0.55) 75%)',
           opacity: entranceStep >= 2 ? 1 : 0
         }}
       />
@@ -316,9 +318,9 @@ export default function PhytoloreHero({ onScrollToAbout }) {
       {/* ── CENTRAL DOMINANT EDITORIAL TYPOGRAPHY & BRANDING ── */}
       <div className="relative z-30 flex-1 flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto w-full">
         
-        {/* 1. RENDEZVOUS'26 Official Logo Mask Badge (Step 09) */}
+        {/* 1. RENDEZVOUS'26 Logo (Step 09) — white via CSS filter */}
         <div
-          className="mb-4 sm:mb-6 transition-all duration-1000"
+          className="mb-3 sm:mb-5 transition-all duration-1000"
           style={{
             ...layerTransform(0.12),
             opacity: entranceStep >= 9 ? 1 : 0,
@@ -328,31 +330,9 @@ export default function PhytoloreHero({ onScrollToAbout }) {
           <img
             src="/rendezvous-hero-logo.png"
             alt="RENDEZVOUS 26"
-            className="w-full max-w-[260px] sm:max-w-md md:max-w-lg lg:max-w-xl h-auto mx-auto select-none"
+            className="w-full max-w-[160px] sm:max-w-[220px] md:max-w-[280px] lg:max-w-sm h-auto mx-auto select-none"
+            style={{ filter: 'brightness(0) invert(1) drop-shadow(0 0 20px rgba(255,255,255,0.3))' }}
           />
-        </div>
-
-        {/* 1b. RENDEZVOUS 26 plain text label (Step 09) */}
-        <div
-          className="mb-2 sm:mb-3 transition-all duration-1000 pointer-events-none"
-          style={{
-            ...layerTransform(0.14),
-            opacity: entranceStep >= 9 ? 1 : 0,
-          }}
-        >
-          <span
-            className="font-sora font-extrabold uppercase tracking-[0.25em] leading-none pointer-events-none select-none"
-            style={{
-              fontSize: 'clamp(0.65rem, 1.6vw, 1.1rem)',
-              background: 'linear-gradient(90deg, #01B998, #64D431, #AEE515)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              filter: 'drop-shadow(0 0 18px rgba(100,212,49,0.35))',
-            }}
-          >
-            RENDEZVOUS 26
-          </span>
         </div>
 
         {/* 2. Primary Concept Title: DECODING PHYTOLORE (Step 10 & 11) */}

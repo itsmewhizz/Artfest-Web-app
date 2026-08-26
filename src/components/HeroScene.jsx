@@ -205,16 +205,46 @@ export default function HeroScene({ entranceStep, mousePos }) {
   const [debugIndex, setDebugIndex] = useState(0)
   const containerRef = useRef(null)
   const glRef = useRef(null)
+  const [webglFailed, setWebglFailed] = useState(false)
 
   const handleCreated = ({ gl, scene, camera }) => {
     glRef.current = gl
+
+    // If WebGL context was lost, attempt to restore
     gl.domElement.addEventListener('webglcontextlost', (e) => {
       e.preventDefault()
     }, { passive: false })
+
     gl.domElement.addEventListener('webglcontextrestored', () => {
       gl.setClearColor(0x000000, 0)
       gl.render(scene, camera)
     }, { passive: true })
+  }
+
+  // Detect WebGL context creation failure (happens on some mobile GPUs)
+  useEffect(() => {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    if (!gl) {
+      setWebglFailed(true)
+    }
+  }, [])
+
+  if (webglFailed) {
+    return (
+      <div className="absolute inset-0 z-10 pointer-events-auto w-full h-full flex items-center justify-center">
+        <div className="text-center px-6">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#01B998]/20 flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#64D431" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <p className="text-[#64D431]/70 text-sm font-mono">3D scene requires WebGL</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -249,9 +279,8 @@ export default function HeroScene({ entranceStep, mousePos }) {
             failIfMajorPerformanceCaveat: false,
           }}
           style={{ background: 'transparent', width: '100%', height: '100%' }}
-          dpr={Math.min(window.devicePixelRatio || 1, 2)}
+          dpr={[1, 1.5]}
           onCreated={handleCreated}
-          resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
         >
           {/* STUDIO LIGHTING SETUP */}
           <ambientLight intensity={1.0} />
@@ -303,12 +332,14 @@ export default function HeroScene({ entranceStep, mousePos }) {
         </Canvas>
       </CanvasErrorBoundary>
 
-      <button
-        onClick={() => setDebugMode(true)}
-        className="absolute bottom-4 right-4 z-50 opacity-20 hover:opacity-100 bg-white/10 text-white text-[10px] px-2 py-1 rounded"
-      >
-        Debug Rotations
-      </button>
+      {import.meta.env.DEV && (
+        <button
+          onClick={() => setDebugMode(true)}
+          className="absolute bottom-4 right-4 z-50 opacity-20 hover:opacity-100 bg-white/10 text-white text-[10px] px-2 py-1 rounded"
+        >
+          Debug Rotations
+        </button>
+      )}
     </div>
   )
 }
