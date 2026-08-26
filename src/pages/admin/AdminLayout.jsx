@@ -26,7 +26,7 @@ const navItems = [
   { label: 'Categories', path: '/admin/categories', icon: Layers },
   { label: 'Teams', path: '/admin/teams', icon: Trophy },
   { label: 'Participants', path: '/admin/students', icon: Users },
-  { label: 'Spotlight / Gallery', path: '/admin/spotlight', icon: GalleryHorizontalEnd },
+  { label: 'Gallery', path: '/admin/spotlight', icon: GalleryHorizontalEnd },
   { label: 'Results', path: '/admin/results', icon: FileText },
   { label: 'Result Poster', path: '/admin/result-poster', icon: Image },
   { label: 'Print', path: '/admin/print', icon: Printer },
@@ -106,9 +106,8 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col admin-sidebar shadow-2xl transition-transform duration-300 lg:translate-x-0 ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 flex flex-col admin-sidebar shadow-2xl transition-transform duration-300 lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Brand */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 dark:border-black/10">
@@ -127,8 +126,7 @@ export default function AdminLayout() {
               end={end}
               onClick={closeDrawer}
               className={({ isActive }) =>
-                `admin-nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                  isActive ? 'admin-nav-link-active' : 'border-transparent opacity-70 hover:opacity-100'
+                `admin-nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${isActive ? 'admin-nav-link-active' : 'border-transparent opacity-70 hover:opacity-100'
                 }`
               }
             >
@@ -148,9 +146,8 @@ export default function AdminLayout() {
               type="button"
               onClick={handleFramesClick}
               aria-expanded={framesOpen}
-              className={`admin-nav-link group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
-                isFramesActive ? 'admin-nav-link-active' : 'border-transparent opacity-70 hover:opacity-100'
-              }`}
+              className={`admin-nav-link group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium border transition-colors ${isFramesActive ? 'admin-nav-link-active' : 'border-transparent opacity-70 hover:opacity-100'
+                }`}
             >
               <Frame size={18} className="admin-nav-ico" />
               <span className="flex-1 truncate text-left">Frames</span>
@@ -172,8 +169,7 @@ export default function AdminLayout() {
                     to={sub.to}
                     onClick={closeDrawer}
                     className={({ isActive }) =>
-                      `group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        isActive ? 'admin-nav-link-active border-transparent' : 'border-transparent opacity-70 hover:opacity-100'
+                      `group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${isActive ? 'admin-nav-link-active border-transparent' : 'border-transparent opacity-70 hover:opacity-100'
                       }`
                     }
                   >
