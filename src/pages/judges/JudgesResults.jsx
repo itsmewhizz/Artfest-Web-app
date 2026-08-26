@@ -152,15 +152,23 @@ function JudgesResults() {
     ? safeArr(programmes).filter(p => categoryFilter === 'General' ? p.category === 'General' : p.category === categoryFilter)
     : safeArr(programmes)
 
-  const lockedProgrammeIds = new Set(safeArr(savedResults).filter(r => r.locked).map(r => r.programmeId))
+  // A result is "submitted" only if locked=true AND has actual entry data.
+  // Locked-but-empty rows are orphaned bad data and should show as Not Submitted.
+  const hasResultData = (r) => {
+    if (!r) return false
+    if (r.entries && safeArr(r.entries).length > 0) return true
+    return !!(r.first || r.second || r.third)
+  }
+
+  const lockedProgrammeIds = new Set(safeArr(savedResults).filter(r => r.locked && hasResultData(r)).map(r => r.programmeId))
 
   const notSubmitted = filteredProgrammes
     .filter(p => !lockedProgrammeIds.has(p.id))
     .sort((a, b) => (resultNoMap[a.id] || 999) - (resultNoMap[b.id] || 999) || a.name.localeCompare(b.name))
 
-  // "Submitted Results" = result row exists with locked=true (judge has submitted).
-  // Does NOT require programme.isFinished — judge submission is independent of admin publication.
-  const lockedResults = safeArr(savedResults).filter(r => r.locked)
+  // "Submitted Results" = result row exists with locked=true AND has actual data.
+  // Locked-but-empty rows are treated as not submitted (orphaned data).
+  const lockedResults = safeArr(savedResults).filter(r => r.locked && hasResultData(r))
   const filteredLockedResults = categoryFilter
     ? lockedResults.filter(r => {
         const prog = safeArr(programmes).find(p => p.id === r.programmeId)
@@ -449,6 +457,7 @@ function JudgesResults() {
       p_first: payload.first,
       p_second: payload.second,
       p_third: payload.third,
+      p_entries: resolvedEntries,
     })
 
     if (rpcError || rpcData?.error) {
@@ -461,13 +470,9 @@ function JudgesResults() {
         rpcData?.error === 'not_authorized' ? 'You are not authorized to edit this result.' :
         rpcData?.error === 'invalid_judge' ? 'Judge re-verification failed. Please verify again.' :
         rpcData?.error === 'captcha_invalid' ? 'Security code was invalid or expired. Please verify again.' :
+        rpcData?.error === 'no_entries' ? 'At least one placement is required to save a result.' :
         (rpcError?.message || 'Edit failed. Please try again.')
       setEditError(msg); setSaving(false); return
-    }
-
-    // Also update the entries column directly since the RPC may not know about it
-    if (first || second || third) {
-      await judgeClient.from('results').update({ entries: resolvedEntries }).eq('programmeId', editProg.id)
     }
 
     setSaving(false); closeEdit(); toast('Result saved and locked!'); loadResults()

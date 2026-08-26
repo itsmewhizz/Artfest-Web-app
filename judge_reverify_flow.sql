@@ -122,7 +122,8 @@ create or replace function public.judge_reverify_edit(
   p_result_no integer default null,
   p_first jsonb default null,
   p_second jsonb default null,
-  p_third jsonb default null
+  p_third jsonb default null,
+  p_entries jsonb default null
 )
 returns jsonb
 language plpgsql
@@ -176,7 +177,12 @@ begin
   end if;
   update public.judge_captcha_challenges set used = true where id = v_chal.id;
 
-  -- 5) Upsert the result for this programme (latest row)
+  -- 5) Guard: require at least one placement before locking
+  if p_first is null and p_second is null and p_third is null then
+    return jsonb_build_object('error', 'no_entries', 'message', 'At least one placement is required to lock a result.');
+  end if;
+
+  -- 6) Upsert the result for this programme (latest row)
   select id, first, second, third
     into v_existing_id, v_old_first, v_old_second, v_old_third
   from public.results
@@ -190,14 +196,15 @@ begin
     else
       v_next_no := p_result_no;
     end if;
-    insert into public.results ("programmeId", name, first, second, third, "updatedAt", locked, "resultNo")
-    values (p_programme_id, p_programme_name, p_first, p_second, p_third, now(), true, v_next_no)
+    insert into public.results ("programmeId", name, first, second, third, entries, "updatedAt", locked, "resultNo")
+    values (p_programme_id, p_programme_name, p_first, p_second, p_third, coalesce(p_entries, '[]'::jsonb), now(), true, v_next_no)
     returning id into v_new_id;
   else
     update public.results
     set first = p_first,
         second = p_second,
         third = p_third,
+        entries = coalesce(p_entries, entries),
         "updatedAt" = now(),
         locked = true
     where id = v_existing_id
