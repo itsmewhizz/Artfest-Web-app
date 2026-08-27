@@ -89,9 +89,9 @@ export const ALL_FIELDS = (type) => FIELD_GROUPS[type]?.flatMap(g => g.fields) |
 export const isRepeatableField = (field) => /(\.\{i\}\.)|\.\{i\}\b/.test(field || '')
 
 export const ordinal = (n) => {
-  if (n === 1) return '1st Place'
-  if (n === 2) return '2nd Place'
-  return '3rd Place'
+  if (n === 1) return '1st'
+  if (n === 2) return '2nd'
+  return '3rd'
 }
 
 export const createId = () =>
@@ -264,7 +264,7 @@ export const createDefaultTemplate = (type, theme = 'light') => {
   const elements = [
     ...header,
     textElement(createId(), { text: 'RESULT', x: 90, y: 244, width: 200, height: 28, fontSize: 20, fontWeight: 700, textAlign: 'left', textTransform: 'uppercase', fontColor: palette.label }),
-    textElement(createId(), { field: 'result.resultNo', x: 90, y: 282, width: 420, height: 118, fontSize: 96, fontWeight: 800, textAlign: 'left', fontColor: palette.accent }),
+    textElement(createId(), { field: 'result.resultNo', prefix: 'Result #', x: 90, y: 282, width: 420, height: 118, fontSize: 96, fontWeight: 800, textAlign: 'left', fontColor: palette.accent }),
     textElement(createId(), { field: 'programme.name', x: 90, y: 430, width: 420, height: 300, fontSize: 50, fontWeight: 800, textAlign: 'left', fontColor: palette.body }),
     textElement(createId(), { field: 'programme.category', x: 90, y: 742, width: 420, height: 38, fontSize: 26, fontWeight: 600, textAlign: 'left', fontColor: palette.label }),
     textElement(createId(), { text: 'WINNERS', x: 570, y: 244, width: 420, height: 28, fontSize: 20, fontWeight: 700, textAlign: 'left', textTransform: 'uppercase', fontColor: palette.label }),
@@ -303,12 +303,22 @@ const isUuid = (id) => (
   typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
 )
 
+// Ensure existing templates get the "Result #" prefix on result.resultNo
+// elements that don't already have one, and strip any leading "#" from the
+// data value so it doesn't double up.
+const migrateResultNoPrefix = (elements) =>
+  elements.map(el => {
+    if (el.field !== 'result.resultNo') return el
+    const hasPrefix = (el.prefix || '').includes('Result')
+    return { ...el, prefix: hasPrefix ? el.prefix : 'Result #' }
+  })
+
 // Normalize a raw row/template into the app model (legacy templates lack
 // `canvas` / `elements` guards).
 const cast = (t) => ensureCanvas({
   ...t,
   id: t.id || createId(),
-  elements: Array.isArray(t?.elements) ? t.elements : [],
+  elements: migrateResultNoPrefix(Array.isArray(t?.elements) ? t.elements : []),
   background: t?.background || { kind: 'solid', color: '#5E35B1', gradient: '', imageUrl: '' },
 })
 
@@ -446,7 +456,7 @@ export const buildPosterSource = ({ type, programme, result, studentMap = {}, te
   return {
     type: 'result',
     programme: { name: programme?.name || '', category: programme?.category || '' },
-    result: { resultNo: result?.resultNo ? `#${result.resultNo}` : '' },
+    result: { resultNo: result?.resultNo ?? '' },
     date: fmtDate(result?.updatedAt || new Date().toISOString()),
     placements,
   }
@@ -472,7 +482,7 @@ export const makeSampleSource = (type) => {
   return {
     type: 'result',
     programme: { name: 'Group Song (Malayalam)', category: 'General Cat-A' },
-    result: { resultNo: '#12' },
+    result: { resultNo: '12' },
     date: fmtDate(new Date().toISOString()),
     placements: samples.map((s, i) => ({ rank: ordinal(i + 1), name: s.name, points: s.points, grade: s.grade, team: s.team, chestNo: s.chestNo })),
   }

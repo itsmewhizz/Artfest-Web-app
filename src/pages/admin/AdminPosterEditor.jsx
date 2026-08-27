@@ -69,7 +69,7 @@ const initSampleState = (type) => {
   return {
     programmeName: 'Group Song (Malayalam)',
     category: 'General Cat-A',
-    resultNo: '#042',
+    resultNo: '042',
     footerText: "RENDEZVOUS '26 ART FESTIVAL",
     placements: (base.placements || []).map(p => ({ name: p.name || '', team: p.team || '' })),
   }
@@ -809,12 +809,13 @@ export default function AdminPosterEditor() {
                       patchElement(selected.id, { field, repeat: isRepeatableField(field) })
                     }}
                     className={selectCls + ' w-auto min-w-[170px]'}
+                    style={{ color: 'var(--text-main)' }}
                   >
-                    <option value="">Custom text</option>
+                    <option value="" style={{ color: 'var(--text-main)', backgroundColor: 'var(--card-white)' }}>Custom text</option>
                     {elGroups.map(g => (
                       <optgroup key={g.label} label={g.label}>
                         {g.fields.map(f => (
-                          <option key={f.key} value={f.key}>{f.label}{isRepeatableField(f.key) ? ' (per winner)' : ''}</option>
+                          <option key={f.key} value={f.key} style={{ color: 'var(--text-main)', backgroundColor: 'var(--card-white)' }}>{f.label}{isRepeatableField(f.key) ? ' (per winner)' : ''}</option>
                         ))}
                       </optgroup>
                     ))}
