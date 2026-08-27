@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EventX — Complete Software Overview & Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --green-900:#0C2E1A;--green-800:#115F32;--green-700:#1A7A3E;
+    --green-600:#228C22;--green-500:#3AA842;--green-400:#8ED06C;
+    --green-300:#B8E89A;--green-200:#D4FFB8;--green-100:#E4F7DA;--green-50:#F4FFF0;
+    --gray-900:#111827;--gray-800:#1F2937;--gray-700:#374151;--gray-600:#4B5563;
+    --gray-500:#6B7280;--gray-400:#9CA3AF;--gray-300:#D1D5DB;--gray-200:#E5E7EB;
+    --gray-100:#F3F4F6;--gray-50:#F9FAFB;--white:#FFFFFF;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;color:var(--gray-800);line-height:1.65;font-size:9.5pt;background:#fff;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page{width:210mm;min-height:297mm;padding:22mm 24mm 28mm;margin:0 auto;page-break-after:always;position:relative}
+  @media print{.page{box-shadow:none;margin:0}}
+
+  /* Typography */
+  h1{font-size:26pt;font-weight:700;color:var(--gray-900);line-height:1.15;margin-bottom:8px}
+  h2{font-size:18pt;font-weight:700;color:var(--green-800);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--green-200)}
+  h3{font-size:12pt;font-weight:600;color:var(--gray-900);margin:14px 0 6px}
+  h4{font-size:10pt;font-weight:600;color:var(--gray-800);margin:10px 0 4px}
+  p{margin-bottom:6px;color:var(--gray-700)}
+  .subtitle{font-size:11pt;color:var(--gray-500);margin-bottom:14px}
+  .meta{font-size:8pt;color:var(--gray-400);margin-top:12px}
+  .section-num{font-size:9pt;font-weight:600;color:var(--green-600);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:8.5pt}
+  th{background:var(--green-50);color:var(--green-800);font-weight:600;text-align:left;padding:6px 8px;border:1px solid var(--gray-200)}
+  td{padding:5px 8px;border:1px solid var(--gray-200);color:var(--gray-700);vertical-align:top}
+  tr:nth-child(even){background:var(--gray-50)}
+  code,.mono{font-family:'JetBrains Mono',monospace;font-size:8pt;background:var(--gray-100);padding:1px 4px;border-radius:3px}
+  pre{background:var(--gray-900);color:var(--green-300);padding:10px 14px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:7.5pt;line-height:1.5;overflow-x:auto;margin:8px 0;white-space:pre-wrap}
+  pre code{background:none;padding:0}
+
+  /* Lists */
+  ol,ul{margin:6px 0 8px 18px;color:var(--gray-700)}
+  li{margin-bottom:3px}
+  ol li{margin-bottom:5px}
+
+  /* Boxes */
+  .note{background:var(--green-50);border-left:3px solid var(--green-500);padding:8px 12px;margin:10px 0;border-radius:0 6px 6px 0;font-size:8.5pt}
+  .note strong{color:var(--green-800)}
+  .warning{background:#FEF3C7;border-left:3px solid #F59E0B;padding:8px 12px;margin:10px 0;border-radius:0 6px 6px 0;font-size:8.5pt}
+
+  /* Cover */
+  .cover{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:36mm 28mm;background:var(--green-900);color:#fff}
+  .cover h1{font-size:38pt;color:#fff;margin-bottom:4px}
+  .cover h1 span{color:var(--green-300)}
+  .cover .subtitle{color:rgba(255,255,255,0.7);font-size:12pt}
+  .cover .meta{color:rgba(255,255,255,0.4);font-size:9pt;margin-top:20px}
+  .cover .badge{display:inline-block;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:3px 10px;font-size:8pt;font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;color:var(--green-300)}
+
+  /* TOC */
+  .toc{columns:2;column-gap:24px}
+  .toc-item{break-inside:avoid;padding:4px 0;border-bottom:1px dotted var(--gray-300);font-size:9pt}
+  .toc-item .num{color:var(--green-600);font-weight:600;margin-right:6px}
+  .toc-item a{color:var(--gray-700);text-decoration:none}
+
+  /* Two col */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .col-box{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;padding:10px 12px}
+  .col-box h4{margin-top:0}
+
+  .page-footer{position:absolute;bottom:12mm;left:24mm;font-size:7.5pt;color:var(--gray-400)}
+  .page-num{position:absolute;bottom:12mm;right:24mm;font-size:8pt;color:var(--gray-400);font-weight:500}
+  .page-title{font-size:7.5pt;color:var(--gray-400);font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER ==================== -->
+<div class="page cover">
+  <div class="badge">Software Overview & Documentation</div>
+  <h1>Event<span>X</span></h1>
+  <p class="subtitle">Complete Software Overview & Documentation — v1.0</p>
+  <p class="subtitle" style="font-size:10pt;margin-top:8px">Event/Festival Management Platform</p>
+  <div class="meta">
+    <p>Created by Team SynaptiX</p>
+    <p style="margin-top:4px">Document Version: 1.0</p>
+    <p style="margin-top:4px">Source: Artfest-Web-app-main</p>
+    <p style="margin-top:4px">Live: isra-rendezvous.vercel.app</p>
+  </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="page">
+  <h2>Table of Contents</h2>
+  <div class="toc">
+    <div class="toc-item"><span class="num">01</span> Product Overview</div>
+    <div class="toc-item"><span class="num">02</span> Technology Stack</div>
+    <div class="toc-item"><span class="num">03</span> Routes & Pages</div>
+    <div class="toc-item"><span class="num">04</span> Authentication & Security</div>
+    <div class="toc-item"><span class="num">05</span> Admin Panel — Features & Workflows</div>
+    <div class="toc-item"><span class="num">06</span> Student Panel — Features & Workflows</div>
+    <div class="toc-item"><span class="num">07</span> Judge Panel — Features & Workflows</div>
+    <div class="toc-item"><span class="num">08</span> Public Pages — Features & Workflows</div>
+    <div class="toc-item"><span class="num">09</span> Green Room & Lot Draw System</div>
+    <div class="toc-item"><span class="num">10</span> Poster Generation System</div>
+    <div class="toc-item"><span class="num">11</span> Print Sheet System</div>
+    <div class="toc-item"><span class="num">12</span> Data Import System</div>
+    <div class="toc-item"><span class="num">13</span> Gallery & Media System</div>
+    <div class="toc-item"><span class="num">14</span> Database Schema & Data Model</div>
+    <div class="toc-item"><span class="num">15</span> Supabase RPCs & Functions</div>
+    <div class="toc-item"><span class="num">16</span> Design System</div>
+    <div class="toc-item"><span class="num">17</span> Project Structure & Deployment</div>
+  </div>
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">02</div>
+</div>
+
+<!-- ==================== 01 — PRODUCT OVERVIEW ==================== -->
+<div class="page">
+  <div class="section-num">01 — Product Overview</div>
+  <h2>Product Overview</h2>
+
+  <h3>What is EventX?</h3>
+  <p>EventX is a full-stack web application designed to manage every aspect of large-scale academic and cultural festivals. It replaces spreadsheets, paper forms, and manual coordination with a unified, role-based digital platform — from participant registration to real-time result publishing.</p>
+  <p>The platform is purpose-built for the ISRA Vatanappally Life Festival ("Rendezvous'26"), supporting 500+ participants across 20+ event categories with multiple competition teams.</p>
+
+  <h3>User Roles</h3>
+  <table>
+    <tr><th>Role</th><th>Login</th><th>Session</th><th>Key Capabilities</th></tr>
+    <tr><td><strong>Admin</strong></td><td>/admin/login</td><td>Supabase Auth (email/password)</td><td>Full CRUD on all entities, result publishing, poster generation, gallery management, print sheets, lot draw</td></tr>
+    <tr><td><strong>Student</strong></td><td>/student/login</td><td>Custom: chestNo + password, localStorage + DB</td><td>View own profile, programmes, results; download posters; edit details (admin-gated)</td></tr>
+    <tr><td><strong>Judge</strong></td><td>/judges/login</td><td>Supabase Auth (separate client instance)</td><td>Submit results per programme, re-edit locked results with CAPTCHA verification</td></tr>
+    <tr><td><strong>Public</strong></td><td>None</td><td>None</td><td>View home page, gallery, results, result details, download posters</td></tr>
+    <tr><td><strong>Green Room</strong></td><td>/lots (PIN gate)</td><td>sessionStorage</td><td>Lot draw (numbers/letters), code letter assignment to participants</td></tr>
+  </table>
+
+  <h3>Key Statistics (from Source Code)</h3>
+  <div class="three-col">
+    <div class="col-box"><h4>30 Routes</h4><p>10 public, 13 admin, 2 judge, 1 student, 4 redirects</p></div>
+    <div class="col-box"><h4>14 Database Tables</h4><p>programmes, teams, students, results, categories, spotlight, poster_templates, gallery_footers, performance_code_assignments, student_credentials, judge_captcha_challenges, result_edit_log, admin (legacy)</p></div>
+    <div class="col-box"><h4>4 RPCs</h4><p>judge_create_captcha, judge_reverify_edit, admin_set_result_no, admin_delete_results_for_programme</p></div>
+  </div>
+  <div class="three-col" style="margin-top:8px">
+    <div class="col-box"><h4>26 Components</h4><p>Reusable UI components including poster engine, import modals, route guards, 3D scenes</p></div>
+    <div class="col-box"><h4>15 Admin Pages</h4><p>Dashboard, programmes, teams, students, categories, results, gallery, footers, print, posters (2), lot draw</p></div>
+    <div class="col-box"><h4>3 Supabase Clients</h4><p>Main (admin), judgeClient (judge auth), verifyJudgeClient (re-verification)</p></div>
+  </div>
+
+  <h3>Architecture Summary</h3>
+  <p>EventX is a React SPA (Single Page Application) using Vite as the build tool, Supabase as the backend (PostgreSQL + Auth + Storage), and Tailwind CSS for styling. The app is deployed on Vercel with SPA catch-all routing.</p>
+  <p>All server-side logic is handled by PostgreSQL functions (RPCs) — there are no Edge Functions or separate API servers. Real-time subscriptions are not used; the app operates on a pull/refresh model.</p>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">03</div>
+</div>
+
+<!-- ==================== 02 — TECHNOLOGY STACK ==================== -->
+<div class="page">
+  <div class="section-num">02 — Technology Stack</div>
+  <h2>Technology Stack</h2>
+
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Version</th><th>Notes</th></tr>
+    <tr><td>UI Framework</td><td>React</td><td>19.2.7</td><td>Functional components, hooks</td></tr>
+    <tr><td>Build Tool</td><td>Vite</td><td>8.1.0</td><td>ESM, @vitejs/plugin-react 6.0.2</td></tr>
+    <tr><td>Routing</td><td>react-router-dom</td><td>7.18.0</td><td>BrowserRouter, nested routes</td></tr>
+    <tr><td>Backend</td><td>Supabase</td><td>2.108.2</td><td>PostgreSQL, Auth, Storage, RPCs</td></tr>
+    <tr><td>CSS</td><td>Tailwind CSS</td><td>3.4.19</td><td>Utility-first, CSS variable tokens</td></tr>
+    <tr><td>3D Graphics</td><td>Three.js + React Three Fiber</td><td>0.185.1 / 9.7.0</td><td>Hero scene with GLB models</td></tr>
+    <tr><td>Icons</td><td>lucide-react</td><td>1.21.0</td><td>Consistent icon system</td></tr>
+    <tr><td>CSV Parsing</td><td>PapaParse</td><td>5.6.0</td><td>Bulk participant/programme import</td></tr>
+    <tr><td>Excel Parsing</td><td>SheetJS (xlsx)</td><td>0.18.5</td><td>Bulk import from .xlsx/.xls</td></tr>
+    <tr><td>PDF Extraction</td><td>pdfjs-dist</td><td>6.2.108</td><td>Text extraction from PDF files</td></tr>
+    <tr><td>OCR</td><td>Tesseract.js</td><td>7.0.0</td><td>Image-to-text for import from images</td></tr>
+    <tr><td>Screenshot</td><td>html2canvas</td><td>1.4.1</td><td>Poster/sheet PNG export</td></tr>
+    <tr><td>File Download</td><td>file-saver</td><td>2.0.5</td><td>Client-side file download</td></tr>
+    <tr><td>Progress UI</td><td>react-circular-progressbar</td><td>2.2.0</td><td>Student dashboard progress ring</td></tr>
+    <tr><td>Linter</td><td>oxlint</td><td>1.69.0</td><td>Oxidation Compiler linter</td></tr>
+    <tr><td>Deployment</td><td>Vercel</td><td>—</td><td>SPA with catch-all rewrite</td></tr>
+  </table>
+
+  <h3>Architecture Decisions</h3>
+  <table>
+    <tr><th>Decision</th><th>Approach</th><th>Rationale</th></tr>
+    <tr><td>State Management</td><td>Component-local state + localStorage</td><td>No global state library (Redux/Zustand). Data fetched per-component. Session state in localStorage/DB.</td></tr>
+    <tr><td>Backend</td><td>Supabase (Postgres + RPCs)</td><td>No separate API server. All write logic in SECURITY DEFINER PostgreSQL functions. RLS for access control.</td></tr>
+    <tr><td>Rendering</td><td>Client-side SPA</td><td>All pages render client-side. Public pages are index.html + JS. No SSR/SSG.</td></tr>
+    <tr><td>Auth Isolation</td><td>3 Supabase client instances</td><td>Separate storageKeys prevent GoTrueClient collisions between admin, judge, and verify sessions.</td></tr>
+    <tr><td>Student Auth</td><td>Custom session (not Supabase Auth)</td><td>Students authenticate as anon role. Session tracked in both localStorage and DB for single-device enforcement.</td></tr>
+    <tr><td>Image Handling</td><td>Supabase Storage (public)</td><td>All images stored in single "photos" bucket with folder-based organization. Public read access.</td></tr>
+    <tr><td>Real-time</td><td>Pull/refresh (no subscriptions)</td><td>Simplicity. Admin refreshes to see updates. No WebSocket overhead.</td></tr>
+  </table>
+
+  <h3>NPM Scripts</h3>
+  <table>
+    <tr><th>Script</th><th>Command</th><th>Purpose</th></tr>
+    <tr><td>dev</td><td>vite</td><td>Development server with HMR</td></tr>
+    <tr><td>build</td><td>vite build</td><td>Production build to dist/</td></tr>
+    <tr><td>lint</td><td>oxlint</td><td>Run linter</td></tr>
+    <tr><td>preview</td><td>vite preview</td><td>Preview production build locally</td></tr>
+  </table>
+
+  <h3>Environment Variables</h3>
+  <table>
+    <tr><th>Variable</th><th>Purpose</th></tr>
+    <tr><td><code>VITE_SUPABASE_URL</code></td><td>Supabase project URL</td></tr>
+    <tr><td><code>VITE_SUPABASE_ANON_KEY</code></td><td>Supabase anonymous API key</td></tr>
+  </table>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">04</div>
+</div>
+
+<!-- ==================== 03 — ROUTES & PAGES ==================== -->
+<div class="page">
+  <div class="section-num">03 — Routes & Pages</div>
+  <h2>Routes & Pages</h2>
+
+  <h3>Public Routes</h3>
+  <table>
+    <tr><th>Path</th><th>Component</th><th>Description</th></tr>
+    <tr><td><code>/</code></td><td>Home</td><td>Landing page with 3D hero, team standings, stats, gallery preview, about section</td></tr>
+    <tr><td><code>/gallery</code></td><td>Gallery</td><td>Photo gallery with album grouping, lightbox, download with footer overlay</td></tr>
+    <tr><td><code>/results</code></td><td>Results</td><td>Published results grid with category filter, unpublished toggle</td></tr>
+    <tr><td><code>/results/:id</code></td><td>ResultDetail</td><td>Single programme result with placements and poster download</td></tr>
+    <tr><td><code>/programmes</code></td><td>Redirect → /results</td><td>Legacy redirect</td></tr>
+    <tr><td><code>/programmes/:id</code></td><td>Redirect → /results/:id</td><td>Legacy redirect</td></tr>
+  </table>
+
+  <h3>Student Routes</h3>
+  <table>
+    <tr><th>Path</th><th>Component</th><th>Guard</th><th>Description</th></tr>
+    <tr><td><code>/student/login</code></td><td>StudentLogin</td><td>None</td><td>Chest number + password authentication</td></tr>
+    <tr><td><code>/student/dashboard</code></td><td>StudentDashboard</td><td>Session check (localStorage + DB)</td><td>Profile, programme progress, results, poster download</td></tr>
+  </table>
+
+  <h3>Admin Routes</h3>
+  <table>
+    <tr><th>Path</th><th>Component</th><th>Description</th></tr>
+    <tr><td><code>/admin/login</code></td><td>AdminLogin</td><td>Email/password login (redirects if session active)</td></tr>
+    <tr><td><code>/admin</code></td><td>AdminDashboard</td><td>Statistics, team points leaderboard, individual points by category</td></tr>
+    <tr><td><code>/admin/programmes</code></td><td>AdminProgrammes</td><td>CRUD programmes, toggle publish, clear results, bulk import</td></tr>
+    <tr><td><code>/admin/categories</code></td><td>AdminCategories</td><td>CRUD categories (name + sort order)</td></tr>
+    <tr><td><code>/admin/teams</code></td><td>AdminTeams</td><td>View/edit team names and colors, team breakdown</td></tr>
+    <tr><td><code>/admin/students</code></td><td>AdminStudents</td><td>CRUD participants, photo upload, bulk import</td></tr>
+    <tr><td><code>/admin/results</code></td><td>AdminResults</td><td>Read-only results preview for all programmes</td></tr>
+    <tr><td><code>/admin/result-poster</code></td><td>AdminResultPoster</td><td>Cumulative team standings poster generator</td></tr>
+    <tr><td><code>/admin/print</code></td><td>AdminPrint</td><td>Print sign/valuation/result sheets</td></tr>
+    <tr><td><code>/admin/spotlight</code></td><td>AdminSpotlight</td><td>Gallery image upload and management</td></tr>
+    <tr><td><code>/admin/frames/templates</code></td><td>AdminPosterTemplates</td><td>Poster template library (create, duplicate, delete)</td></tr>
+    <tr><td><code>/admin/frames/templates/:id/edit</code></td><td>AdminPosterEditor</td><td>Visual drag-and-drop poster template editor</td></tr>
+    <tr><td><code>/admin/frames/footer</code></td><td>AdminGalleryFooters</td><td>Gallery footer overlay management</td></tr>
+  </table>
+  <p class="meta">All /admin/* routes (except /admin/login) are wrapped in ProtectedRoute which checks supabase.auth.getSession().</p>
+
+  <h3>Green Room Routes</h3>
+  <table>
+    <tr><th>Path</th><th>Component</th><th>Guard</th><th>Description</th></tr>
+    <tr><td><code>/lots</code></td><td>LotsAccess</td><td>6-digit PIN (201219)</td><td>Access gate for lot draw system</td></tr>
+    <tr><td><code>/lots/draw</code></td><td>LotsDraw</td><td>sessionStorage('lots_granted')</td><td>Lot draw container (topic/code/assign modes)</td></tr>
+  </table>
+
+  <h3>Judge Routes</h3>
+  <table>
+    <tr><th>Path</th><th>Component</th><th>Guard</th><th>Description</th></tr>
+    <tr><td><code>/judges/login</code></td><td>JudgesLogin</td><td>None</td><td>Judge email/password login (validates role)</td></tr>
+    <tr><td><code>/judges/results</code></td><td>JudgesResults</td><td>JudgesRoute (role check)</td><td>Result entry panel with CAPTCHA re-verification</td></tr>
+  </table>
+
+  <h3>Route Guards</h3>
+  <table>
+    <tr><th>Guard</th><th>File</th><th>Protects</th><th>Mechanism</th></tr>
+    <tr><td>ProtectedRoute</td><td>src/components/ProtectedRoute.jsx</td><td>/admin/*</td><td>supabase.auth.getSession() → redirect to /admin/login</td></tr>
+    <tr><td>JudgesRoute</td><td>src/components/JudgesRoute.jsx</td><td>/judges/results</td><td>judgeClient.auth.getSession() + app_metadata.role === 'judge'</td></tr>
+    <tr><td>AdminSessionRedirect</td><td>src/App.jsx (inline)</td><td>/admin/login</td><td>If authenticated, redirect to /admin</td></tr>
+    <tr><td>Student session guard</td><td>src/pages/StudentDashboard.jsx</td><td>/student/dashboard</td><td>getStudentSessionState() — checks localStorage + DB</td></tr>
+  </table>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">05</div>
+</div>
+
+<!-- ==================== 04 — AUTHENTICATION & SECURITY ==================== -->
+<div class="page">
+  <div class="section-num">04 — Authentication & Security</div>
+  <h2>Authentication & Security</h2>
+
+  <h3>Supabase Client Configuration</h3>
+  <p>Three separate Supabase client instances are created in <code>src/supabase/client.js</code>, all sharing the same URL and anon key but with different <code>storageKey</code> values to prevent session collisions:</p>
+  <table>
+    <tr><th>Client</th><th>Variable</th><th>storageKey</th><th>Purpose</th></tr>
+    <tr><td>Main</td><td><code>supabase</code></td><td>Default (sb-*-auth-token)</td><td>Admin auth, all data queries</td></tr>
+    <tr><td>Judge</td><td><code>judgeClient</code></td><td>artfest-judge-auth</td><td>Judge authentication (isolated session)</td></tr>
+    <tr><td>Verify</td><td><code>verifyJudgeClient</code></td><td>artfest-verify-auth</td><td>Re-verification flow (persistSession: false)</td></tr>
+  </table>
+
+  <h3>Role System</h3>
+  <p>Roles are stored in <code>auth.users.raw_app_meta_data</code> and carried in the JWT as <code>app_metadata.role</code>. Two SQL helper functions are defined:</p>
+  <pre><code>CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean AS $$
+  SELECT COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin';
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_judge() RETURNS boolean AS $$
+  SELECT COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'judge';
+$$;</code></pre>
+
+  <h3>Admin Authentication Flow</h3>
+  <ol>
+    <li>User navigates to <code>/admin/login</code></li>
+    <li>AdminSessionRedirect checks if session already exists → redirects to /admin if so</li>
+    <li>Admin enters email + password</li>
+    <li><code>supabase.auth.signInWithPassword({ email, password })</code> is called</li>
+    <li>On success, JWT is stored with <code>app_metadata.role = "admin"</code></li>
+    <li>Navigate to <code>/admin</code> with <code>replace: true</code> (no back-stack entry for login)</li>
+    <li>ProtectedRoute on all /admin/* routes verifies session exists</li>
+  </ol>
+
+  <h3>Student Authentication Flow</h3>
+  <ol>
+    <li>Student navigates to <code>/student/login</code></li>
+    <li>Enters chest number and password</li>
+    <li><code>getStudentByCredentials(chestNo, password)</code> queries the <code>students</code> table</li>
+    <li>Checks <code>student_credentials</code> table for password match</li>
+    <li>Falls back to common password <code>israfest2026</code> if no per-student credential exists</li>
+    <li>Checks <code>sessionActive</code> in DB — rejects with <code>'already_logged_in_elsewhere'</code> if true</li>
+    <li>Creates session: stores token in localStorage (<code>student_session_&lt;id&gt;</code>) and DB (<code>sessionActive=true, sessionToken, sessionExpiresAt</code>)</li>
+    <li>Session expires after 8 hours (<code>SESSION_EXPIRY_MS = 8 * 60 * 60 * 1000</code>)</li>
+    <li>Student ID stored in <code>localStorage.setItem('student_id', id)</code></li>
+  </ol>
+  <div class="note"><strong>Note:</strong> Students authenticate as the <code>anon</code> role in Supabase Auth. Their writes to the students table are gated by RLS policies requiring <code>auth.role() = 'authenticated'</code>, so students cannot write directly via PostgREST.</div>
+
+  <h3>Judge Authentication Flow</h3>
+  <ol>
+    <li>Judge navigates to <code>/judges/login</code></li>
+    <li>Any existing judge session is cleared: <code>judgeClient.auth.signOut()</code></li>
+    <li>Enters email + password</li>
+    <li><code>judgeClient.auth.signInWithPassword({ email, password })</code> is called</li>
+    <li>After sign-in, checks <code>data.user.app_metadata.role</code></li>
+    <li>If role !== 'judge', signs out and shows error: "This account is not registered as a judge."</li>
+    <li>On success, navigates to <code>/judges/results</code></li>
+    <li>JudgesRoute guard verifies session + role on every access</li>
+  </ol>
+
+  <h3>Result Re-Verification Flow (Judge Editing Locked Results)</h3>
+  <ol>
+    <li>Judge clicks "Re-verify & Edit" on a locked result</li>
+    <li>Prompt: "Are you really a Judge?"</li>
+    <li>CAPTCHA challenge generated via <code>judge_create_captcha</code> RPC (6-char code, 5-minute expiry)</li>
+    <li>Judge re-enters email + password</li>
+    <li>Enters the CAPTCHA code</li>
+    <li>Client calls <code>judge_reverify_edit</code> RPC with all data</li>
+    <li>Server-side verification: checks JWT role, validates password via <code>crypt()</code>, validates CAPTCHA (valid, unexpired, unused)</li>
+    <li>On success: upserts result, sets <code>locked=true</code>, writes audit log to <code>result_edit_log</code></li>
+  </ol>
+
+  <h3>Row-Level Security (RLS) Policies</h3>
+  <table>
+    <tr><th>Table</th><th>SELECT</th><th>INSERT</th><th>UPDATE</th><th>DELETE</th></tr>
+    <tr><td>students</td><td>public</td><td>authenticated</td><td>authenticated</td><td>authenticated</td></tr>
+    <tr><td>programmes</td><td>public</td><td>authenticated</td><td>authenticated</td><td>authenticated</td></tr>
+    <tr><td>results</td><td>public</td><td>admin (placeholder) / judge (locked)</td><td>!locked</td><td>judge & !locked</td></tr>
+    <tr><td>teams</td><td>public</td><td>authenticated</td><td>authenticated</td><td>authenticated</td></tr>
+    <tr><td>categories</td><td>public</td><td>is_admin()</td><td>is_admin()</td><td>is_admin()</td></tr>
+    <tr><td>spotlight</td><td>public</td><td>authenticated</td><td>authenticated</td><td>authenticated</td></tr>
+    <tr><td>poster_templates</td><td>anon + auth</td><td>authenticated</td><td>authenticated</td><td>authenticated</td></tr>
+    <tr><td>gallery_footers</td><td>anon + auth</td><td>authenticated</td><td>authenticated</td><td>authenticated</td></tr>
+    <tr><td>performance_code_assignments</td><td>public</td><td>authenticated</td><td>authenticated</td><td>authenticated</td></tr>
+    <tr><td>result_edit_log</td><td>is_admin()</td><td>—</td><td>—</td><td>—</td></tr>
+  </table>
+
+  <h3>Storage RLS</h3>
+  <p>Single bucket: <code>photos</code>. SELECT is public. INSERT/UPDATE/DELETE require <code>is_admin()</code> and folder must be one of: templates, spotlight, students, footers, frames.</p>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">06</div>
+</div>
+
+<!-- ==================== 05 — ADMIN PANEL ==================== -->
+<div class="page">
+  <div class="section-num">05 — Admin Panel — Features & Workflows</div>
+  <h2>Admin Panel — Features & Workflows</h2>
+
+  <h3>Dashboard (/admin)</h3>
+  <p>Displays live statistics (total participants, teams, categories, programmes via row counts), a team points leaderboard sorted by total points across all published results, and individual points leaderboard by student category (Minor, HS, Premier, Sub Junior, Junior) with per-category tabs.</p>
+
+  <h3>Programme Management (/admin/programmes)</h3>
+  <h4>Capabilities</h4>
+  <ul>
+    <li>Add/Edit/Delete programmes with fields: name, category, programmeType (On-stage/Off-stage), participationType (Individual/Group), result number</li>
+    <li>Toggle publish status (isPublished) — controls public result visibility</li>
+    <li>Clear result — resets placements, marks as not finished</li>
+    <li>Bulk import from CSV/Excel/PDF/OCR via ProgrammeBulkImportModal</li>
+    <li>Filter by category, programme type, participation type</li>
+    <li>Paginate (25/50/100/200/All)</li>
+    <li>View enrolled participants modal per programme</li>
+  </ul>
+  <h4>Workflow: Creating a Programme</h4>
+  <ol>
+    <li>Click "Add Programme"</li>
+    <li>Enter name, select category, programme type, participation type</li>
+    <li>Optionally assign result number (or auto-assign)</li>
+    <li>Save — placeholder result row is auto-created via <code>ensureResultMasterRow()</code></li>
+    <li>Programme appears in admin list and (if published) in public results</li>
+  </ol>
+  <h4>Workflow: Publishing Results</h4>
+  <ol>
+    <li>Judge submits result (locked + has data) via /judges/results</li>
+    <li>Admin reviews in /admin/results (read-only preview)</li>
+    <li>Admin toggles "Published" on the programme in /admin/programmes</li>
+    <li>Result becomes visible on /results and /results/:id</li>
+    <li>Student sees result on their dashboard</li>
+  </ol>
+
+  <h3>Team Management (/admin/teams)</h3>
+  <p>View team scores (auto-calculated from published results via sync_team_totals trigger). Edit team name and color (16 preset colors). Expandable TeamBreakdown component shows per-category point breakdown and placement details.</p>
+
+  <h3>Participant Management (/admin/students)</h3>
+  <h4>Capabilities</h4>
+  <ul>
+    <li>Add/Edit/Delete participants with fields: name, chest number, category, team, photo, programme enrollment</li>
+    <li>Photo upload to Supabase Storage (students/ folder)</li>
+    <li>Bulk import via BulkImportModal (CSV/Excel/PDF/OCR)</li>
+    <li>Filter by team and category</li>
+    <li>View enrolled programmes modal</li>
+  </ul>
+
+  <h3>Category Management (/admin/categories)</h3>
+  <p>CRUD for the categories table. Controls which categories appear in dropdowns/filters across the app. Default seed data: Minor(1), HS(2), Premier(3), Sub Junior(4), Junior(5), General Cat-A(6), General Cat-B(7).</p>
+
+  <h3>Results Viewer (/admin/results)</h3>
+  <p>Read-only results preview. Programme-centric list: every programme gets a row with result data. Shows placement rows (1st/2nd/3rd) with chest number, name, team, points, grade. Search by name/result number. Status badges: Published / Awaiting Publish / No result.</p>
+
+  <h3>Gallery Management (/admin/spotlight)</h3>
+  <p>Upload images (up to 10 per batch) to Supabase Storage. Add captions, assign to albums. Toggle "Hero banner" status (appears in home hero carousel). Edit caption/album. Delete images.</p>
+
+  <h3>Gallery Footer Management (/admin/frames/footer)</h3>
+  <p>Upload transparent PNG frames. Create/Edit/Delete footer overlays. Set one as "active" — enforced by trigger to ensure at most one active footer. Active footer is composited onto gallery photos at display time.</p>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">07</div>
+</div>
+
+<!-- ==================== 06 — STUDENT PANEL ==================== -->
+<div class="page">
+  <div class="section-num">06 — Student Panel — Features & Workflows</div>
+  <h2>Student Panel — Features & Workflows</h2>
+
+  <h3>Login (/student/login)</h3>
+  <p>Students authenticate with chest number + password. The system uses a custom session mechanism (not Supabase Auth) with the following properties:</p>
+  <ul>
+    <li>Credentials checked against <code>student_credentials</code> table, with fallback to common password <code>israfest2026</code></li>
+    <li>Session stored in both localStorage and the <code>students</code> table (dual storage)</li>
+    <li>8-hour session expiry</li>
+    <li>Single-device enforcement: if <code>sessionActive=true</code> in DB, login is rejected with <code>'already_logged_in_elsewhere'</code></li>
+  </ul>
+
+  <h3>Dashboard (/student/dashboard)</h3>
+  <h4>Profile Display</h4>
+  <ul>
+    <li>Student name, chest number, category, team</li>
+    <li>Profile photo (or colored initial avatar fallback)</li>
+    <li>Circular progress ring showing completed/total programmes</li>
+  </ul>
+
+  <h4>Programme Lists</h4>
+  <ul>
+    <li><strong>Completed:</strong> Programmes where the student has a placement in published results</li>
+    <li><strong>Pending:</strong> Enrolled programmes without results yet</li>
+  </ul>
+
+  <h4>Poster Download</h4>
+  <ol>
+    <li>Student clicks "Download Poster" button</li>
+    <li>Picker modal shows completed programmes</li>
+    <li>Selects a programme → opens TemplatePosterModal (if templates exist) or ResultPoster (3-theme fallback)</li>
+    <li>Downloads poster as PNG</li>
+  </ol>
+
+  <h3>Edit Details (Admin-Gated)</h3>
+  <p>Students can self-edit their profile, but must first authenticate an admin session:</p>
+  <ol>
+    <li>Student clicks "Edit Details"</li>
+    <li>Prompted for admin email + password</li>
+    <li>System calls <code>supabase.auth.signInWithPassword()</code> with admin credentials</li>
+    <li>On success, edit form opens with fields: photo, name, category, team, programme enrollment</li>
+    <li>Changes saved via Supabase client (now authenticated as admin)</li>
+    <li>Admin session signed out after edit closes</li>
+  </ol>
+  <div class="note"><strong>Why?</strong> Students operate as the <code>anon</code> role in Supabase. RLS policies on the students table require <code>authenticated</code> role for writes. The admin re-authentication provides the necessary credentials.</div>
+
+  <h3>Logout</h3>
+  <p>Clears both localStorage session and DB session state (<code>sessionActive=false</code>), then redirects to /student/login.</p>
+
+  <h2 style="margin-top:20px">07 — Judge Panel — Features & Workflows</h2>
+
+  <h3>Login (/judges/login)</h3>
+  <p>Uses the isolated <code>judgeClient</code> instance. Validates <code>app_metadata.role === 'judge'</code> after sign-in. Clears any existing session before new login.</p>
+
+  <h3>Result Entry Panel (/judges/results)</h3>
+  <h4>Layout</h4>
+  <ul>
+    <li>Category filter dropdown</li>
+    <li>"Not Submitted" section: programmes awaiting results</li>
+    <li>"Submitted Results" section: locked results (read-only unless re-verified)</li>
+  </ul>
+
+  <h4>Workflow: First-Time Result Entry</h4>
+  <ol>
+    <li>Judge selects a programme from "Not Submitted" list</li>
+    <li>Clicks "Enter Result" to open the editor</li>
+    <li>Editor shows code letter dropdowns (populated from <code>performance_code_assignments</code> table)</li>
+    <li>Selects code letters and enters points (0-10) for each placement</li>
+    <li>Grade auto-calculated: 10=A+, 8-9=A, 6-7=B, 4-5=C</li>
+    <li>Can add multiple entries (dynamic row count)</li>
+    <li>Clicks "Save & Lock Result"</li>
+    <li>Result row updated with <code>locked: true, isFinished: true</code></li>
+    <li>Programme moves to "Submitted Results" section</li>
+  </ol>
+
+  <h4>Workflow: Editing Locked Results (Re-Verification)</h4>
+  <ol>
+    <li>Judge clicks "Re-verify & Edit" on a locked result</li>
+    <li>Passes through re-verification flow (CAPTCHA + email + password)</li>
+    <li>Server-side verification via <code>judge_reverify_edit</code> RPC</li>
+    <li>Editor opens with existing entries pre-filled</li>
+    <li>Judge makes changes and saves</li>
+    <li>Audit log written to <code>result_edit_log</code> table</li>
+  </ol>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">08</div>
+</div>
+
+<!-- ==================== 08 — PUBLIC PAGES ==================== -->
+<div class="page">
+  <div class="section-num">08 — Public Pages — Features & Workflows</div>
+  <h2>Public Pages — Features & Workflows</h2>
+
+  <h3>Home Page (/)</h3>
+  <ul>
+    <li><strong>Hero Section:</strong> 3D scene with floating GLB models (leaf, lens, seedpod), animated gradient background, parallax scroll effects</li>
+    <li><strong>Team Standings:</strong> Live leaderboard from published results with ember particle effects</li>
+    <li><strong>Stats Blocks:</strong> Animated counters for Teams, Days, Participants, Programmes</li>
+    <li><strong>Gallery Preview:</strong> First 8 spotlight images with footer overlay compositing</li>
+    <li><strong>About Section:</strong> Festival description for Rendezvous'26</li>
+    <li><strong>Team Profiles:</strong> 8 Corvion team member profiles with photos</li>
+    <li><strong>Floating Nav:</strong> Glassmorphism top bar with Login dropdown (Participant, Judges, Admin, Green Room) + ThemeToggle</li>
+  </ul>
+
+  <h3>Results Page (/results)</h3>
+  <ul>
+    <li>Grid of published programmes with result number, grade, status</li>
+    <li>Category filter dropdown</li>
+    <li>"Unpublished" toggle to show/hide unpublished results</li>
+    <li>Status badges: Result Available / Awaiting Result / Unfinished</li>
+    <li>Click to view detail at /results/:id</li>
+  </ul>
+
+  <h3>Result Detail (/results/:id)</h3>
+  <ul>
+    <li>Programme info (name, category, type)</li>
+    <li>Medal placements (1st/2nd/3rd) with student avatar, name, chest number, team, points</li>
+    <li>"View Posters" button opens TemplatePosterModal or ResultPoster fallback</li>
+  </ul>
+
+  <h3>Gallery (/gallery)</h3>
+  <ul>
+    <li>Images grouped by album (sorted by newest first)</li>
+    <li>Lightbox modal for full-size viewing</li>
+    <li>Download button per image (with footer overlay composited into download)</li>
+    <li>Back-to-home navigation</li>
+  </ul>
+
+  <h3>Bottom Navigation (Mobile)</h3>
+  <p>Fixed bottom bar with 2 tabs: Home (/) and Results (/results). Supports rubber-band swipe gesture navigation. Hidden on admin/student/judge paths.</p>
+
+  <h2 style="margin-top:20px">09 — Green Room & Lot Draw System</h2>
+
+  <h3>Access Gate (/lots)</h3>
+  <p>PIN-protected access (hardcoded 6-digit code: <code>201219</code>). On success, sets <code>sessionStorage('lots_granted')</code>. No Supabase authentication involved.</p>
+
+  <h3>Lot Draw (/lots/draw)</h3>
+  <p>Three operational modes:</p>
+
+  <h4>Mode 1: Topic Lotting</h4>
+  <ul>
+    <li>Generates N numbered cards (1 to N)</li>
+    <li>Shuffle and flip to reveal entry order numbers</li>
+    <li>3D CSS card-flip animation</li>
+    <li>Max 60 cards</li>
+  </ul>
+
+  <h4>Mode 2: Code Letter Lotting</h4>
+  <ul>
+    <li>Generates N lettered cards (A to Nth letter)</li>
+    <li>Max 26 letters</li>
+    <li>Same card-flip animation</li>
+  </ul>
+
+  <h4>Mode 3: Code Assignment (Green Room)</h4>
+  <ol>
+    <li>Select Category from dropdown</li>
+    <li>Select Programme from dropdown</li>
+    <li>View enrolled candidates with code letter dropdowns</li>
+    <li>Assign unique code letters (A, B, C...) to each candidate</li>
+    <li>Save → upserts to <code>performance_code_assignments</code> table with conflict resolution on (programme_id, code_letter)</li>
+  </ol>
+  <p>This system enables <strong>blind grading</strong> — judges see only code letters, not student names.</p>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">09</div>
+</div>
+
+<!-- ==================== 10 — POSTER GENERATION ==================== -->
+<div class="page">
+  <div class="section-num">10 — Poster Generation System</div>
+  <h2>Poster Generation System</h2>
+
+  <h3>Architecture</h3>
+  <p>The poster system consists of four layers:</p>
+  <table>
+    <tr><th>Layer</th><th>File(s)</th><th>Responsibility</th></tr>
+    <tr><td>Data Model</td><td>src/utils/posterTemplates.js</td><td>Template definitions, field mappings, data resolution, storage</td></tr>
+    <tr><td>Rendering</td><td>src/components/PosterStage.jsx</td><td>Interactive canvas with drag, resize, rotation, grid, snap guides</td></tr>
+    <tr><td>Editor UI</td><td>src/pages/admin/AdminPosterEditor.jsx</td><td>3-panel visual editor (Layer Library, Live Preview, Config)</td></tr>
+    <tr><td>Export</td><td>html2canvas + file-saver</td><td>DOM-to-canvas capture at 2x scale → PNG download</td></tr>
+  </table>
+
+  <h3>Template Model</h3>
+  <ul>
+    <li><strong>Canvas:</strong> 1080×1080 (standard 1:1) or legacy 720×960</li>
+    <li><strong>Types:</strong> <code>result</code> (programme winners) and <code>standings</code> (team leaderboard)</li>
+    <li><strong>Elements:</strong> Positioned text layers with optional data field bindings</li>
+    <li><strong>Repeatable fields:</strong> <code>{i}</code> placeholder renders multiple rows (one per placement/team)</li>
+    <li><strong>Backgrounds:</strong> Solid color, gradient (9 presets), or uploaded image</li>
+  </ul>
+
+  <h3>Data Field Mappings</h3>
+  <table>
+    <tr><th>Field Key</th><th>Template Type</th><th>Resolves To</th></tr>
+    <tr><td><code>programme.name</code></td><td>result</td><td>Programme name</td></tr>
+    <tr><td><code>result.resultNo</code></td><td>result</td><td>Result number (with "Result #" prefix)</td></tr>
+    <tr><td><code>placement.{i}.name</code></td><td>result</td><td>Winner name at position i</td></tr>
+    <tr><td><code>placement.{i}.chestNo</code></td><td>result</td><td>Chest number at position i</td></tr>
+    <tr><td><code>placement.{i}.team</code></td><td>result</td><td>Team name at position i</td></tr>
+    <tr><td><code>placement.{i}.points</code></td><td>result</td><td>Points at position i</td></tr>
+    <tr><td><code>placement.{i}.grade</code></td><td>result</td><td>Grade at position i</td></tr>
+    <tr><td><code>team.{i}.name</code></td><td>standings</td><td>Team name at rank i</td></tr>
+    <tr><td><code>team.{i}.points</code></td><td>standings</td><td>Team points at rank i</td></tr>
+  </table>
+
+  <h3>Poster Export Workflow</h3>
+  <ol>
+    <li>Admin designs template in AdminPosterEditor (or uses default)</li>
+    <li>Template saved to <code>poster_templates</code> table (with localStorage fallback)</li>
+    <li>User clicks "Export Poster" in editor OR "View Posters" on public result page</li>
+    <li><code>buildPosterSource()</code> creates a value map from live programme/result data</li>
+    <li><code>PosterStage</code> renders template with real data injected into field bindings</li>
+    <li><code>html2canvas</code> captures the rendered DOM at 2x scale</li>
+    <li><code>file-saver</code> triggers PNG download</li>
+  </ol>
+
+  <h3>Cumulative Team Poster (AdminResultPoster)</h3>
+  <ol>
+    <li>Admin enters programme count (multiples of 5)</li>
+    <li>System sums points per team across first N published programmes</li>
+    <li>Renders a green gradient poster with team rankings</li>
+    <li>Captures via html2canvas, stores in localStorage</li>
+    <li>Admin can toggle publish/unpublish for student download area</li>
+  </ol>
+
+  <h3>Legacy Poster System (ResultPoster)</h3>
+  <p>Fallback when no templates exist. Renders 3 poster variants (Classic, Vibrant, Minimal) with programme name, result number, 1st/2nd/3rd winners, and points. Each captured via html2canvas at 2x scale.</p>
+
+  <h2 style="margin-top:20px">11 — Print Sheet System</h2>
+
+  <h3>Admin Print (/admin/print)</h3>
+  <p>Two tabs: Programmes (Sign + Valuation sheets) and Results (Result sheets).</p>
+
+  <h3>Sheet Types</h3>
+  <table>
+    <tr><th>Sheet</th><th>Layout</th><th>Columns</th><th>Data Source</th></tr>
+    <tr><td>Sign Sheet</td><td>2 per A4 page</td><td>Chest No, Name, Code Letter, Signature</td><td>Enrolled participants + code assignments</td></tr>
+    <tr><td>Valuation Sheet</td><td>2 per A4 page</td><td>Code Letter, Grade, Price</td><td>Blank rows for hand-writing</td></tr>
+    <tr><td>Result Sheet</td><td>4 per A4 page</td><td>Chest No, Name, Team, Code, Grade, Price, Point</td><td>Locked judge results</td></tr>
+  </table>
+
+  <h3>Print Workflow</h3>
+  <ol>
+    <li>Admin selects sheet type and programmes</li>
+    <li>Multi-select with max 8 sheets constraint</li>
+    <li>Preview paginated A4 print layout</li>
+    <li>Trigger browser print dialog via <code>window.print()</code></li>
+  </ol>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">10</div>
+</div>
+
+<!-- ==================== 12 — DATA IMPORT ==================== -->
+<div class="page">
+  <div class="section-num">12 — Data Import System</div>
+  <h2>Data Import System</h2>
+
+  <h3>Supported Formats</h3>
+  <table>
+    <tr><th>Format</th><th>Library</th><th>Extension</th></tr>
+    <tr><td>CSV</td><td>PapaParse 5.6.0</td><td>.csv</td></tr>
+    <tr><td>Excel</td><td>SheetJS (xlsx) 0.18.5</td><td>.xlsx, .xls</td></tr>
+    <tr><td>PDF</td><td>pdfjs-dist 6.2.108</td><td>.pdf (text extraction)</td></tr>
+    <tr><td>Image (OCR)</td><td>Tesseract.js 7.0.0</td><td>.png, .jpg, etc.</td></tr>
+  </table>
+
+  <h3>Import Targets</h3>
+  <table>
+    <tr><th>Target</th><th>Modal</th><th>Fields</th></tr>
+    <tr><td>Participants</td><td>BulkImportModal</td><td>name, chestNo, category, team</td></tr>
+    <tr><td>Programmes</td><td>ProgrammeBulkImportModal</td><td>name, category, type, participationType, resultNo</td></tr>
+  </table>
+
+  <h3>Import Pipeline</h3>
+  <ol>
+    <li>User selects file via FileImportModal</li>
+    <li><code>parseFileToRows()</code> universal parser detects format and extracts rows</li>
+    <li>Smart header detection using <code>HEADER_KEYWORDS</code> mapping</li>
+    <li><code>validateParticipants()</code> or <code>validateProgrammes()</code> checks:
+      <ul>
+        <li>Required fields present</li>
+        <li>Duplicate chest numbers (participants)</li>
+        <li>Unknown categories/teams (validated against DB)</li>
+      </ul>
+    </li>
+    <li>Preview displayed to user with validation errors highlighted</li>
+    <li>On confirmation, batch-inserted into Supabase</li>
+  </ol>
+
+  <h3>Utility Modules</h3>
+  <table>
+    <tr><th>Module</th><th>Lines</th><th>Purpose</th></tr>
+    <tr><td>importParsers.js</td><td>130</td><td>Universal file parser with tab/space table detection, PDF text extraction with Y/X coordinate layout, OCR with progress callback</td></tr>
+    <tr><td>bulkImportParser.js</td><td>~120</td><td>Participant-specific import with validation</td></tr>
+    <tr><td>programmeBulkParser.js</td><td>101</td><td>Programme-specific import with validation</td></tr>
+  </table>
+
+  <h2 style="margin-top:20px">13 — Gallery & Media System</h2>
+
+  <h3>Gallery Management</h3>
+  <h4>Upload (AdminSpotlight)</h4>
+  <ul>
+    <li>Upload images (up to 10 per batch) to Supabase Storage <code>spotlight/</code> folder</li>
+    <li>Each image has: imageURL, caption, album, isFeatured (hero banner toggle)</li>
+    <li>Images grouped by album in public gallery (default album: "Spotlight")</li>
+  </ul>
+
+  <h4>Footer Overlays (AdminGalleryFooters)</h4>
+  <ul>
+    <li>Upload transparent PNG frames to Supabase Storage <code>footers/</code> folder</li>
+    <li>Create/Edit/Delete footer overlays</li>
+    <li>Set one as "active" — enforced by <code>enforce_single_active_footer()</code> trigger</li>
+    <li>Active footer composited onto gallery photos at display time (canvas-based, does NOT modify original)</li>
+  </ul>
+
+  <h3>Image Compositing Pipeline</h3>
+  <ol>
+    <li>Gallery photo displayed → <code>imageCompositor.js</code> loads base image and active footer</li>
+    <li>Canvas-based: footer placed at 25% height from bottom, 3.5% offset</li>
+    <li>Result cached as JPEG data URL in memory (<code>Map</code> cache keyed by <code>base|||footer</code>)</li>
+    <li>Downloads also go through this pipeline — footer baked into downloaded file</li>
+  </ol>
+
+  <h3>Storage Paths</h3>
+  <table>
+    <tr><th>Folder</th><th>Used By</th></tr>
+    <tr><td><code>templates/{id}/bg-*</code></td><td>Poster template background images</td></tr>
+    <tr><td><code>spotlight/{ts}_{i}_{name}</code></td><td>Gallery/spotlight images</td></tr>
+    <tr><td><code>students/{ts}_{name}</code></td><td>Student profile photos</td></tr>
+    <tr><td><code>footers/{ts}_{name}</code></td><td>Gallery footer overlay images</td></tr>
+    <tr><td><code>frames/{ts}_{rand}.{ext}</code></td><td>Frame images</td></tr>
+  </table>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">11</div>
+</div>
+
+<!-- ==================== 14 — DATABASE SCHEMA ==================== -->
+<div class="page">
+  <div class="section-num">14 — Database Schema & Data Model</div>
+  <h2>Database Schema & Data Model</h2>
+
+  <h3>programmes</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>name</td><td>text</td><td></td><td>Programme name</td></tr>
+    <tr><td>category</td><td>text</td><td></td><td>Category name (e.g. "Minor")</td></tr>
+    <tr><td>isFinished</td><td>boolean</td><td>false</td><td>Event has ended</td></tr>
+    <tr><td>isPublished</td><td>boolean</td><td>false</td><td>Result released publicly</td></tr>
+    <tr><td>resultId</td><td>text</td><td></td><td>Legacy FK reference</td></tr>
+    <tr><td>programmeType</td><td>text</td><td></td><td>"On-stage" / "Off-stage"</td></tr>
+    <tr><td>participationType</td><td>text</td><td></td><td>"Individual" / "Group"</td></tr>
+    <tr><td>createdAt</td><td>timestamptz</td><td>now()</td><td>Creation timestamp</td></tr>
+  </table>
+
+  <h3>teams</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>text (PK)</td><td></td><td>Team identifier</td></tr>
+    <tr><td>name</td><td>text</td><td></td><td>Display name</td></tr>
+    <tr><td>color</td><td>text</td><td></td><td>Team color</td></tr>
+    <tr><td>firstPlaceCount</td><td>bigint</td><td>0</td><td>Gold medals</td></tr>
+    <tr><td>secondPlaceCount</td><td>bigint</td><td>0</td><td>Silver medals</td></tr>
+    <tr><td>thirdPlaceCount</td><td>bigint</td><td>0</td><td>Bronze medals</td></tr>
+    <tr><td>totalPoints</td><td>bigint</td><td>0</td><td>Auto-synced by trigger</td></tr>
+  </table>
+
+  <h3>students</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>name</td><td>text</td><td></td><td>Student name</td></tr>
+    <tr><td>class</td><td>text</td><td></td><td>Category (e.g. "Minor")</td></tr>
+    <tr><td>team</td><td>text</td><td></td><td>Team ID reference</td></tr>
+    <tr><td>photoURL</td><td>text</td><td></td><td>Profile photo URL</td></tr>
+    <tr><td>programmeIds</td><td>jsonb</td><td></td><td>Array of programme IDs</td></tr>
+    <tr><td>chestNo</td><td>text</td><td></td><td>Display chest number</td></tr>
+    <tr><td>createdAt</td><td>timestamptz</td><td>now()</td><td>Creation timestamp</td></tr>
+    <tr><td>sessionActive</td><td>boolean</td><td>false</td><td>Custom session tracking</td></tr>
+    <tr><td>sessionExpiresAt</td><td>timestamptz</td><td></td><td>Session expiry</td></tr>
+    <tr><td>sessionToken</td><td>text</td><td></td><td>Session token</td></tr>
+  </table>
+
+  <h3>results</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>name</td><td>text</td><td></td><td>Programme name (denormalized)</td></tr>
+    <tr><td>programmeId</td><td>text</td><td></td><td>FK to programmes.id</td></tr>
+    <tr><td>first</td><td>jsonb</td><td></td><td>{ studentId, name, points, grade, prize, code }</td></tr>
+    <tr><td>second</td><td>jsonb</td><td></td><td>Same shape as first</td></tr>
+    <tr><td>third</td><td>jsonb</td><td></td><td>Same shape as first</td></tr>
+    <tr><td>entries</td><td>jsonb</td><td>[]</td><td>Array of all placed entries (flexible)</td></tr>
+    <tr><td>updatedAt</td><td>timestamp</td><td></td><td>Last update time</td></tr>
+    <tr><td>resultNo</td><td>integer</td><td>0</td><td>Display number for ordering</td></tr>
+    <tr><td>locked</td><td>boolean</td><td>false</td><td>Judge-submitted = locked; immutable</td></tr>
+    <tr><td>isFinished</td><td>boolean</td><td>false</td><td>Synced from programme</td></tr>
+  </table>
+
+  <h3>categories</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>name</td><td>text (UNIQUE)</td><td></td><td>Category name</td></tr>
+    <tr><td>sortOrder</td><td>integer</td><td>0</td><td>Display ordering</td></tr>
+    <tr><td>createdAt</td><td>timestamptz</td><td>now()</td><td>Creation timestamp</td></tr>
+  </table>
+
+  <h3>spotlight</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>imageURL</td><td>text</td><td></td><td>Image URL</td></tr>
+    <tr><td>caption</td><td>text</td><td></td><td>Image caption</td></tr>
+    <tr><td>order</td><td>bigint</td><td>0</td><td>Display ordering</td></tr>
+    <tr><td>isFeatured</td><td>boolean</td><td>false</td><td>Hero banner toggle</td></tr>
+    <tr><td>album</td><td>text</td><td></td><td>Gallery grouping</td></tr>
+    <tr><td>uploadedAt</td><td>timestamptz</td><td>now()</td><td>Upload timestamp</td></tr>
+  </table>
+
+  <h3>poster_templates</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>name</td><td>text</td><td>'Untitled Template'</td><td>Template name</td></tr>
+    <tr><td>type</td><td>text</td><td>'result'</td><td>"result" or "standings"</td></tr>
+    <tr><td>canvas</td><td>jsonb</td><td></td><td>Canvas dimensions/config</td></tr>
+    <tr><td>background</td><td>jsonb</td><td></td><td>Background config</td></tr>
+    <tr><td>elements</td><td>jsonb</td><td>[]</td><td>Text/element layers</td></tr>
+    <tr><td>teamsToShow</td><td>integer</td><td>8</td><td>Standings teams to display</td></tr>
+    <tr><td>createdAt</td><td>timestamptz</td><td>now()</td><td>Auto-touched by trigger</td></tr>
+    <tr><td>updatedAt</td><td>timestamptz</td><td>now()</td><td>Auto-touched by trigger</td></tr>
+  </table>
+
+  <h3>gallery_footers</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>name</td><td>text</td><td>'Footer'</td><td>Footer name</td></tr>
+    <tr><td>image_url</td><td>text</td><td></td><td>Image URL</td></tr>
+    <tr><td>is_active</td><td>boolean</td><td>false</td><td>Single-active enforced by trigger</td></tr>
+    <tr><td>created_at</td><td>timestamptz</td><td>now()</td><td>Creation timestamp</td></tr>
+    <tr><td>updated_at</td><td>timestamptz</td><td>now()</td><td>Auto-touched by trigger</td></tr>
+  </table>
+
+  <h3>performance_code_assignments</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>programme_id</td><td>text (NOT NULL)</td><td></td><td>FK to programmes</td></tr>
+    <tr><td>participant_id</td><td>uuid (NOT NULL)</td><td></td><td>FK to students(id) ON DELETE CASCADE</td></tr>
+    <tr><td>code_letter</td><td>text (NOT NULL)</td><td></td><td>Blind-grading letter code</td></tr>
+    <tr><td>created_at</td><td>timestamptz</td><td>now()</td><td>Creation timestamp</td></tr>
+    <tr><td colspan="4"><strong>UNIQUE:</strong> (programme_id, code_letter)</td></tr>
+  </table>
+
+  <h3>student_credentials</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+    <tr><td>student_id</td><td>uuid</td><td>FK to students(id)</td></tr>
+    <tr><td>password</td><td>text</td><td>Password (plaintext)</td></tr>
+  </table>
+
+  <h3>judge_captcha_challenges</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>judge_id</td><td>uuid (NOT NULL)</td><td></td><td>auth.users.id of judge</td></tr>
+    <tr><td>captcha</td><td>text (NOT NULL)</td><td></td><td>6-char code</td></tr>
+    <tr><td>expires_at</td><td>timestamptz</td><td>now() + 5 min</td><td>Expiry timestamp</td></tr>
+    <tr><td>used</td><td>boolean</td><td>false</td><td>Single-use flag</td></tr>
+  </table>
+
+  <h3>result_edit_log</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>id</td><td>uuid (PK)</td><td>gen_random_uuid()</td><td>Unique identifier</td></tr>
+    <tr><td>result_id</td><td>uuid</td><td></td><td>Result being edited</td></tr>
+    <tr><td>programme_id</td><td>text</td><td></td><td>Programme reference</td></tr>
+    <tr><td>programme_name</td><td>text</td><td></td><td>Programme name</td></tr>
+    <tr><td>judge_email</td><td>text</td><td></td><td>Judge who edited</td></tr>
+    <tr><td>edited_at</td><td>timestamptz</td><td>now()</td><td>Edit timestamp</td></tr>
+    <tr><td>old_first/old_second/old_third</td><td>jsonb</td><td></td><td>Previous state</td></tr>
+    <tr><td>new_first/new_second/new_third</td><td>jsonb</td><td></td><td>New state</td></tr>
+  </table>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">12</div>
+</div>
+
+<!-- ==================== 15 — RPCs ==================== -->
+<div class="page">
+  <div class="section-num">15 — Supabase RPCs & Functions</div>
+  <h2>Supabase RPCs & Functions</h2>
+
+  <h3>Trigger Functions</h3>
+  <table>
+    <tr><th>Function</th><th>Type</th><th>Trigger</th><th>Purpose</th></tr>
+    <tr><td><code>sync_team_totals()</code></td><td>SECURITY DEFINER</td><td>AFTER INSERT/UPDATE/DELETE ON results (FOR EACH STATEMENT)</td><td>Recalculates teams.totalPoints by summing points from all latest results per programme</td></tr>
+    <tr><td><code>touch_poster_template_updated_at()</code></td><td>Trigger function</td><td>BEFORE INSERT/UPDATE ON poster_templates</td><td>Auto-sets updatedAt = now()</td></tr>
+    <tr><td><code>enforce_single_active_footer()</code></td><td>Trigger function</td><td>BEFORE INSERT/UPDATE ON gallery_footers</td><td>Ensures at most one row has is_active = true</td></tr>
+  </table>
+
+  <h3>RPC Functions</h3>
+
+  <h4><code>judge_credentials(p_judge_email, p_judge_password)</code></h4>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Type</td><td>SECURITY DEFINER, returns jsonb</td></tr>
+    <tr><td>Grants</td><td>authenticated, anon</td></tr>
+    <tr><td>Purpose</td><td>Server-side password verification against auth.users.encrypted_password</td></tr>
+    <tr><td>Returns</td><td>{ valid: true, judge_id, email, role } or { valid: false, error: "invalid_credentials" }</td></tr>
+  </table>
+
+  <h4><code>judge_create_captcha()</code></h4>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Type</td><td>SECURITY DEFINER, returns jsonb</td></tr>
+    <tr><td>Auth gate</td><td>Checks app_metadata.role = 'judge' inside function</td></tr>
+    <tr><td>Purpose</td><td>Generates 6-char captcha, stores in judge_captcha_challenges with 5-min expiry</td></tr>
+    <tr><td>Returns</td><td>{ challenge_id, captcha, expires_at } or { error: "not_authorized" }</td></tr>
+  </table>
+
+  <h4><code>judge_reverify_edit(...)</code></h4>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Type</td><td>SECURITY DEFINER, returns jsonb</td></tr>
+    <tr><td>Parameters</td><td>p_challenge_id, p_captcha, p_judge_email, p_judge_password, p_programme_id, p_programme_name, p_result_no, p_first, p_second, p_third, p_entries</td></tr>
+    <tr><td>Purpose</td><td>The ONLY secure write path for locked results. Verifies: (1) JWT role is judge, (2) email matches, (3) password valid via crypt(), (4) captcha valid/unexpired/unused, (5) at least one placement. Then upserts result, sets locked=true, writes audit log.</td></tr>
+  </table>
+
+  <h4><code>admin_set_result_no(p_programme_id, p_programme_name, p_result_no)</code></h4>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Type</td><td>SECURITY DEFINER, returns jsonb</td></tr>
+    <tr><td>Purpose</td><td>Lets admin edit a programme's displayed result number. Creates placeholder result row if none exists.</td></tr>
+  </table>
+
+  <h4><code>admin_delete_results_for_programme(p_programme_id)</code></h4>
+  <table>
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Type</td><td>SECURITY DEFINER, returns jsonb</td></tr>
+    <tr><td>Purpose</td><td>Bypasses RLS to delete ALL result rows for a given programme. Used when un-finishing, deleting, or clearing results.</td></tr>
+  </table>
+
+  <h3>RPC Call Map</h3>
+  <table>
+    <tr><th>RPC</th><th>Called From</th><th>Client</th></tr>
+    <tr><td>judge_create_captcha</td><td>JudgesResults.jsx</td><td>judgeClient</td></tr>
+    <tr><td>judge_reverify_edit</td><td>JudgesResults.jsx</td><td>judgeClient</td></tr>
+    <tr><td>admin_delete_results_for_programme</td><td>AdminProgrammes.jsx</td><td>supabase</td></tr>
+    <tr><td>admin_set_result_no</td><td>AdminProgrammes.jsx</td><td>supabase</td></tr>
+  </table>
+
+  <h2 style="margin-top:20px">16 — Design System</h2>
+
+  <h3>Theme System</h3>
+  <p>Class-based dark mode (<code>darkMode: 'class'</code> in Tailwind config). Toggled via <code>data-theme</code> attribute on <code>&lt;html&gt;</code>. Theme persisted in localStorage under key <code>artfest-theme</code>. A blocking script in <code>index.html</code> reads this on page load to prevent flash-of-wrong-theme.</p>
+
+  <h3>Color Tokens (CSS Variables)</h3>
+  <table>
+    <tr><th>Token</th><th>Light Value</th><th>Dark Value</th></tr>
+    <tr><td>--bg-page</td><td>#F5FAF3</td><td>#061A0D</td></tr>
+    <tr><td>--text-main</td><td>#115F32</td><td>#D4FFB8</td></tr>
+    <tr><td>--text-muted</td><td>#52705D</td><td>#8ED06C</td></tr>
+    <tr><td>--card-white</td><td>#FFFFFF</td><td>#0B2A17</td></tr>
+    <tr><td>--card-lavender</td><td>#D4FFB8</td><td>#0B2A17</td></tr>
+    <tr><td>--accent-purple</td><td>#115F32</td><td>#115F32</td></tr>
+    <tr><td>--accent-purple-deep</td><td>#228C22</td><td>#228C22</td></tr>
+    <tr><td>--border-subtle</td><td>rgba(17,95,50,0.25)</td><td>rgba(17,95,50,0.4)</td></tr>
+    <tr><td>--admin-sidebar-bg</td><td>#011E11</td><td>#0d3520</td></tr>
+    <tr><td>--admin-main-bg</td><td>#FFFFFF</td><td>#011E11</td></tr>
+  </table>
+
+  <h3>Typography</h3>
+  <p><strong>Primary Font:</strong> Sora (Google Fonts, weights 300-800) — set as global body font. All Tailwind font utility classes (font-poppins, font-inter, font-display, font-playfair, font-brand) map to Sora.</p>
+  <p><strong>Custom Font:</strong> CSGENERAL-REGULAR_DEMO — used exclusively for the "Corvion" brand name.</p>
+  <p><strong>Poster Fonts:</strong> Sora, Montserrat, Inter, Roboto, Serif (Georgia), Monospace (Courier New), CSGENERAL.</p>
+
+  <h3>CSS Component Classes</h3>
+  <table>
+    <tr><th>Class</th><th>Purpose</th></tr>
+    <tr><td>.floating-nav</td><td>Glassmorphism floating navigation bar</td></tr>
+    <tr><td>.nav-glass-vessel</td><td>Liquid-glass bottom nav container</td></tr>
+    <tr><td>.glass-chip</td><td>Glass-effect button/chip</td></tr>
+    <tr><td>.bento-white-card / .bento-dark-card</td><td>Card variants with hover lift</td></tr>
+    <tr><td>.lot-card / .lot-card-inner / .lot-card-face</td><td>3D flip card (lottery draw)</td></tr>
+    <tr><td>.cta-gradient</td><td>Primary CTA gradient button</td></tr>
+    <tr><td>.admin-sidebar / .admin-main-content</td><td>Admin layout containers</td></tr>
+    <tr><td>.lb-1, .lb-2, .lb-3</td><td>Leaderboard row styles (gold/silver/bronze)</td></tr>
+    <tr><td>.reveal / .reveal-visible</td><td>Scroll-reveal animation</td></tr>
+    <tr><td>.starfield / .star</td><td>Animated star background</td></tr>
+  </table>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">13</div>
+</div>
+
+<!-- ==================== 17 — DEPLOYMENT ==================== -->
+<div class="page">
+  <div class="section-num">17 — Project Structure & Deployment</div>
+  <h2>Project Structure & Deployment</h2>
+
+  <h3>Source Directory Structure</h3>
+  <pre><code>src/
+├── App.jsx                    Root component (BrowserRouter + Routes)
+├── main.jsx                   Entry point (ToastProvider wrapper)
+├── index.css                  Design system, CSS variables, animations
+├── assets/                    Fonts, images, hero assets
+│   └── CSGENERAL-REGULAR_DEMO.OTF
+├── components/                26 reusable UI components
+│   ├── BottomNav.jsx          Mobile bottom navigation
+│   ├── BulkImportModal.jsx    CSV/Excel/PDF bulk import
+│   ├── CursorGlow.jsx         Mouse-following ambient glow
+│   ├── FileImportModal.jsx    Generic file import dialog
+│   ├── FilterDropdown.jsx     Filter dropdown UI
+│   ├── FloatingCards.jsx      3D floating card carousel
+│   ├── GalleryFooterOverlay.jsx  Footer overlay on photos
+│   ├── HeroAnimation.jsx      Hero section animation
+│   ├── HeroScene.jsx          Three.js 3D hero scene
+│   ├── IsraLogo.jsx           ISRA brand logo
+│   ├── JudgesRoute.jsx        Judges auth guard
+│   ├── KebabMenu.jsx          Overflow menu
+│   ├── LoginControl.jsx       Login/logout dropdown
+│   ├── PhytoloreHero.jsx      Alternative hero component
+│   ├── PosterGeneratorModal.jsx  Poster generation dialog
+│   ├── PosterStage.jsx        Poster rendering canvas
+│   ├── ProgrammeBulkImportModal.jsx
+│   ├── ProtectedRoute.jsx     Admin auth guard
+│   ├── ResultPoster.jsx       Legacy poster display
+│   ├── Starfield.jsx          Animated starfield
+│   ├── StudentAvatar.jsx      Student avatar display
+│   ├── TeamBreakdown.jsx      Team breakdown view
+│   ├── TemplatePosterModal.jsx   Template selection modal
+│   ├── ThemeToggle.jsx        Light/dark theme toggle
+│   └── Toast.jsx              Toast notification system
+├── hooks/                     2 custom hooks
+│   ├── useCountUp.js          Animated number counter
+│   └── useScrollReveal.js     IntersectionObserver scroll reveal
+├── pages/                     Page-level components
+│   ├── Home.jsx               Landing page
+│   ├── Gallery.jsx            Photo gallery
+│   ├── Results.jsx            Public results listing
+│   ├── ResultDetail.jsx       Individual result view
+│   ├── LotsAccess.jsx         Lottery access gate
+│   ├── LotsDraw.jsx           Lottery draw page
+│   ├── StudentLogin.jsx       Student login
+│   ├── StudentDashboard.jsx   Student dashboard
+│   ├── admin/                 15 admin pages
+│   │   ├── AdminLogin.jsx
+│   │   ├── AdminLayout.jsx
+│   │   ├── AdminDashboard.jsx
+│   │   ├── AdminProgrammes.jsx
+│   │   ├── AdminTeams.jsx
+│   │   ├── AdminStudents.jsx
+│   │   ├── AdminSpotlight.jsx
+│   │   ├── AdminGalleryFooters.jsx
+│   │   ├── AdminCategories.jsx
+│   │   ├── AdminPrint.jsx
+│   │   ├── AdminResults.jsx
+│   │   ├── AdminResultPoster.jsx
+│   │   ├── AdminPosterTemplates.jsx
+│   │   ├── AdminPosterEditor.jsx
+│   │   └── AdminLots.jsx
+│   └── judges/                2 judge pages
+│       ├── JudgesLogin.jsx
+│       └── JudgesResults.jsx
+└── supabase/                  Backend integration
+    ├── client.js              3 Supabase client instances
+    └── queries.js             808 lines of DB query functions</code></pre>
+
+  <h3>Deployment Configuration</h3>
+  <table>
+    <tr><th>Setting</th><th>Value</th></tr>
+    <tr><td>Host</td><td>Vercel</td></tr>
+    <tr><td>Build Command</td><td><code>vite build</code></td></tr>
+    <tr><td>Output Directory</td><td><code>dist</code></td></tr>
+    <tr><td>SPA Rewrite</td><td><code>/((?!assets/).*) → /index.html</code></td></tr>
+    <tr><td>Live URL</td><td>isra-rendezvous.vercel.app</td></tr>
+    <tr><td>Supabase Project</td><td>lvkehbubcijtovbrcikq.supabase.co</td></tr>
+  </table>
+
+  <h3>Entry Point Chain</h3>
+  <pre><code>index.html
+  ├── localStorage theme flash-prevention script
+  ├── Google Fonts (Sora 300-800)
+  └── #root
+      └── src/main.jsx
+          └── &lt;StrictMode&gt;
+              └── &lt;ToastProvider&gt;
+                  └── &lt;App /&gt;
+                      └── &lt;BrowserRouter&gt;
+                          ├── &lt;Starfield /&gt;
+                          ├── &lt;CursorGlow /&gt;
+                          ├── &lt;Routes&gt; (all page routes)
+                          └── &lt;BottomNav /&gt;</code></pre>
+
+  <h3>localStorage Keys</h3>
+  <table>
+    <tr><th>Key</th><th>Purpose</th></tr>
+    <tr><td><code>artfest-theme</code></td><td>Theme preference (light/dark)</td></tr>
+    <tr><td><code>student_id</code></td><td>Current student ID</td></tr>
+    <tr><td><code>student_session_&lt;id&gt;</code></td><td>Student session token</td></tr>
+    <tr><td><code>student_session_expires_&lt;id&gt;</code></td><td>Student session expiry timestamp</td></tr>
+  </table>
+
+  <h3>sessionStorage Keys</h3>
+  <table>
+    <tr><th>Key</th><th>Purpose</th></tr>
+    <tr><td><code>lots_granted</code></td><td>Green room access flag (set on PIN entry)</td></tr>
+  </table>
+
+  <h3>Global Components (Rendered on Every Page)</h3>
+  <table>
+    <tr><th>Component</th><th>Purpose</th></tr>
+    <tr><td>Starfield</td><td>Animated twinkling star background</td></tr>
+    <tr><td>CursorGlow</td><td>Mouse-following ambient glow (hidden on touch devices)</td></tr>
+    <tr><td>BottomNav</td><td>Mobile bottom navigation (hidden on admin/student/judge paths)</td></tr>
+    <tr><td>ToastProvider</td><td>Global toast notification context</td></tr>
+  </table>
+
+  <div class="page-footer"><span class="page-title">EventX — Software Overview</span></div>
+  <div class="page-num">14</div>
+</div>
+
+</body>
+</html>
